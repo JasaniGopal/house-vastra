@@ -3,6 +3,8 @@ import Hero from "./Hero";
 import TrustStrip from "./TrustStrip";
 import Occasions from "./Occasions";
 import Trending from "./Trending";
+import HowItWorks from "./HowItWorks";
+import WhyRentVastra from "./WhyRentVastra";
 
 export default function HomeView() {
   return (
@@ -11,6 +13,8 @@ export default function HomeView() {
       <TrustStrip />
       <Occasions />
       <Trending />
+      <HowItWorks />
+      <WhyRentVastra />
     </div>
   );
 }
