@@ -144,7 +144,7 @@ export default function CheckoutPage() {
                   {/* Delete Button */}
                   <button
                     onClick={() => handleDelete(item.id)}
-                    className="absolute top-4 right-4 text-zinc-400 hover:text-red-500 cursor-pointer transition-colors p-1"
+                    className="absolute top-4 right-4 text-zinc-400 hover:text-red-500 cursor-pointer transition-colors p-1 z-10 bg-white/50 sm:bg-transparent rounded-full backdrop-blur-sm sm:backdrop-blur-none"
                     aria-label={`Remove ${item.title} from bag`}
                   >
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
@@ -152,15 +152,15 @@ export default function CheckoutPage() {
                     </svg>
                   </button>
 
-                  <div className="flex flex-col sm:flex-row gap-6">
+                  <div className="flex flex-row gap-4 sm:gap-6">
                     {/* Item Image */}
-                    <div className="relative w-full sm:w-[150px] aspect-[4/5] sm:aspect-square md:aspect-[4/5] shrink-0 rounded-lg overflow-hidden bg-[#FAF2E8]">
+                    <div className="relative w-[100px] sm:w-[150px] aspect-[4/5] shrink-0 rounded-lg overflow-hidden bg-[#FAF2E8]">
                       <Image
                         src={item.image}
                         alt={item.title}
                         fill
                         className="object-cover object-center"
-                        sizes="(max-w-640px) 100vw, 150px"
+                        sizes="(max-width: 640px) 100px, 150px"
                         priority
                       />
                     </div>
@@ -169,10 +169,10 @@ export default function CheckoutPage() {
                     <div className="flex-grow flex flex-col justify-between">
                       <div>
                         {/* Title & Designer */}
-                        <h3 className="font-serif text-lg md:text-xl font-bold text-[#001410] pr-8 leading-tight">
+                        <h3 className="font-serif text-[15px] sm:text-lg md:text-xl font-bold text-[#001410] pr-6 sm:pr-8 leading-tight">
                           {item.title}
                         </h3>
-                        <p className="font-sans text-xs md:text-sm text-zinc-400 font-semibold uppercase tracking-wider mt-1">
+                        <p className="font-sans text-[10px] sm:text-xs md:text-sm text-zinc-400 font-semibold uppercase tracking-wider mt-1">
                           {item.designer} {item.size && `• ${item.size}`}
                         </p>
 
