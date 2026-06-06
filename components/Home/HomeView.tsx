@@ -5,6 +5,11 @@ import Occasions from "./Occasions";
 import Trending from "./Trending";
 import HowItWorks from "./HowItWorks";
 import WhyRentVastra from "./WhyRentVastra";
+import Reviews from "./Reviews";
+import Promise from "./Promise";
+import Newsletter from "./Newsletter";
+import SocialJourney from "./SocialJourney";
+import StylistBanner from "./StylistBanner";
 
 export default function HomeView() {
   return (
@@ -15,6 +20,11 @@ export default function HomeView() {
       <Trending />
       <HowItWorks />
       <WhyRentVastra />
+      <Reviews />
+      <Promise />
+      <Newsletter />
+      <SocialJourney />
+      <StylistBanner />
     </div>
   );
 }
