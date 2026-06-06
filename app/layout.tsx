@@ -28,7 +28,9 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${bodoniModa.variable} ${plusJakartaSans.variable} h-full antialiased`}
+      data-scroll-behavior="smooth"
     >
+
       <body className="min-h-full flex flex-col bg-[#fcf9f8] text-[#1c1b1b] font-sans">
         {children}
       </body>

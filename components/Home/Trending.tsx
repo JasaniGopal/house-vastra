@@ -54,15 +54,61 @@ const trendingProducts = [
 
 export default function Trending() {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [wishlisted, setWishlisted] = useState<Record<number, boolean>>({});
+  const [wishlisted, setWishlisted] = useState<Record<string, boolean>>({});
 
-  const toggleWishlist = (e: React.MouseEvent, idx: number) => {
+  React.useEffect(() => {
+    const loadWishlist = () => {
+      try {
+        const saved = localStorage.getItem("wishlist");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          const map: Record<string, boolean> = {};
+          parsed.forEach((item: any) => {
+            map[item.title] = true;
+          });
+          setWishlisted(map);
+        } else {
+          setWishlisted({});
+        }
+      } catch (e) {
+        console.error("Failed to load wishlist", e);
+      }
+    };
+    
+    loadWishlist();
+    window.addEventListener("wishlistUpdated", loadWishlist);
+    return () => window.removeEventListener("wishlistUpdated", loadWishlist);
+  }, []);
+
+  const toggleWishlist = (e: React.MouseEvent, product: typeof trendingProducts[0]) => {
     e.preventDefault();
     e.stopPropagation();
-    setWishlisted((prev) => ({
-      ...prev,
-      [idx]: !prev[idx],
-    }));
+    
+    setWishlisted((prev) => {
+      const isCurrentlyWishlisted = !!prev[product.title];
+      const newState = { ...prev, [product.title]: !isCurrentlyWishlisted };
+      
+      try {
+        const saved = localStorage.getItem("wishlist");
+        let items: any[] = [];
+        if (saved) items = JSON.parse(saved);
+        
+        if (!isCurrentlyWishlisted) {
+          if (!items.find((i) => i.title === product.title)) {
+            items.push(product);
+          }
+        } else {
+          items = items.filter((i) => i.title !== product.title);
+        }
+        
+        localStorage.setItem("wishlist", JSON.stringify(items));
+        window.dispatchEvent(new Event("wishlistUpdated"));
+      } catch (err) {
+        console.error("Failed to update wishlist", err);
+      }
+      
+      return newState;
+    });
   };
 
   const scroll = (direction: "left" | "right") => {
@@ -135,15 +181,15 @@ export default function Trending() {
 
                 {/* Wishlist Button Overlay */}
                 <button
-                  onClick={(e) => toggleWishlist(e, idx)}
+                  onClick={(e) => toggleWishlist(e, product)}
                   className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/95 backdrop-blur-sm flex items-center justify-center shadow-sm text-zinc-700 hover:scale-105 active:scale-90 transition-all duration-300"
                   aria-label="Toggle wishlist"
                 >
                   <svg
                     className={`w-5 h-5 transition-colors duration-300 ${
-                      wishlisted[idx] ? "fill-red-500 text-red-500" : "text-zinc-700"
+                      wishlisted[product.title] ? "fill-red-500 text-red-500" : "text-zinc-700"
                     }`}
-                    fill={wishlisted[idx] ? "currentColor" : "none"}
+                    fill={wishlisted[product.title] ? "currentColor" : "none"}
                     viewBox="0 0 24 24"
                     stroke="currentColor"
                     strokeWidth="1.5"

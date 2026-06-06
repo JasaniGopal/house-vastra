@@ -141,7 +141,7 @@ export default function Header() {
 
                 {/* Wishlist */}
                 <Link
-                  href="/profile?tab=wishlist"
+                  href="/wishlist"
                   className="p-1.5 text-[#001410] hover:text-[#775a19] transition-colors"
                   aria-label="View wishlist"
                 >
