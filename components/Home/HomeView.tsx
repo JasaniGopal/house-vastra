@@ -2,6 +2,7 @@ import React from "react";
 import Hero from "./Hero";
 import TrustStrip from "./TrustStrip";
 import Occasions from "./Occasions";
+import Trending from "./Trending";
 
 export default function HomeView() {
   return (
@@ -9,6 +10,7 @@ export default function HomeView() {
       <Hero />
       <TrustStrip />
       <Occasions />
+      <Trending />
     </div>
   );
 }
