@@ -25,18 +25,19 @@ export default function Header() {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-            ? "bg-white/90 backdrop-blur-md border-b border-outline-variant/30 py-4 shadow-sm"
-            : "bg-surface py-5"
-          }`}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isScrolled
+            ? "bg-white/90 backdrop-blur-md border-b border-[#c1c8c5]/30 py-4 shadow-sm"
+            : "bg-[#fcf9f8] py-5"
+        }`}
       >
-        <div className="mx-auto max-w-container-max px-margin-mobile md:px-margin-desktop">
+        <div className="mx-auto max-w-[1280px] px-4 md:px-16">
           <div className="flex items-center justify-between">
-
+            
             {/* Left Side: Burger Menu (Mobile Only) */}
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="flex p-2 text-primary hover:text-secondary lg:hidden"
+              className="flex p-2 text-[#001410] hover:text-[#775a19] lg:hidden"
               aria-label="Open navigation drawer"
             >
               <svg
@@ -58,57 +59,57 @@ export default function Header() {
             {/* Brand Logo (Serif font) */}
             <Link
               href="/"
-              className="font-serif text-2xl font-bold tracking-tight text-primary hover:text-[#00261f] transition-colors"
+              className="font-serif text-2xl font-bold tracking-tight text-[#001410] hover:text-[#00261f] transition-colors"
             >
               Rent Vastra
             </Link>
 
             {/* Center: Navigation Links (Desktop Only) */}
-            <nav className="hidden lg:flex items-center gap-md">
+            <nav className="hidden lg:flex items-center gap-6">
               <Link
                 href="/search?category=ethnic"
-                className="text-label-lg text-on-surface-variant hover:text-secondary transition-colors font-bold uppercase"
+                className="text-sm font-sans font-bold tracking-wider text-[#414846] hover:text-[#775a19] transition-colors uppercase"
               >
                 Ethnic
               </Link>
               <Link
                 href="/search?category=western"
-                className="text-label-lg text-on-surface-variant hover:text-secondary transition-colors font-bold uppercase"
+                className="text-sm font-sans font-bold tracking-wider text-[#414846] hover:text-[#775a19] transition-colors uppercase"
               >
                 Western
               </Link>
               <Link
                 href="/search?category=accessories"
-                className="text-label-lg text-on-surface-variant hover:text-secondary transition-colors font-bold uppercase"
+                className="text-sm font-sans font-bold tracking-wider text-[#414846] hover:text-[#775a19] transition-colors uppercase"
               >
                 Accessories
               </Link>
             </nav>
 
             {/* Right Side Actions */}
-            <div className="flex items-center gap-sm md:gap-md">
+            <div className="flex items-center gap-3 md:gap-6">
               {/* User Controls (Desktop Only) */}
-              <div className="hidden md:flex items-center gap-sm">
+              <div className="hidden md:flex items-center gap-3">
                 <Link
                   href="/login"
-                  className="text-label-lg text-on-surface-variant hover:text-secondary transition-colors font-bold uppercase"
+                  className="text-sm font-sans font-bold tracking-wider text-[#414846] hover:text-[#775a19] transition-colors uppercase"
                 >
                   Login
                 </Link>
                 <Link
                   href="/register"
-                  className="bg-primary text-white text-label-md py-2 px-4 border border-transparent rounded hover:border-secondary hover:bg-[#00261f] transition-all font-bold uppercase tracking-wider"
+                  className="bg-[#001410] text-white text-xs font-sans py-2 px-4 border border-transparent rounded hover:border-[#775a19] hover:bg-[#00261f] transition-all font-bold uppercase tracking-wider"
                 >
                   Register
                 </Link>
               </div>
 
               {/* Utility Icons */}
-              <div className="flex items-center gap-xs sm:gap-sm">
+              <div className="flex items-center gap-1 sm:gap-3">
                 {/* Search */}
                 <Link
                   href="/search"
-                  className="p-1.5 text-primary hover:text-secondary transition-colors"
+                  className="p-1.5 text-[#001410] hover:text-[#775a19] transition-colors"
                   aria-label="Search outfits"
                 >
                   <svg
@@ -130,7 +131,7 @@ export default function Header() {
                 {/* Wishlist */}
                 <Link
                   href="/profile?tab=wishlist"
-                  className="p-1.5 text-primary hover:text-secondary transition-colors"
+                  className="p-1.5 text-[#001410] hover:text-[#775a19] transition-colors"
                   aria-label="View wishlist"
                 >
                   <svg
@@ -152,7 +153,7 @@ export default function Header() {
                 {/* Cart Bag */}
                 <Link
                   href="/checkout"
-                  className="relative p-1.5 text-primary hover:text-secondary transition-colors"
+                  className="relative p-1.5 text-[#001410] hover:text-[#775a19] transition-colors"
                   aria-label="View shopping cart"
                 >
                   <svg
@@ -170,7 +171,7 @@ export default function Header() {
                     />
                   </svg>
                   {cartCount > 0 && (
-                    <span className="absolute top-0 right-0 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-secondary text-[9px] font-bold text-white font-sans">
+                    <span className="absolute top-0 right-0 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-[#775a19] text-[9px] font-bold text-white font-sans">
                       {cartCount}
                     </span>
                   )}
@@ -180,7 +181,6 @@ export default function Header() {
           </div>
         </div>
       </header>
-
     </>
   );
 }

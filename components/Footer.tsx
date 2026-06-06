@@ -3,26 +3,26 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="bg-surface text-on-surface pt-16 pb-8 border-t border-outline-variant/30">
-      <div className="mx-auto max-w-container-max px-margin-mobile md:px-margin-desktop">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-md lg:gap-lg pb-12">
+    <footer className="bg-[#fcf9f8] text-[#1c1b1b] pt-16 pb-8 border-t border-[#c1c8c5]/30">
+      <div className="mx-auto max-w-[1280px] px-4 md:px-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-12 pb-12">
           
           {/* Brand Column */}
-          <div className="flex flex-col gap-sm">
-            <Link href="/" className="font-serif text-2xl font-bold tracking-tight text-primary hover:text-secondary transition-colors">
+          <div className="flex flex-col gap-3">
+            <Link href="/" className="font-serif text-2xl font-bold tracking-tight text-[#001410] hover:text-[#775a19] transition-colors">
               Rent Vastra
             </Link>
-            <p className="text-body-sm text-on-surface-variant leading-relaxed max-w-[240px]">
+            <p className="text-sm font-sans text-[#414846] leading-relaxed max-w-[240px]">
               Curated designer ethnic wear for your defining moments. Rent luxury, sustainably.
             </p>
             {/* Social & Share Icons */}
-            <div className="flex items-center gap-sm mt-xs">
+            <div className="flex items-center gap-3 mt-1">
               {/* Instagram Icon */}
               <a 
                 href="https://instagram.com" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="text-on-surface hover:text-secondary transition-colors p-1" 
+                className="text-[#1c1b1b] hover:text-[#775a19] transition-colors p-1" 
                 aria-label="Instagram"
               >
                 <svg
@@ -48,7 +48,7 @@ export default function Footer() {
 
               {/* Share Icon */}
               <button 
-                className="text-on-surface hover:text-secondary transition-colors p-1" 
+                className="text-[#1c1b1b] hover:text-[#775a19] transition-colors p-1" 
                 aria-label="Share page"
               >
                 <svg
@@ -70,57 +70,57 @@ export default function Footer() {
           </div>
 
           {/* Quick Links Column */}
-          <div className="flex flex-col gap-sm">
-            <h4 className="font-sans text-sm font-bold text-primary tracking-wide">
+          <div className="flex flex-col gap-3">
+            <h4 className="font-sans text-sm font-bold text-[#001410] tracking-wide">
               Quick Links
             </h4>
-            <nav className="flex flex-col gap-xs">
-              <Link href="/search" className="text-body-sm text-on-surface-variant hover:text-primary transition-colors">
+            <nav className="flex flex-col gap-1">
+              <Link href="/search" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
                 All Collections
               </Link>
-              <Link href="#how-it-works" className="text-body-sm text-on-surface-variant hover:text-primary transition-colors">
+              <Link href="#how-it-works" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
                 How it Works
               </Link>
-              <Link href="/about" className="text-body-sm text-on-surface-variant hover:text-primary transition-colors">
+              <Link href="/about" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
                 About Us
               </Link>
-              <Link href="/blog" className="text-body-sm text-on-surface-variant hover:text-primary transition-colors">
+              <Link href="/blog" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
                 Blog
               </Link>
             </nav>
           </div>
 
           {/* Support Column */}
-          <div className="flex flex-col gap-sm">
-            <h4 className="font-sans text-sm font-bold text-primary tracking-wide">
+          <div className="flex flex-col gap-3">
+            <h4 className="font-sans text-sm font-bold text-[#001410] tracking-wide">
               Support
             </h4>
-            <nav className="flex flex-col gap-xs">
-              <Link href="/support/faqs" className="text-body-sm text-on-surface-variant hover:text-primary transition-colors">
+            <nav className="flex flex-col gap-1">
+              <Link href="/support/faqs" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
                 FAQs
               </Link>
-              <Link href="/support/shipping" className="text-body-sm text-on-surface-variant hover:text-primary transition-colors">
+              <Link href="/support/shipping" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
                 Shipping & Returns
               </Link>
-              <Link href="/support/terms" className="text-body-sm text-on-surface-variant hover:text-primary transition-colors">
+              <Link href="/support/terms" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
                 Terms of Service
               </Link>
-              <Link href="/support/privacy" className="text-body-sm text-on-surface-variant hover:text-primary transition-colors">
+              <Link href="/support/privacy" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
                 Privacy Policy
               </Link>
             </nav>
           </div>
 
           {/* Contact Us Column */}
-          <div className="flex flex-col gap-sm">
-            <h4 className="font-sans text-sm font-bold text-primary tracking-wide">
+          <div className="flex flex-col gap-3">
+            <h4 className="font-sans text-sm font-bold text-[#001410] tracking-wide">
               Contact Us
             </h4>
-            <div className="flex flex-col gap-xs">
+            <div className="flex flex-col gap-1">
               {/* Email */}
               <a 
                 href="mailto:hello@rentvastra.com" 
-                className="flex items-center gap-xs text-body-sm text-on-surface-variant hover:text-primary transition-colors"
+                className="flex items-center gap-1 text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -142,7 +142,7 @@ export default function Footer() {
               {/* Phone */}
               <a 
                 href="tel:+919876543210" 
-                className="flex items-center gap-xs text-body-sm text-on-surface-variant hover:text-primary transition-colors"
+                className="flex items-center gap-1 text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -162,7 +162,7 @@ export default function Footer() {
               </a>
 
               {/* Location */}
-              <div className="flex items-center gap-xs text-body-sm text-on-surface-variant">
+              <div className="flex items-center gap-1 text-sm font-sans text-[#414846]">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -190,8 +190,8 @@ export default function Footer() {
         </div>
 
         {/* Bottom copyright banner */}
-        <div className="mt-md pt-md border-t border-outline-variant/20">
-          <p className="text-body-sm text-on-surface-variant font-sans">
+        <div className="mt-6 pt-6 border-t border-[#c1c8c5]/20">
+          <p className="text-sm text-[#414846] font-sans">
             &copy; 2024 Rent Vastra. All rights reserved.
           </p>
         </div>

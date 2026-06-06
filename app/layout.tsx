@@ -31,7 +31,7 @@ export default function RootLayout({
       lang="en"
       className={`${bodoniModa.variable} ${plusJakartaSans.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-surface text-on-surface font-sans">
+      <body className="min-h-full flex flex-col bg-[#fcf9f8] text-[#1c1b1b] font-sans">
         <Header />
         <main className="flex-1 flex flex-col pt-[72px]">
           {children}
