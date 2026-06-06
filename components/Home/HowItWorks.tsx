@@ -35,7 +35,8 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section className="w-full py-16 md:py-24 bg-[#fcf9f8] overflow-hidden">
+    <section id="how-it-works" className="w-full py-16 md:py-24 bg-[#fcf9f8] overflow-hidden">
+
       <div className="mx-auto max-w-[1280px] px-6 md:px-16">
 
         {/* Section Header */}

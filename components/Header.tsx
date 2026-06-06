@@ -7,7 +7,6 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [cartCount] = useState(2); // Mock cart items
-  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,6 +20,18 @@ export default function Header() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isMobileMenuOpen]);
 
   return (
     <>
@@ -37,7 +48,7 @@ export default function Header() {
             {/* Left Side: Burger Menu (Mobile Only) */}
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="flex p-2 text-[#001410] hover:text-[#775a19] lg:hidden"
+              className="flex p-2 text-[#001410] hover:text-[#775a19] lg:hidden cursor-pointer"
               aria-label="Open navigation drawer"
             >
               <svg
@@ -98,7 +109,7 @@ export default function Header() {
                 </Link>
                 <Link
                   href="/register"
-                  className="bg-[#001410] text-white text-xs font-sans py-2 px-4 border border-transparent rounded hover:border-[#775a19] hover:bg-[#00261f] transition-all font-bold uppercase tracking-wider"
+                  className="bg-[#001410] text-white text-xs font-sans py-2 px-4 border border-transparent rounded hover:border-[#775a19] hover:bg-[#00261f] transition-all font-bold uppercase tracking-wider cursor-pointer"
                 >
                   Register
                 </Link>
@@ -181,6 +192,135 @@ export default function Header() {
           </div>
         </div>
       </header>
+
+      {/* Mobile Drawer Overlay / Backdrop */}
+      <div
+        onClick={() => setIsMobileMenuOpen(false)}
+        className={`fixed inset-0 bg-black/40 z-50 transition-opacity duration-300 ${
+          isMobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+        aria-hidden="true"
+      />
+
+      {/* Mobile Drawer Menu Container */}
+      <div
+        className={`fixed top-0 left-0 bottom-0 w-[80%] max-w-[320px] bg-white z-50 shadow-2xl flex flex-col p-6 transition-transform duration-300 ease-in-out ${
+          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {/* Close Button */}
+        <button
+          onClick={() => setIsMobileMenuOpen(false)}
+          className="absolute top-5 right-5 text-zinc-500 hover:text-zinc-800 cursor-pointer transition-colors"
+          aria-label="Close menu"
+        >
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        {/* My Account Button */}
+        <Link
+          href="/profile"
+          onClick={() => setIsMobileMenuOpen(false)}
+          className="flex items-center gap-3 w-full bg-zinc-100 px-4 py-3 rounded-xl text-[#001410] font-sans font-semibold text-base mt-8 hover:bg-zinc-200 transition-colors cursor-pointer"
+        >
+          <svg className="w-5 h-5 text-[#001410]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+          </svg>
+          <span>My Account</span>
+        </Link>
+
+        {/* Search Input */}
+        <div className="relative w-full mt-4 mb-6">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+            <svg className="h-5 w-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+          </span>
+          <input
+            type="text"
+            placeholder="Search collections..."
+            className="w-full bg-zinc-50 border border-zinc-100 rounded-xl pl-10 pr-4 py-2.5 text-sm font-sans focus:outline-none focus:bg-white focus:border-[#775a19]"
+          />
+        </div>
+
+        {/* Menu Navigation Links */}
+        <nav className="flex flex-col gap-2">
+          <Link
+            href="/search?category=ethnic"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="flex items-center gap-4 py-3 text-[#414846] font-sans font-medium text-base hover:text-[#775a19] hover:translate-x-1 transition-all"
+          >
+            <svg className="w-5 h-5 text-[#414846]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75">
+              <path d="M5.5 3h13l1.5 4.5L16 9v12H8V9L4 7.5 5.5 3Z" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M12 3v5" />
+            </svg>
+            <span>Ethnic</span>
+          </Link>
+          <Link
+            href="/search?category=western"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="flex items-center gap-4 py-3 text-[#414846] font-sans font-medium text-base hover:text-[#775a19] hover:translate-x-1 transition-all"
+          >
+            <svg className="w-5 h-5 text-[#414846]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6a2.5 2.5 0 0 1 4 2" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2 17.5L12 10l10 7.5A1.5 1.5 0 0 1 21 20H3a1.5 1.5 0 0 1-1-2.5Z" />
+            </svg>
+            <span>Western</span>
+          </Link>
+          <Link
+            href="/search?category=accessories"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="flex items-center gap-4 py-3 text-[#414846] font-sans font-medium text-base hover:text-[#775a19] hover:translate-x-1 transition-all"
+          >
+            <svg className="w-5 h-5 text-[#414846]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 3h12l4 6-10 12L2 9z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11 3 8 9l4 12 4-12-3-6" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2 9h20" />
+            </svg>
+            <span>Accessories</span>
+          </Link>
+          <Link
+            href="#how-it-works"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="flex items-center gap-4 py-3 text-[#414846] font-sans font-medium text-base hover:text-[#775a19] hover:translate-x-1 transition-all"
+          >
+            <svg className="w-5 h-5 text-[#414846]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 111.063.852l-.708 2.836a.75.75 0 001.063.852l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+            </svg>
+            <span>How it Works</span>
+          </Link>
+          <Link
+            href="/support"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="flex items-center gap-4 py-3 text-[#414846] font-sans font-medium text-base hover:text-[#775a19] hover:translate-x-1 transition-all"
+          >
+            <svg className="w-5 h-5 text-[#414846]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+            </svg>
+            <span>Support</span>
+          </Link>
+        </nav>
+
+        {/* Footer Login/Signup Buttons */}
+        <div className="mt-auto pt-6 flex flex-col gap-3">
+          <Link
+            href="/login"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="w-full bg-[#001410] text-white py-3.5 text-center font-sans font-bold text-sm rounded-md hover:bg-[#00261f] active:scale-[0.98] transition-all cursor-pointer"
+          >
+            Login
+          </Link>
+          <Link
+            href="/register"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="w-full border border-[#001410] text-[#001410] bg-white py-3.5 text-center font-sans font-bold text-sm rounded-md hover:bg-[#FAF2E8]/30 active:scale-[0.98] transition-all cursor-pointer"
+          >
+            Sign Up
+          </Link>
+        </div>
+      </div>
     </>
   );
 }
