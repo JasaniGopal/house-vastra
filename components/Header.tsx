@@ -6,7 +6,13 @@ import Link from "next/link";
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
   const [cartCount] = useState(2); // Mock cart items
+
+  const toggleMobileExpanded = (category: string) => {
+    if (mobileExpanded === category) setMobileExpanded(null);
+    else setMobileExpanded(category);
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -76,25 +82,64 @@ export default function Header() {
             </Link>
 
             {/* Center: Navigation Links (Desktop Only) */}
-            <nav className="hidden lg:flex items-center gap-6">
-              <Link
-                href="/search?category=ethnic"
-                className="text-sm font-sans font-bold tracking-wider text-[#414846] hover:text-[#775a19] transition-colors uppercase"
-              >
-                Ethnic
-              </Link>
-              <Link
-                href="/search?category=western"
-                className="text-sm font-sans font-bold tracking-wider text-[#414846] hover:text-[#775a19] transition-colors uppercase"
-              >
-                Western
-              </Link>
-              <Link
-                href="/search?category=accessories"
-                className="text-sm font-sans font-bold tracking-wider text-[#414846] hover:text-[#775a19] transition-colors uppercase"
-              >
-                Accessories
-              </Link>
+            <nav className="hidden lg:flex items-center gap-8 h-full">
+              
+              {/* Ethnic Dropdown */}
+              <div className="relative group h-full flex items-center py-2 cursor-pointer">
+                <Link
+                  href="/search?category=ethnic"
+                  className="text-sm font-sans font-bold tracking-wider text-[#414846] group-hover:text-[#775a19] transition-colors uppercase flex items-center gap-1.5"
+                >
+                  Ethnic
+                  <svg className="w-3.5 h-3.5 transition-transform duration-300 group-hover:-rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </Link>
+                <div className="absolute top-[120%] left-1/2 -translate-x-1/2 w-48 bg-white shadow-xl rounded-sm opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 py-2 border border-zinc-100 before:absolute before:-top-6 before:left-0 before:w-full before:h-6">
+                  <Link href="/search?category=ethnic&subcategory=lehenga" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Lehengas</Link>
+                  <Link href="/search?category=ethnic&subcategory=kurta" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Kurtas & Sets</Link>
+                  <Link href="/search?category=ethnic&subcategory=saree" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Sarees</Link>
+                  <Link href="/search?category=ethnic&subcategory=sherwani" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Sherwanis</Link>
+                </div>
+              </div>
+
+              {/* Western Dropdown */}
+              <div className="relative group h-full flex items-center py-2 cursor-pointer">
+                <Link
+                  href="/search?category=western"
+                  className="text-sm font-sans font-bold tracking-wider text-[#414846] group-hover:text-[#775a19] transition-colors uppercase flex items-center gap-1.5"
+                >
+                  Western
+                  <svg className="w-3.5 h-3.5 transition-transform duration-300 group-hover:-rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </Link>
+                <div className="absolute top-[120%] left-1/2 -translate-x-1/2 w-48 bg-white shadow-xl rounded-sm opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 py-2 border border-zinc-100 before:absolute before:-top-6 before:left-0 before:w-full before:h-6">
+                  <Link href="/search?category=western&subcategory=dresses" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Dresses & Gowns</Link>
+                  <Link href="/search?category=western&subcategory=suits" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Suits & Blazers</Link>
+                  <Link href="/search?category=western&subcategory=tops" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Tops & Shirts</Link>
+                  <Link href="/search?category=western&subcategory=trousers" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Trousers & Skirts</Link>
+                </div>
+              </div>
+
+              {/* Accessories Dropdown */}
+              <div className="relative group h-full flex items-center py-2 cursor-pointer">
+                <Link
+                  href="/search?category=accessories"
+                  className="text-sm font-sans font-bold tracking-wider text-[#414846] group-hover:text-[#775a19] transition-colors uppercase flex items-center gap-1.5"
+                >
+                  Accessories
+                  <svg className="w-3.5 h-3.5 transition-transform duration-300 group-hover:-rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </Link>
+                <div className="absolute top-[120%] left-1/2 -translate-x-1/2 w-48 bg-white shadow-xl rounded-sm opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 py-2 border border-zinc-100 before:absolute before:-top-6 before:left-0 before:w-full before:h-6">
+                  <Link href="/search?category=accessories&subcategory=jewelry" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Jewelry</Link>
+                  <Link href="/search?category=accessories&subcategory=footwear" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Footwear</Link>
+                  <Link href="/search?category=accessories&subcategory=bags" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Bags & Clutches</Link>
+                  <Link href="/search?category=accessories&subcategory=headwear" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Headwear</Link>
+                </div>
+              </div>
             </nav>
 
             {/* Right Side Actions */}
@@ -247,40 +292,87 @@ export default function Header() {
 
         {/* Menu Navigation Links */}
         <nav className="flex flex-col gap-2">
-          <Link
-            href="/search?category=ethnic"
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="flex items-center gap-4 py-3 text-[#414846] font-sans font-medium text-base hover:text-[#775a19] hover:translate-x-1 transition-all"
-          >
-            <svg className="w-5 h-5 text-[#414846]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75">
-              <path d="M5.5 3h13l1.5 4.5L16 9v12H8V9L4 7.5 5.5 3Z" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M12 3v5" />
-            </svg>
-            <span>Ethnic</span>
-          </Link>
-          <Link
-            href="/search?category=western"
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="flex items-center gap-4 py-3 text-[#414846] font-sans font-medium text-base hover:text-[#775a19] hover:translate-x-1 transition-all"
-          >
-            <svg className="w-5 h-5 text-[#414846]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6a2.5 2.5 0 0 1 4 2" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2 17.5L12 10l10 7.5A1.5 1.5 0 0 1 21 20H3a1.5 1.5 0 0 1-1-2.5Z" />
-            </svg>
-            <span>Western</span>
-          </Link>
-          <Link
-            href="/search?category=accessories"
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="flex items-center gap-4 py-3 text-[#414846] font-sans font-medium text-base hover:text-[#775a19] hover:translate-x-1 transition-all"
-          >
-            <svg className="w-5 h-5 text-[#414846]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 3h12l4 6-10 12L2 9z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11 3 8 9l4 12 4-12-3-6" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2 9h20" />
-            </svg>
-            <span>Accessories</span>
-          </Link>
+          {/* Ethnic Accordion */}
+          <div className="flex flex-col">
+            <button
+              onClick={() => toggleMobileExpanded('ethnic')}
+              className="flex items-center justify-between py-3 text-[#414846] font-sans font-medium text-base hover:text-[#775a19] transition-all cursor-pointer"
+            >
+              <div className="flex items-center gap-4">
+                <svg className="w-5 h-5 text-[#414846]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75">
+                  <path d="M5.5 3h13l1.5 4.5L16 9v12H8V9L4 7.5 5.5 3Z" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M12 3v5" />
+                </svg>
+                <span>Ethnic</span>
+              </div>
+              <svg className={`w-4 h-4 transition-transform duration-300 ${mobileExpanded === 'ethnic' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <div className={`overflow-hidden transition-all duration-300 ${mobileExpanded === 'ethnic' ? 'max-h-48 opacity-100 mb-2' : 'max-h-0 opacity-0'}`}>
+              <div className="flex flex-col pl-9 gap-3 mt-1">
+                <Link href="/search?category=ethnic&subcategory=lehenga" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Lehengas</Link>
+                <Link href="/search?category=ethnic&subcategory=kurta" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Kurtas & Sets</Link>
+                <Link href="/search?category=ethnic&subcategory=saree" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Sarees</Link>
+                <Link href="/search?category=ethnic&subcategory=sherwani" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Sherwanis</Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Western Accordion */}
+          <div className="flex flex-col">
+            <button
+              onClick={() => toggleMobileExpanded('western')}
+              className="flex items-center justify-between py-3 text-[#414846] font-sans font-medium text-base hover:text-[#775a19] transition-all cursor-pointer"
+            >
+              <div className="flex items-center gap-4">
+                <svg className="w-5 h-5 text-[#414846]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6a2.5 2.5 0 0 1 4 2" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2 17.5L12 10l10 7.5A1.5 1.5 0 0 1 21 20H3a1.5 1.5 0 0 1-1-2.5Z" />
+                </svg>
+                <span>Western</span>
+              </div>
+              <svg className={`w-4 h-4 transition-transform duration-300 ${mobileExpanded === 'western' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <div className={`overflow-hidden transition-all duration-300 ${mobileExpanded === 'western' ? 'max-h-48 opacity-100 mb-2' : 'max-h-0 opacity-0'}`}>
+              <div className="flex flex-col pl-9 gap-3 mt-1">
+                <Link href="/search?category=western&subcategory=dresses" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Dresses & Gowns</Link>
+                <Link href="/search?category=western&subcategory=suits" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Suits & Blazers</Link>
+                <Link href="/search?category=western&subcategory=tops" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Tops & Shirts</Link>
+                <Link href="/search?category=western&subcategory=trousers" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Trousers & Skirts</Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Accessories Accordion */}
+          <div className="flex flex-col">
+            <button
+              onClick={() => toggleMobileExpanded('accessories')}
+              className="flex items-center justify-between py-3 text-[#414846] font-sans font-medium text-base hover:text-[#775a19] transition-all cursor-pointer"
+            >
+              <div className="flex items-center gap-4">
+                <svg className="w-5 h-5 text-[#414846]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 3h12l4 6-10 12L2 9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 3 8 9l4 12 4-12-3-6" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2 9h20" />
+                </svg>
+                <span>Accessories</span>
+              </div>
+              <svg className={`w-4 h-4 transition-transform duration-300 ${mobileExpanded === 'accessories' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <div className={`overflow-hidden transition-all duration-300 ${mobileExpanded === 'accessories' ? 'max-h-48 opacity-100 mb-2' : 'max-h-0 opacity-0'}`}>
+              <div className="flex flex-col pl-9 gap-3 mt-1">
+                <Link href="/search?category=accessories&subcategory=jewelry" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Jewelry</Link>
+                <Link href="/search?category=accessories&subcategory=footwear" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Footwear</Link>
+                <Link href="/search?category=accessories&subcategory=bags" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Bags & Clutches</Link>
+                <Link href="/search?category=accessories&subcategory=headwear" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Headwear</Link>
+              </div>
+            </div>
+          </div>
           <Link
             href="#how-it-works"
             onClick={() => setIsMobileMenuOpen(false)}

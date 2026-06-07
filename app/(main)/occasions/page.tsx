@@ -57,6 +57,7 @@ export default function OccasionsPage() {
                 src="/images/occasions/new_grand_wedding.png"
                 alt="Grand Weddings"
                 fill
+                sizes="(max-width: 768px) 100vw, 50vw"
                 priority
                 className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.02]"
               />
@@ -84,6 +85,7 @@ export default function OccasionsPage() {
                   src="/images/occasions/reception.jpg"
                   alt="Receptions"
                   fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.02]"
                 />
               </div>
@@ -107,6 +109,7 @@ export default function OccasionsPage() {
                   src="/images/occasions/new_sangeet.png"
                   alt="Sangeet and Mehendi"
                   fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.02]"
                 />
               </div>
@@ -183,6 +186,7 @@ export default function OccasionsPage() {
                 src="/images/occasions/new_pre_wedding.png"
                 alt="Pre-wedding sunset shoot"
                 fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover object-center"
               />
             </div>
@@ -214,6 +218,7 @@ export default function OccasionsPage() {
                 src="/images/occasions/navratri.png" 
                 alt="Navratri" 
                 fill 
+                sizes="(max-width: 768px) 100vw, 33vw"
                 className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.03]" 
               />
             </div>
@@ -228,6 +233,7 @@ export default function OccasionsPage() {
                 src="/images/occasions/diwali.png" 
                 alt="Diwali" 
                 fill 
+                sizes="(max-width: 768px) 100vw, 33vw"
                 className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.03]" 
               />
             </div>
@@ -242,6 +248,7 @@ export default function OccasionsPage() {
                 src="/images/occasions/christmas.png" 
                 alt="Christmas" 
                 fill 
+                sizes="(max-width: 768px) 100vw, 33vw"
                 className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.03]" 
               />
             </div>
@@ -290,6 +297,7 @@ export default function OccasionsPage() {
                 src="/images/occasions/date_night.png" 
                 alt="Date Night Elegance" 
                 fill 
+                sizes="(max-width: 1024px) 100vw, 33vw"
                 className="object-cover object-top transition-transform duration-700 ease-out group-hover:scale-[1.03]" 
               />
             </div>
@@ -329,6 +337,8 @@ export default function OccasionsPage() {
                 src="/images/occasions/campus_icons.png" 
                 alt="Campus Icons" 
                 fill 
+                priority
+                sizes="(max-width: 1024px) 100vw, 66vw"
                 className="object-cover object-center" 
               />
               {/* Subtle gradient overlay to blend image into background on mobile */}
