@@ -49,12 +49,12 @@ export default function MeasurementsPage() {
                  </div>
                  <div className="flex flex-col gap-2">
                    <label className="text-[11px] uppercase tracking-wider font-bold text-zinc-500">Standard Top Size</label>
-                   <select className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 text-sm font-medium text-[#001410] focus:outline-none appearance-none">
-                     <option>XS</option>
-                     <option>S</option>
-                     <option selected>M</option>
-                     <option>L</option>
-                     <option>XL</option>
+                   <select defaultValue="M" className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 text-sm font-medium text-[#001410] focus:outline-none appearance-none">
+                     <option value="XS">XS</option>
+                     <option value="S">S</option>
+                     <option value="M">M</option>
+                     <option value="L">L</option>
+                     <option value="XL">XL</option>
                    </select>
                  </div>
                </div>
