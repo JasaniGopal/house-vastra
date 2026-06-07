@@ -42,7 +42,7 @@ export default function Occasions() {
             </p>
           </div>
           <Link
-            href="/search"
+            href="/occasions"
             className="text-sm font-sans font-semibold text-[#775a19] hover:text-[#5d4613] transition-colors flex items-center gap-1.5 mt-4 sm:mt-0"
           >
             View All Occasions
