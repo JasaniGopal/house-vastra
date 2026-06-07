@@ -1,9 +1,36 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 
 export default function ReferPage() {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText("ANANYA500");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: 'Rent Vastra',
+      text: 'Use my code ANANYA500 to get ₹500 off your first luxury rental!',
+      url: 'https://rentvastra.com?ref=ANANYA500'
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.error('Error sharing:', err);
+      }
+    } else {
+      // Fallback for desktop/unsupported browsers
+      navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+      alert("Referral message and link copied to clipboard!");
+    }
+  };
   return (
     <main className="min-h-screen bg-[#fcf9f8] font-sans pb-24">
       <div className="max-w-[700px] mx-auto px-4 md:px-8 pt-8 md:pt-12">
@@ -41,8 +68,11 @@ export default function ReferPage() {
             {/* Code Box */}
             <div className="bg-white/10 backdrop-blur-md border border-white/20 p-2 pl-6 rounded-2xl flex items-center justify-between w-full max-w-[400px] relative z-10">
               <span className="font-mono text-xl md:text-2xl font-bold text-white tracking-widest uppercase">ANANYA500</span>
-              <button className="bg-[#F6EDDB] text-[#001410] py-3.5 px-6 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-white active:scale-95 transition-all shadow-md">
-                Copy Code
+              <button 
+                onClick={handleCopy}
+                className="bg-[#F6EDDB] text-[#001410] py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-white active:scale-95 transition-all shadow-md w-[110px]"
+              >
+                {copied ? "Copied!" : "Copy Code"}
               </button>
             </div>
           </div>
@@ -69,7 +99,10 @@ export default function ReferPage() {
           </div>
 
           {/* Share Button (Mobile friendly) */}
-          <button className="w-full bg-[#001410] text-white py-4 rounded-xl font-bold text-sm uppercase tracking-wider hover:bg-[#00261f] hover:shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-3 md:hidden">
+          <button 
+            onClick={handleShare}
+            className="w-full bg-[#001410] text-white py-4 rounded-xl font-bold text-sm uppercase tracking-wider hover:bg-[#00261f] hover:shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-3 md:hidden"
+          >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
             </svg>
