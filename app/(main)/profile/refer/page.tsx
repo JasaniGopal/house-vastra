@@ -22,8 +22,11 @@ export default function ReferPage() {
     if (navigator.share) {
       try {
         await navigator.share(shareData);
-      } catch (err) {
-        console.error('Error sharing:', err);
+      } catch (err: any) {
+        // Ignore the error if the user simply dismissed the share sheet
+        if (err.name !== 'AbortError') {
+          console.error('Error sharing:', err);
+        }
       }
     } else {
       // Fallback for desktop/unsupported browsers
