@@ -73,7 +73,7 @@ const MOCK_PRODUCTS = [
 ];
 
 // Reusable Product Card Component
-const ProductCard = ({ product }: { product: typeof MOCK_PRODUCTS[0] }) => {
+const ProductCard = ({ product, priority = false }: { product: typeof MOCK_PRODUCTS[0], priority?: boolean }) => {
   return (
     <Link href="#" className="group flex flex-col gap-3 relative">
       {/* Image Container */}
@@ -82,6 +82,8 @@ const ProductCard = ({ product }: { product: typeof MOCK_PRODUCTS[0] }) => {
           src={product.image} 
           alt={product.name} 
           fill 
+          priority={priority}
+          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
           className="object-cover object-top group-hover:scale-105 transition-transform duration-700 ease-in-out" 
         />
         {/* Heart Icon */}
@@ -249,8 +251,8 @@ export default function CollectionsPage() {
         {/* --- Product Grid --- */}
         <div className="flex-1">
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-10 md:gap-x-6 md:gap-y-12">
-            {MOCK_PRODUCTS.map((product) => (
-              <ProductCard key={product.id} product={product} />
+            {MOCK_PRODUCTS.map((product, idx) => (
+              <ProductCard key={product.id} product={product} priority={idx < 4} />
             ))}
           </div>
           
