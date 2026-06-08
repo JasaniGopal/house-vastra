@@ -43,7 +43,7 @@ export default function Hero() {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mt-8 md:mt-10">
             <Link
-              href="/search"
+              href="/collections"
               className="bg-[#001410] text-white font-sans font-semibold text-center text-sm py-4 px-8 rounded hover:bg-[#00261f] transition-all hover:shadow-lg hover:shadow-[#001410]/10"
             >
               Explore Collection
