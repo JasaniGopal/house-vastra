@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
@@ -46,7 +46,8 @@ const ACCESSORIES = [
   }
 ];
 
-export default function ProductDetailPage({ params }: { params: { id: string } }) {
+export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const unwrappedParams = use(params);
   const { addToCart } = useCart();
   const router = useRouter();
   const [selectedSize, setSelectedSize] = useState<string>('S');
@@ -78,8 +79,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
   };
 
   const handleRentNow = () => {
-    addToCart(createCartItem());
-    router.push('/checkout');
+    router.push('/checkout/' + unwrappedParams.id);
   };
 
   useEffect(() => {
