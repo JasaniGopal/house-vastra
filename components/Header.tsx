@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
 
 export default function Header() {
   const { cartItems } = useCart();
+  const { wishlistItems } = useWishlist();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
@@ -188,7 +190,7 @@ export default function Header() {
                 {/* Wishlist */}
                 <Link
                   href="/wishlist"
-                  className="p-1.5 text-[#001410] hover:text-[#775a19] transition-colors"
+                  className="relative p-1.5 text-[#001410] hover:text-[#775a19] transition-colors"
                   aria-label="View wishlist"
                 >
                   <svg
@@ -205,6 +207,11 @@ export default function Header() {
                       d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
                     />
                   </svg>
+                  {wishlistItems.length > 0 && (
+                    <span className="absolute top-0 right-0 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-[#775a19] text-[9px] font-bold text-white font-sans">
+                      {wishlistItems.length}
+                    </span>
+                  )}
                 </Link>
 
                 {/* Cart Bag */}
