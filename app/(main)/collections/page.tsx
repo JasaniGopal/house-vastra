@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -113,12 +114,29 @@ const ProductCard = ({ product, priority = false }: { product: typeof MOCK_PRODU
   );
 };
 
-export default function CollectionsPage() {
+function CollectionsContent() {
+  const searchParams = useSearchParams();
+  const occasionParam = searchParams.get('occasion');
+
   const [selectedCategories, setSelectedCategories] = useState<string[]>(['Lehengas']);
+  const [selectedOccasions, setSelectedOccasions] = useState<string[]>(
+    occasionParam ? [occasionParam] : []
+  );
   const [selectedSize, setSelectedSize] = useState<string>('S');
+
+  // Update occasion filter if URL changes directly
+  useEffect(() => {
+    if (occasionParam) {
+      setSelectedOccasions(prev => prev.includes(occasionParam) ? prev : [...prev, occasionParam]);
+    }
+  }, [occasionParam]);
 
   const toggleCategory = (cat: string) => {
     setSelectedCategories(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);
+  };
+
+  const toggleOccasion = (occ: string) => {
+    setSelectedOccasions(prev => prev.includes(occ) ? prev.filter(o => o !== occ) : [...prev, occ]);
   };
 
   const toggleSize = (size: string) => {
@@ -143,6 +161,10 @@ export default function CollectionsPage() {
           <div className="flex items-center gap-3 overflow-x-auto pb-2 no-scrollbar">
             <button className="flex items-center gap-2 border border-zinc-300 rounded-lg px-4 py-2 text-xs font-bold text-[#001410] whitespace-nowrap bg-white hover:bg-zinc-50">
               Category
+              <svg className="w-3 h-3 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+            </button>
+            <button className="flex items-center gap-2 border border-zinc-300 rounded-lg px-4 py-2 text-xs font-bold text-[#001410] whitespace-nowrap bg-white hover:bg-zinc-50">
+              Occasion
               <svg className="w-3 h-3 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
             </button>
             <button className="flex items-center gap-2 border border-zinc-300 rounded-lg px-4 py-2 text-xs font-bold text-[#001410] whitespace-nowrap bg-white hover:bg-zinc-50">
@@ -200,6 +222,24 @@ export default function CollectionsPage() {
                     className="w-4 h-4 rounded border-zinc-300 text-[#001410] focus:ring-[#775a19]"
                   />
                   <span className="text-xs text-zinc-600 group-hover:text-[#001410] transition-colors">{cat}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Occasion Filter */}
+          <div className="flex flex-col gap-4">
+            <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Occasion</span>
+            <div className="flex flex-col gap-3">
+              {['Weddings', 'Cocktail', 'Haldi', 'Reception'].map(occ => (
+                <label key={occ} className="flex items-center gap-3 cursor-pointer group">
+                  <input 
+                    type="checkbox" 
+                    checked={selectedOccasions.includes(occ)}
+                    onChange={() => toggleOccasion(occ)}
+                    className="w-4 h-4 rounded border-zinc-300 text-[#001410] focus:ring-[#775a19]"
+                  />
+                  <span className="text-xs text-zinc-600 group-hover:text-[#001410] transition-colors">{occ}</span>
                 </label>
               ))}
             </div>
@@ -266,5 +306,13 @@ export default function CollectionsPage() {
 
       </div>
     </main>
+  );
+}
+
+export default function CollectionsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#fcf9f8] flex items-center justify-center font-serif text-2xl text-[#001410]">Loading Collections...</div>}>
+      <CollectionsContent />
+    </Suspense>
   );
 }

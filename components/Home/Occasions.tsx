@@ -5,21 +5,21 @@ import Image from "next/image";
 const occasions = [
   {
     title: "Weddings",
-    link: "/search?occasion=weddings",
+    link: "/collections?occasion=Weddings",
     desktopSrc: "/images/home/occassion_weddings.png",
     mobileSrc: "/images/home/occassion_weddings_mobile.jpg",
     alt: "Traditional bridal weddings collection",
   },
   {
     title: "Cocktail",
-    link: "/search?occasion=cocktail",
+    link: "/collections?occasion=Cocktail",
     desktopSrc: "/images/home/occassion_cocktail.png",
     mobileSrc: "/images/home/occassion_cocktail_mobile.jpg",
     alt: "Glamorous cocktail evening wear",
   },
   {
     title: "Haldi & Mehendi",
-    link: "/search?occasion=haldi",
+    link: "/collections?occasion=Haldi",
     desktopSrc: "/images/home/occassion_haldi.png",
     mobileSrc: "/images/home/occassion_haldi_mobile.jpg",
     alt: "Bright ethnic wear for Haldi and Mehendi ceremonies",
@@ -42,7 +42,7 @@ export default function Occasions() {
             </p>
           </div>
           <Link
-            href="/occasions"
+            href="/collections"
             className="text-sm font-sans font-semibold text-[#775a19] hover:text-[#5d4613] transition-colors flex items-center gap-1.5 mt-4 sm:mt-0"
           >
             View All Occasions
