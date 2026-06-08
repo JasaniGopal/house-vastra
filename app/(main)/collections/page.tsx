@@ -75,7 +75,7 @@ const MOCK_PRODUCTS = [
 // Reusable Product Card Component
 const ProductCard = ({ product, priority = false }: { product: typeof MOCK_PRODUCTS[0], priority?: boolean }) => {
   return (
-    <Link href="#" className="group flex flex-col gap-3 relative">
+    <Link href={`/product/${product.id}`} className="group flex flex-col gap-3 relative">
       {/* Image Container */}
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-zinc-100">
         <Image 
