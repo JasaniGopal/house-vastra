@@ -1,10 +1,17 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
 export default function ActiveRentalsPage() {
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
   return (
     <main className="min-h-screen bg-[#fcf9f8] font-sans pb-24">
       <div className="max-w-[800px] mx-auto px-4 md:px-8 pt-8 md:pt-12">
@@ -64,10 +71,10 @@ export default function ActiveRentalsPage() {
               
               {/* Actions */}
               <div className="flex items-center gap-3 mt-6">
-                <button className="flex-1 bg-[#001410] text-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#00261f] hover:shadow-lg transition-all active:scale-[0.98]">
+                <button onClick={() => showToast("Return scheduled for tomorrow between 9 AM - 12 PM.")} className="flex-1 bg-[#001410] text-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#00261f] hover:shadow-lg transition-all active:scale-[0.98]">
                   Schedule Return
                 </button>
-                <button className="flex-1 border border-[#001410] text-[#001410] bg-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-zinc-50 transition-all active:scale-[0.98]">
+                <button onClick={() => showToast("Extension requested. Our team will contact you shortly.")} className="flex-1 border border-[#001410] text-[#001410] bg-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-zinc-50 transition-all active:scale-[0.98]">
                   Extend Rental
                 </button>
               </div>
@@ -79,7 +86,7 @@ export default function ActiveRentalsPage() {
             {/* Image Thumbnail */}
             <div className="relative w-full md:w-36 h-48 md:h-36 rounded-xl overflow-hidden bg-[#FAF2E8] shrink-0 border border-zinc-100">
                <Image 
-                src="/images/home/western-gowns.png" 
+                src="/images/home/bag_midnight_lehenga.png" 
                 alt="Midnight Blue Sequin Gown" 
                 fill 
                 className="object-cover object-top" 
@@ -116,7 +123,7 @@ export default function ActiveRentalsPage() {
               
               {/* Actions */}
               <div className="flex items-center gap-3 mt-6">
-                <button className="flex-1 bg-zinc-100 text-zinc-400 py-3 rounded-xl text-xs font-bold uppercase tracking-wider cursor-not-allowed">
+                <button onClick={() => showToast("Opening tracking link for tracking ID: HOV-9824...")} className="flex-1 bg-[#FAF2E8] text-[#775a19] py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#F6EDDB] transition-all active:scale-[0.98]">
                   Track Delivery
                 </button>
               </div>
@@ -125,6 +132,19 @@ export default function ActiveRentalsPage() {
 
         </div>
       </div>
+
+      {/* Custom Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-8 right-4 md:right-8 z-50 transition-all duration-300 transform translate-y-0 opacity-100">
+          <div className="bg-[#001410] text-white px-6 py-4 rounded-sm shadow-2xl flex items-center gap-3 border border-[#775a19]/30">
+            <svg className="w-5 h-5 text-[#775a19]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+            <span className="font-sans text-xs md:text-[13px] uppercase font-bold tracking-wider">{toastMessage}</span>
+          </div>
+        </div>
+      )}
+
     </main>
   );
 }

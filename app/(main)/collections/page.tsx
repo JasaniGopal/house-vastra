@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useWishlist } from '@/context/WishlistContext';
 
 // Mock Product Data
 const MOCK_PRODUCTS = [
@@ -75,6 +76,15 @@ const MOCK_PRODUCTS = [
 
 // Reusable Product Card Component
 const ProductCard = ({ product, priority = false }: { product: typeof MOCK_PRODUCTS[0], priority?: boolean }) => {
+  const { wishlistItems, toggleWishlist } = useWishlist();
+  const isInWishlist = wishlistItems.some(item => item.id === product.id);
+
+  const handleWishlistClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleWishlist(product);
+  };
+
   return (
     <Link href={`/product/${product.id}`} className="group flex flex-col gap-3 relative">
       {/* Image Container */}
@@ -88,8 +98,11 @@ const ProductCard = ({ product, priority = false }: { product: typeof MOCK_PRODU
           className="object-cover object-top group-hover:scale-105 transition-transform duration-700 ease-in-out" 
         />
         {/* Heart Icon */}
-        <button className="absolute top-3 right-3 w-8 h-8 md:w-10 md:h-10 bg-white/70 backdrop-blur-md rounded-xl flex items-center justify-center text-[#001410] hover:bg-white hover:text-red-500 transition-colors shadow-sm">
-          <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <button 
+          onClick={handleWishlistClick}
+          className="absolute top-3 right-3 w-8 h-8 md:w-10 md:h-10 bg-white/70 backdrop-blur-md rounded-xl flex items-center justify-center text-[#001410] hover:bg-white hover:text-red-500 transition-colors shadow-sm"
+        >
+          <svg className={`w-4 h-4 md:w-5 md:h-5 transition-colors ${isInWishlist ? 'fill-red-500 text-red-500' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
           </svg>
         </button>
@@ -154,6 +167,24 @@ function CollectionsContent() {
     setSelectedSize(size);
   };
 
+  const clearFilters = () => {
+    setSelectedCategories([]);
+    setSelectedOccasions([]);
+    setSelectedSize('');
+  };
+
+  // Mock filtering logic for demonstration
+  const filteredProducts = MOCK_PRODUCTS.filter(product => {
+    if (selectedCategories.length > 0 && !selectedCategories.some(cat => product.name.includes(cat) || product.brand.includes(cat.split(' ')[0].toUpperCase()))) {
+      // Just a mock way to make the list smaller when multiple filters are applied
+      return Math.random() > 0.5; // Simulate filtering
+    }
+    return true;
+  });
+
+  // Mock an actual empty state if too many filters are clicked (simulate empty)
+  const isEmptyState = selectedCategories.length >= 3 && selectedOccasions.length >= 2;
+
   return (
     <main className="min-h-screen bg-[#fcf9f8] font-sans pb-24">
       
@@ -189,7 +220,7 @@ function CollectionsContent() {
           </div>
           
           <div className="flex items-center justify-between mt-2 mb-4">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">84 Pieces Found</span>
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{isEmptyState ? 0 : filteredProducts.length} Pieces Found</span>
             <div className="relative flex items-center gap-2 cursor-pointer">
               <span className="text-[10px] font-bold text-[#001410] uppercase tracking-wider pointer-events-none">Sort By:</span>
               <select defaultValue="New Arrivals" className="bg-transparent border-none text-[10px] font-bold text-[#001410] uppercase tracking-wider focus:ring-0 appearance-none pr-4 py-2 cursor-pointer w-full z-10">
@@ -303,20 +334,42 @@ function CollectionsContent() {
 
         </div>
 
-        {/* --- Product Grid --- */}
-        <div className="flex-1">
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-10 md:gap-x-6 md:gap-y-12">
-            {MOCK_PRODUCTS.map((product, idx) => (
-              <ProductCard key={product.id} product={product} priority={idx < 4} />
-            ))}
-          </div>
-          
-          {/* Pagination/Load More */}
-          <div className="mt-16 flex justify-center">
-             <button className="border border-[#001410] text-[#001410] px-8 py-3 text-xs font-bold uppercase tracking-wider hover:bg-[#001410] hover:text-white transition-colors">
-                Load More Pieces
-             </button>
-          </div>
+        {/* --- Product Grid & Empty State --- */}
+        <div className="flex-1 flex flex-col">
+          {isEmptyState ? (
+            <div className="flex flex-col items-center justify-center py-20 md:py-32 text-center h-full">
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-zinc-100 rounded-full flex items-center justify-center mb-6">
+                <svg className="w-8 h-8 md:w-10 md:h-10 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+              </div>
+              <h2 className="font-serif text-2xl md:text-3xl text-[#001410] mb-3">No pieces found</h2>
+              <p className="text-sm text-zinc-500 mb-8 max-w-sm">
+                We couldn't find any items matching your exact filters. Try adjusting your selections or clearing filters.
+              </p>
+              <button 
+                onClick={clearFilters}
+                className="bg-[#001410] text-white px-8 py-3.5 text-xs font-bold uppercase tracking-wider hover:bg-[#775a19] transition-colors"
+              >
+                Clear All Filters
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-10 md:gap-x-6 md:gap-y-12">
+                {filteredProducts.map((product, idx) => (
+                  <ProductCard key={product.id} product={product} priority={idx < 4} />
+                ))}
+              </div>
+              
+              {/* Pagination/Load More */}
+              <div className="mt-16 flex justify-center">
+                 <button className="border border-[#001410] text-[#001410] px-8 py-3 text-xs font-bold uppercase tracking-wider hover:bg-[#001410] hover:text-white transition-colors">
+                    Load More Pieces
+                 </button>
+              </div>
+            </>
+          )}
         </div>
 
       </div>

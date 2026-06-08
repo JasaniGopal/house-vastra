@@ -1,9 +1,22 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 
 export default function MeasurementsPage() {
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsUpdating(true);
+    setTimeout(() => {
+      setIsUpdating(false);
+      setToastMessage("Measurement Profile Updated Successfully!");
+      setTimeout(() => setToastMessage(null), 3000);
+    }, 1000);
+  };
+
   return (
     <main className="min-h-screen bg-[#fcf9f8] font-sans pb-24">
       <div className="max-w-[600px] mx-auto px-4 md:px-8 pt-8 md:pt-12">
@@ -97,8 +110,13 @@ export default function MeasurementsPage() {
 
             {/* Action */}
             <div className="mt-2 pt-6 border-t border-zinc-100 flex items-center justify-end">
-              <button type="button" className="bg-[#001410] text-white py-3.5 px-8 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#00261f] hover:shadow-lg transition-all active:scale-[0.98]">
-                Update Profile
+              <button 
+                type="submit" 
+                onClick={handleSubmit}
+                disabled={isUpdating}
+                className={`bg-[#001410] text-white py-3.5 px-8 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#00261f] hover:shadow-lg transition-all active:scale-[0.98] ${isUpdating ? 'opacity-80 cursor-not-allowed' : ''}`}
+              >
+                {isUpdating ? 'Updating...' : 'Update Profile'}
               </button>
             </div>
 
@@ -106,6 +124,19 @@ export default function MeasurementsPage() {
         </div>
 
       </div>
+
+      {/* Custom Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-8 right-4 md:right-8 z-50 transition-all duration-300 transform translate-y-0 opacity-100">
+          <div className="bg-[#001410] text-white px-6 py-4 rounded-sm shadow-2xl flex items-center gap-3 border border-[#775a19]/30">
+            <svg className="w-5 h-5 text-[#775a19]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="font-sans text-xs md:text-[13px] uppercase font-bold tracking-wider">{toastMessage}</span>
+          </div>
+        </div>
+      )}
+
     </main>
   );
 }

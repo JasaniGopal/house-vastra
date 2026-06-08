@@ -54,6 +54,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [activeImage, setActiveImage] = useState<string>(MOCK_PRODUCT.mainImage);
   const [wishlisted, setWishlisted] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showDeliveryModal, setShowDeliveryModal] = useState(false);
+  const [showFitModal, setShowFitModal] = useState(false);
 
   const showToast = (message: string) => {
     setToastMessage(message);
@@ -175,7 +177,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             <div className="mb-8">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[10px] md:text-xs font-bold tracking-wider text-[#001410] uppercase">Select Rental Period</span>
-                <span className="text-[10px] md:text-xs text-zinc-500 underline cursor-pointer hover:text-[#001410]">Delivery Timeline</span>
+                <button onClick={() => setShowDeliveryModal(true)} className="text-[10px] md:text-xs text-zinc-500 underline cursor-pointer hover:text-[#001410] outline-none">Delivery Timeline</button>
               </div>
               {/* From & To Date Inputs (Responsive) */}
               <div className="grid grid-cols-2 gap-3 md:gap-4">
@@ -208,7 +210,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             <div className="mb-8">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[10px] md:text-xs font-bold tracking-wider text-[#001410] uppercase">Select Size</span>
-                <span className="text-[10px] md:text-xs font-bold text-[#775a19] underline cursor-pointer hover:text-[#001410] transition-colors">Find My Fit</span>
+                <button onClick={() => setShowFitModal(true)} className="text-[10px] md:text-xs font-bold text-[#775a19] underline cursor-pointer hover:text-[#001410] transition-colors outline-none">Find My Fit</button>
               </div>
               <div className="flex gap-2">
                 {['S', 'M', 'L', 'XL'].map(size => (
@@ -299,6 +301,107 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           Rent Now
         </button>
       </div>
+
+      {/* DELIVERY TIMELINE MODAL */}
+      {showDeliveryModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-[#001410]/40 backdrop-blur-sm" onClick={() => setShowDeliveryModal(false)}></div>
+          <div className="bg-white w-full max-w-md rounded-2xl p-6 md:p-8 relative z-10 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <button onClick={() => setShowDeliveryModal(false)} className="absolute top-4 right-4 text-zinc-400 hover:text-[#001410]">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <h3 className="font-serif text-2xl text-[#001410] mb-6 border-b border-zinc-100 pb-4">Delivery Timeline</h3>
+            <div className="flex flex-col gap-6 relative">
+              {/* Line behind dots */}
+              <div className="absolute left-[11px] top-2 bottom-2 w-0.5 bg-[#E8D8BA]"></div>
+              
+              <div className="flex gap-4 relative z-10">
+                <div className="w-6 h-6 rounded-full bg-[#001410] flex items-center justify-center shrink-0 border-4 border-white mt-0.5">
+                  <div className="w-2 h-2 rounded-full bg-white"></div>
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-[#001410] uppercase tracking-wider mb-1">Order Placed</h4>
+                  <p className="text-xs text-zinc-500">Your rental is confirmed and scheduled for prep.</p>
+                </div>
+              </div>
+
+              <div className="flex gap-4 relative z-10">
+                <div className="w-6 h-6 rounded-full bg-[#001410] flex items-center justify-center shrink-0 border-4 border-white mt-0.5">
+                  <div className="w-2 h-2 rounded-full bg-white"></div>
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-[#001410] uppercase tracking-wider mb-1">Custom Tailoring</h4>
+                  <p className="text-xs text-zinc-500">Outfit altered to your measurement profile.</p>
+                </div>
+              </div>
+
+              <div className="flex gap-4 relative z-10">
+                <div className="w-6 h-6 rounded-full bg-[#FAF2E8] border border-[#A8813C] flex items-center justify-center shrink-0 mt-0.5"></div>
+                <div>
+                  <h4 className="font-bold text-sm text-zinc-500 uppercase tracking-wider mb-1">Dispatch & Delivery</h4>
+                  <p className="text-xs text-zinc-500">Delivered directly to you 1-2 days before your event.</p>
+                </div>
+              </div>
+
+              <div className="flex gap-4 relative z-10">
+                <div className="w-6 h-6 rounded-full bg-[#FAF2E8] border border-[#A8813C] flex items-center justify-center shrink-0 mt-0.5"></div>
+                <div>
+                  <h4 className="font-bold text-sm text-zinc-500 uppercase tracking-wider mb-1">Return Pickup</h4>
+                  <p className="text-xs text-zinc-500">Scheduled pickup from your address on the return date.</p>
+                </div>
+              </div>
+            </div>
+            <button onClick={() => setShowDeliveryModal(false)} className="w-full mt-8 bg-[#001410] text-white py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#00261f] transition-all">
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* FIND MY FIT MODAL */}
+      {showFitModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-[#001410]/40 backdrop-blur-sm" onClick={() => setShowFitModal(false)}></div>
+          <div className="bg-white w-full max-w-lg rounded-2xl p-6 md:p-8 relative z-10 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <button onClick={() => setShowFitModal(false)} className="absolute top-4 right-4 text-zinc-400 hover:text-[#001410]">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <h3 className="font-serif text-2xl text-[#001410] mb-2">Size Guide</h3>
+            <p className="text-xs text-zinc-500 mb-6">Measurements are in inches. Our outfits are tailored exactly to your measurements.</p>
+            
+            <div className="overflow-x-auto border border-zinc-200 rounded-xl mb-6">
+              <table className="w-full text-left text-xs text-[#001410]">
+                <thead className="bg-zinc-50 border-b border-zinc-200 uppercase tracking-wider text-[10px] font-bold text-zinc-500">
+                  <tr>
+                    <th className="px-4 py-3">Size</th>
+                    <th className="px-4 py-3">Bust</th>
+                    <th className="px-4 py-3">Waist</th>
+                    <th className="px-4 py-3">Hip</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-200">
+                  <tr className="hover:bg-zinc-50"><td className="px-4 py-3 font-bold">XS</td><td className="px-4 py-3">32"</td><td className="px-4 py-3">26"</td><td className="px-4 py-3">36"</td></tr>
+                  <tr className="hover:bg-zinc-50"><td className="px-4 py-3 font-bold">S</td><td className="px-4 py-3">34"</td><td className="px-4 py-3">28"</td><td className="px-4 py-3">38"</td></tr>
+                  <tr className="hover:bg-zinc-50"><td className="px-4 py-3 font-bold">M</td><td className="px-4 py-3">36"</td><td className="px-4 py-3">30"</td><td className="px-4 py-3">40"</td></tr>
+                  <tr className="hover:bg-zinc-50"><td className="px-4 py-3 font-bold">L</td><td className="px-4 py-3">38"</td><td className="px-4 py-3">32"</td><td className="px-4 py-3">42"</td></tr>
+                  <tr className="hover:bg-zinc-50"><td className="px-4 py-3 font-bold">XL</td><td className="px-4 py-3">40"</td><td className="px-4 py-3">34"</td><td className="px-4 py-3">44"</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div className="bg-[#FAF2E8] border border-[#E8D8BA] p-4 rounded-xl flex items-start gap-3">
+               <svg className="w-5 h-5 text-[#A8813C] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" /></svg>
+               <div>
+                 <h4 className="font-bold text-xs uppercase tracking-wider text-[#001410] mb-1">Want a Perfect Fit?</h4>
+                 <p className="text-[11px] text-[#414846] mb-3">Update your profile with exact measurements and we'll tailor it before dispatch.</p>
+                 <Link href="/profile/measurements" className="text-[10px] font-bold text-[#001410] bg-white border border-[#001410] px-4 py-2 rounded uppercase tracking-wider hover:bg-[#001410] hover:text-white transition-colors">
+                   Update Measurement Profile
+                 </Link>
+               </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Custom Toast Notification */}
       {toastMessage && (

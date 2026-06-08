@@ -3,11 +3,14 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
 
 export default function Header() {
   const { cartItems } = useCart();
+  const { wishlistItems } = useWishlist();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
 
   const toggleMobileExpanded = (category: string) => {
@@ -164,8 +167,8 @@ export default function Header() {
               {/* Utility Icons */}
               <div className="flex items-center gap-1 sm:gap-3">
                 {/* Search */}
-                <Link
-                  href="/search"
+                <button
+                  onClick={() => setIsSearchOpen(true)}
                   className="p-1.5 text-[#001410] hover:text-[#775a19] transition-colors"
                   aria-label="Search outfits"
                 >
@@ -183,12 +186,12 @@ export default function Header() {
                       d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
                     />
                   </svg>
-                </Link>
+                </button>
 
                 {/* Wishlist */}
                 <Link
                   href="/wishlist"
-                  className="p-1.5 text-[#001410] hover:text-[#775a19] transition-colors"
+                  className="relative p-1.5 text-[#001410] hover:text-[#775a19] transition-colors"
                   aria-label="View wishlist"
                 >
                   <svg
@@ -205,6 +208,11 @@ export default function Header() {
                       d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
                     />
                   </svg>
+                  {wishlistItems.length > 0 && (
+                    <span className="absolute top-0 right-0 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-[#775a19] text-[9px] font-bold text-white font-sans">
+                      {wishlistItems.length}
+                    </span>
+                  )}
                 </Link>
 
                 {/* Cart Bag */}
@@ -278,7 +286,7 @@ export default function Header() {
         </Link>
 
         {/* Search Input */}
-        <div className="relative w-full mt-4 mb-6">
+        <form action="/collections" className="relative w-full mt-4 mb-6" onSubmit={() => setIsMobileMenuOpen(false)}>
           <span className="absolute inset-y-0 left-0 flex items-center pl-3">
             <svg className="h-5 w-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75">
               <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
@@ -286,10 +294,11 @@ export default function Header() {
           </span>
           <input
             type="text"
+            name="q"
             placeholder="Search collections..."
             className="w-full bg-zinc-50 border border-zinc-100 rounded-xl pl-10 pr-4 py-2.5 text-sm font-sans focus:outline-none focus:bg-white focus:border-[#775a19]"
           />
-        </div>
+        </form>
 
         {/* Menu Navigation Links */}
         <nav className="flex flex-col gap-2">
@@ -414,6 +423,51 @@ export default function Header() {
           </Link>
         </div>
       </div>
+
+      {/* GLOBAL SEARCH OVERLAY */}
+      {isSearchOpen && (
+        <div className="fixed inset-0 z-[100] flex flex-col bg-[#fcf9f8]/95 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="w-full border-b border-[#E8D8BA]">
+            <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-4 md:py-6 flex items-center gap-4">
+              <svg className="w-6 h-6 md:w-8 md:h-8 text-zinc-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+              </svg>
+              <form action="/collections" className="flex-1">
+                <input 
+                  type="text" 
+                  autoFocus 
+                  name="q"
+                  placeholder="Search for Lehengas, Designers, or Colors..." 
+                  className="w-full bg-transparent border-none text-xl md:text-3xl lg:text-4xl font-serif text-[#001410] placeholder:text-zinc-300 focus:outline-none focus:ring-0"
+                />
+              </form>
+              <button onClick={() => setIsSearchOpen(false)} className="shrink-0 p-2 text-[#001410] hover:text-[#775a19] transition-colors rounded-full hover:bg-zinc-100">
+                <svg className="w-6 h-6 md:w-8 md:h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-10 md:py-16 w-full flex-1 overflow-y-auto">
+            <h3 className="font-sans text-xs font-bold uppercase tracking-widest text-zinc-400 mb-6">Trending Searches</h3>
+            <div className="flex flex-wrap gap-3">
+              <Link href="/collections?category=Lehengas" onClick={() => setIsSearchOpen(false)} className="px-5 py-2.5 bg-white border border-[#E8D8BA] text-[#001410] text-sm rounded-full hover:bg-[#FAF2E8] transition-colors">
+                Bridal Lehengas
+              </Link>
+              <Link href="/collections?category=Sherwanis" onClick={() => setIsSearchOpen(false)} className="px-5 py-2.5 bg-white border border-[#E8D8BA] text-[#001410] text-sm rounded-full hover:bg-[#FAF2E8] transition-colors">
+                Ivory Sherwanis
+              </Link>
+              <Link href="/collections?category=Sarees" onClick={() => setIsSearchOpen(false)} className="px-5 py-2.5 bg-white border border-[#E8D8BA] text-[#001410] text-sm rounded-full hover:bg-[#FAF2E8] transition-colors">
+                Sabyasachi Heritage
+              </Link>
+              <Link href="/collections?occasion=Wedding" onClick={() => setIsSearchOpen(false)} className="px-5 py-2.5 bg-white border border-[#E8D8BA] text-[#001410] text-sm rounded-full hover:bg-[#FAF2E8] transition-colors">
+                Wedding Guest
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
