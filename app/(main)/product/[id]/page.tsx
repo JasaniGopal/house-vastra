@@ -177,39 +177,30 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 <span className="text-[10px] md:text-xs font-bold tracking-wider text-[#001410] uppercase">Select Rental Period</span>
                 <span className="text-[10px] md:text-xs text-zinc-500 underline cursor-pointer hover:text-[#001410]">Delivery Timeline</span>
               </div>
-              {/* Desktop: 2 inputs. Mobile: 1 input */}
-              <div className="hidden md:grid grid-cols-2 gap-4">
+              {/* From & To Date Inputs (Responsive) */}
+              <div className="grid grid-cols-2 gap-3 md:gap-4">
                 <div className="relative">
+                  <span className="absolute -top-2 left-2 bg-white px-1 text-[10px] text-zinc-500 font-bold uppercase tracking-wider z-10">From</span>
                   <input 
                     type="text" 
                     placeholder="Dec 14, 2024" 
                     onFocus={(e) => (e.target.type = "date")}
                     onBlur={(e) => (e.target.value === "" ? (e.target.type = "text") : null)}
-                    className="w-full border border-zinc-300 rounded px-4 py-3 text-sm focus:border-[#001410] focus:ring-0 outline-none" 
+                    className="w-full border border-zinc-300 rounded px-3 md:px-4 py-3 text-sm focus:border-[#001410] focus:ring-0 outline-none" 
                   />
-                  <svg className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
+                  <svg className="hidden md:block w-4 h-4 absolute right-3 md:right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
                 </div>
                 <div className="relative">
+                  <span className="absolute -top-2 left-2 bg-white px-1 text-[10px] text-zinc-500 font-bold uppercase tracking-wider z-10">To</span>
                   <input 
                     type="text" 
                     placeholder="Dec 18, 2024" 
                     onFocus={(e) => (e.target.type = "date")}
                     onBlur={(e) => (e.target.value === "" ? (e.target.type = "text") : null)}
-                    className="w-full border border-zinc-300 rounded px-4 py-3 text-sm focus:border-[#001410] focus:ring-0 outline-none" 
+                    className="w-full border border-zinc-300 rounded px-3 md:px-4 py-3 text-sm focus:border-[#001410] focus:ring-0 outline-none" 
                   />
-                  <svg className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
+                  <svg className="hidden md:block w-4 h-4 absolute right-3 md:right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
                 </div>
-              </div>
-              <div className="md:hidden relative">
-                  <input 
-                    type="text" 
-                    placeholder="Choose your event date..." 
-                    onFocus={(e) => (e.target.type = "date")}
-                    onBlur={(e) => (e.target.value === "" ? (e.target.type = "text") : null)}
-                    className="w-full border border-zinc-300 rounded px-4 py-3.5 text-sm focus:border-[#001410] focus:ring-0 outline-none" 
-                  />
-                  <svg className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
-                  <style jsx>{`input { padding-left: 2.5rem; }`}</style>
               </div>
             </div>
 
