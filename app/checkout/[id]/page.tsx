@@ -24,6 +24,15 @@ export default function DirectCheckoutPage({ params }: { params: Promise<{ id: s
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState("card");
+  
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [address, setAddress] = useState({
+    name: "Ananya Sharma",
+    flat: "Flat 402, Sea View Apartments",
+    street: "Juhu Tara Road",
+    city: "Mumbai, Maharashtra 400049",
+    phone: "+91 98XXX XXXXX"
+  });
 
   const handleCheckout = () => {
     setIsCheckoutLoading(true);
@@ -111,24 +120,87 @@ export default function DirectCheckoutPage({ params }: { params: Promise<{ id: s
               <section>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-serif text-xl md:text-2xl font-bold text-[#001410]">1. Delivery Address</h2>
-                  <button className="text-sm font-bold text-[#775a19] hover:underline">Change</button>
+                  <button 
+                    onClick={() => setIsEditingAddress(!isEditingAddress)} 
+                    className="text-sm font-bold text-[#775a19] hover:underline"
+                  >
+                    {isEditingAddress ? "Cancel" : "Change"}
+                  </button>
                 </div>
                 
-                <div className="bg-[#f5f3f0] p-6 rounded-sm border border-black/5 flex gap-4 items-start">
-                  <svg className="w-5 h-5 text-[#001410] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                  </svg>
-                  <div>
-                    <span className="block font-bold text-[#001410] mb-1">Ananya Sharma</span>
-                    <span className="block text-sm text-[#414846] leading-relaxed">
-                      Flat 402, Sea View Apartments,<br />
-                      Juhu Tara Road, Mumbai,<br />
-                      Maharashtra 400049
-                    </span>
-                    <span className="block text-sm text-[#414846] mt-2">Phone: +91 98XXX XXXXX</span>
+                {isEditingAddress ? (
+                  <div className="bg-white p-6 rounded-sm border border-black/10 flex flex-col gap-4 shadow-sm animate-fade-in">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Full Name</label>
+                        <input 
+                          type="text" 
+                          value={address.name}
+                          onChange={(e) => setAddress({...address, name: e.target.value})}
+                          className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" 
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Phone Number</label>
+                        <input 
+                          type="text" 
+                          value={address.phone}
+                          onChange={(e) => setAddress({...address, phone: e.target.value})}
+                          className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" 
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Flat, House no., Building</label>
+                        <input 
+                          type="text" 
+                          value={address.flat}
+                          onChange={(e) => setAddress({...address, flat: e.target.value})}
+                          className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" 
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Area, Street, Sector, Village</label>
+                        <input 
+                          type="text" 
+                          value={address.street}
+                          onChange={(e) => setAddress({...address, street: e.target.value})}
+                          className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" 
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Town/City & Pincode</label>
+                        <input 
+                          type="text" 
+                          value={address.city}
+                          onChange={(e) => setAddress({...address, city: e.target.value})}
+                          className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" 
+                        />
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => setIsEditingAddress(false)}
+                      className="mt-2 bg-[#001410] text-white py-3 px-6 rounded-sm font-sans font-bold text-xs tracking-widest uppercase hover:bg-[#00261f] transition-all self-start"
+                    >
+                      Save Address
+                    </button>
                   </div>
-                </div>
+                ) : (
+                  <div className="bg-[#f5f3f0] p-6 rounded-sm border border-black/5 flex gap-4 items-start">
+                    <svg className="w-5 h-5 text-[#001410] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                    </svg>
+                    <div>
+                      <span className="block font-bold text-[#001410] mb-1">{address.name}</span>
+                      <span className="block text-sm text-[#414846] leading-relaxed">
+                        {address.flat},<br />
+                        {address.street},<br />
+                        {address.city}
+                      </span>
+                      <span className="block text-sm text-[#414846] mt-2">Phone: {address.phone}</span>
+                    </div>
+                  </div>
+                )}
               </section>
 
               {/* Payment Method */}
