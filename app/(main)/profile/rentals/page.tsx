@@ -86,7 +86,7 @@ export default function ActiveRentalsPage() {
             {/* Image Thumbnail */}
             <div className="relative w-full md:w-36 h-48 md:h-36 rounded-xl overflow-hidden bg-[#FAF2E8] shrink-0 border border-zinc-100">
                <Image 
-                src="/images/home/western-gowns.png" 
+                src="/images/home/bag_midnight_lehenga.png" 
                 alt="Midnight Blue Sequin Gown" 
                 fill 
                 className="object-cover object-top" 
