@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useCart } from "@/context/CartContext";
 
 interface CartItem {
   id: number;
@@ -15,35 +16,13 @@ interface CartItem {
   price: number;
 }
 
-const initialItems: CartItem[] = [
-  {
-    id: 1,
-    title: "Midnight Velvet Lehenga",
-    designer: "Sabyasachi Heritage Collection",
-    image: "/images/home/bag_midnight_lehenga.png",
-    duration: "4 Days: 12 Oct - 16 Oct",
-    deposit: 5000,
-    price: 12499,
-  },
-  {
-    id: 2,
-    title: "Champagne Gold Sherwani",
-    designer: "Manish Malhotra",
-    size: "Size M",
-    image: "/images/home/bag_gold_sherwani.png",
-    duration: "4 Days: 14 Oct - 18 Oct",
-    deposit: 3500,
-    price: 8999,
-  },
-];
-
 export default function CheckoutPage() {
-  const [items, setItems] = useState<CartItem[]>(initialItems);
+  const { cartItems: items, removeFromCart, clearCart } = useCart();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
   const handleDelete = (id: number) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+    removeFromCart(id);
   };
 
   const handleCheckout = () => {
@@ -51,7 +30,7 @@ export default function CheckoutPage() {
     setTimeout(() => {
       setIsCheckoutLoading(false);
       setIsSuccess(true);
-      setItems([]);
+      clearCart();
     }, 1500);
   };
 

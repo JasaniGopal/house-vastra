@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Bodoni_Moda, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.scss";
+import { CartProvider } from "@/context/CartContext";
 
 const bodoniModa = Bodoni_Moda({
   variable: "--font-bodoni-moda",
@@ -32,7 +33,9 @@ export default function RootLayout({
     >
 
       <body className="min-h-full flex flex-col bg-[#fcf9f8] text-[#1c1b1b] font-sans">
-        {children}
+        <CartProvider>
+          {children}
+        </CartProvider>
       </body>
     </html>
   );
