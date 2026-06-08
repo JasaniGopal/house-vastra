@@ -117,12 +117,16 @@ const ProductCard = ({ product, priority = false }: { product: typeof MOCK_PRODU
 function CollectionsContent() {
   const searchParams = useSearchParams();
   const occasionParam = searchParams.get('occasion');
+  const categoryParam = searchParams.get('category');
 
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(['Lehengas']);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(
+    categoryParam ? [categoryParam] : ['Lehengas']
+  );
   const [selectedOccasions, setSelectedOccasions] = useState<string[]>(
     occasionParam ? [occasionParam] : []
   );
   const [selectedSize, setSelectedSize] = useState<string>('S');
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   // Update occasion filter if URL changes directly
   useEffect(() => {
@@ -130,6 +134,13 @@ function CollectionsContent() {
       setSelectedOccasions(prev => prev.includes(occasionParam) ? prev : [...prev, occasionParam]);
     }
   }, [occasionParam]);
+
+  // Update category filter if URL changes directly
+  useEffect(() => {
+    if (categoryParam) {
+      setSelectedCategories(prev => prev.includes(categoryParam) ? prev : [...prev, categoryParam]);
+    }
+  }, [categoryParam]);
 
   const toggleCategory = (cat: string) => {
     setSelectedCategories(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);
@@ -159,19 +170,19 @@ function CollectionsContent() {
         {/* --- MOBILE: Horizontal Pill Filters --- */}
         <div className="md:hidden flex flex-col gap-4">
           <div className="flex items-center gap-3 overflow-x-auto pb-2 no-scrollbar">
-            <button className="flex items-center gap-2 border border-zinc-300 rounded-lg px-4 py-2 text-xs font-bold text-[#001410] whitespace-nowrap bg-white hover:bg-zinc-50">
+            <button onClick={() => setIsMobileFilterOpen(true)} className="flex items-center gap-2 border border-zinc-300 rounded-lg px-4 py-2 text-xs font-bold text-[#001410] whitespace-nowrap bg-white hover:bg-zinc-50">
               Category
               <svg className="w-3 h-3 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
             </button>
-            <button className="flex items-center gap-2 border border-zinc-300 rounded-lg px-4 py-2 text-xs font-bold text-[#001410] whitespace-nowrap bg-white hover:bg-zinc-50">
+            <button onClick={() => setIsMobileFilterOpen(true)} className="flex items-center gap-2 border border-zinc-300 rounded-lg px-4 py-2 text-xs font-bold text-[#001410] whitespace-nowrap bg-white hover:bg-zinc-50">
               Occasion
               <svg className="w-3 h-3 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
             </button>
-            <button className="flex items-center gap-2 border border-zinc-300 rounded-lg px-4 py-2 text-xs font-bold text-[#001410] whitespace-nowrap bg-white hover:bg-zinc-50">
+            <button onClick={() => setIsMobileFilterOpen(true)} className="flex items-center gap-2 border border-zinc-300 rounded-lg px-4 py-2 text-xs font-bold text-[#001410] whitespace-nowrap bg-white hover:bg-zinc-50">
               Size
               <svg className="w-3 h-3 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
             </button>
-            <button className="flex items-center gap-2 border border-zinc-300 rounded-lg px-4 py-2 text-xs font-bold text-[#001410] whitespace-nowrap bg-white hover:bg-zinc-50">
+            <button onClick={() => setIsMobileFilterOpen(true)} className="flex items-center gap-2 border border-zinc-300 rounded-lg px-4 py-2 text-xs font-bold text-[#001410] whitespace-nowrap bg-white hover:bg-zinc-50">
               Price
               <svg className="w-3 h-3 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
             </button>
@@ -179,14 +190,14 @@ function CollectionsContent() {
           
           <div className="flex items-center justify-between mt-2 mb-4">
             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">84 Pieces Found</span>
-            <div className="relative flex items-center gap-2">
-              <span className="text-[10px] font-bold text-[#001410] uppercase tracking-wider">Sort By</span>
-              <select defaultValue="New Arrivals" className="bg-transparent border-none text-[10px] font-bold text-[#001410] uppercase tracking-wider focus:ring-0 appearance-none pr-4">
+            <div className="relative flex items-center gap-2 cursor-pointer">
+              <span className="text-[10px] font-bold text-[#001410] uppercase tracking-wider pointer-events-none">Sort By:</span>
+              <select defaultValue="New Arrivals" className="bg-transparent border-none text-[10px] font-bold text-[#001410] uppercase tracking-wider focus:ring-0 appearance-none pr-4 py-2 cursor-pointer w-full z-10">
                 <option value="New Arrivals">New Arrivals</option>
                 <option value="Price: Low to High">Price: Low to High</option>
                 <option value="Price: High to Low">Price: High to Low</option>
               </select>
-              <svg className="w-3 h-3 text-[#001410] absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-3 h-3 text-[#001410] absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none z-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
               </svg>
             </div>
@@ -213,7 +224,11 @@ function CollectionsContent() {
           <div className="flex flex-col gap-4">
             <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Category</span>
             <div className="flex flex-col gap-3">
-              {['Lehengas', 'Sarees', 'Sherwanis', 'Anarkalis'].map(cat => (
+              {[
+                'Lehengas', 'Sarees', 'Sherwanis', 'Anarkalis', 'Kurtas & Sets', 
+                'Dresses & Gowns', 'Suits & Blazers', 'Tops & Shirts', 'Trousers & Skirts',
+                'Jewelry', 'Footwear', 'Bags & Clutches', 'Headwear'
+              ].map(cat => (
                 <label key={cat} className="flex items-center gap-3 cursor-pointer group">
                   <input 
                     type="checkbox" 
@@ -304,6 +319,105 @@ function CollectionsContent() {
           </div>
         </div>
 
+      </div>
+
+      {/* --- Mobile Filter Modal --- */}
+      <div 
+        className={`fixed inset-0 z-50 bg-black/50 transition-opacity duration-300 md:hidden ${isMobileFilterOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setIsMobileFilterOpen(false)}
+      >
+        <div 
+          className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-6 transition-transform duration-300 transform ${isMobileFilterOpen ? 'translate-y-0' : 'translate-y-full'} max-h-[85vh] flex flex-col`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between mb-6 shrink-0">
+            <h3 className="font-serif text-2xl font-bold text-[#001410]">Filters</h3>
+            <button onClick={() => setIsMobileFilterOpen(false)} className="p-2 -mr-2">
+              <svg className="w-5 h-5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+
+          <div className="flex flex-col gap-10 overflow-y-auto pb-6 -mx-6 px-6 no-scrollbar">
+            {/* Sort By */}
+            <div className="flex flex-col gap-3">
+              <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Sort By</span>
+              <div className="relative">
+                 <select defaultValue="New Arrivals" className="w-full bg-zinc-100/50 border-none rounded-lg px-4 py-3 text-xs font-medium text-[#001410] focus:ring-0 appearance-none">
+                   <option value="New Arrivals">New Arrivals</option>
+                   <option value="Price: Low to High">Price: Low to High</option>
+                   <option value="Price: High to Low">Price: High to Low</option>
+                 </select>
+                 <svg className="w-3 h-3 text-zinc-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+              </div>
+            </div>
+
+            {/* Category Filter */}
+            <div className="flex flex-col gap-4">
+              <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Category</span>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  'Lehengas', 'Sarees', 'Sherwanis', 'Anarkalis', 'Kurtas & Sets', 
+                  'Dresses & Gowns', 'Suits & Blazers', 'Tops & Shirts', 'Trousers & Skirts',
+                  'Jewelry', 'Footwear', 'Bags & Clutches', 'Headwear'
+                ].map(cat => (
+                  <label key={`mob-${cat}`} className="flex items-center gap-3 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedCategories.includes(cat)}
+                      onChange={() => toggleCategory(cat)}
+                      className="w-4 h-4 rounded border-zinc-300 text-[#001410] focus:ring-[#775a19]"
+                    />
+                    <span className="text-xs text-zinc-600">{cat}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Occasion Filter */}
+            <div className="flex flex-col gap-4">
+              <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Occasion</span>
+              <div className="grid grid-cols-2 gap-3">
+                {['Weddings', 'Cocktail', 'Haldi', 'Reception'].map(occ => (
+                  <label key={`mob-${occ}`} className="flex items-center gap-3 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedOccasions.includes(occ)}
+                      onChange={() => toggleOccasion(occ)}
+                      className="w-4 h-4 rounded border-zinc-300 text-[#001410] focus:ring-[#775a19]"
+                    />
+                    <span className="text-xs text-zinc-600">{occ}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Size Filter */}
+            <div className="flex flex-col gap-4">
+              <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Size</span>
+              <div className="flex flex-wrap gap-2">
+                {['XS', 'S', 'M', 'L', 'XL'].map(size => (
+                  <button 
+                    key={`mob-${size}`}
+                    onClick={() => toggleSize(size)}
+                    className={`w-10 h-10 border text-xs transition-colors ${
+                      selectedSize === size 
+                        ? 'border-[#001410] bg-[#001410] font-bold text-white' 
+                        : 'border-zinc-200 bg-white font-medium text-zinc-600'
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          <div className="pt-4 bg-white border-t border-zinc-100 shrink-0">
+            <button onClick={() => setIsMobileFilterOpen(false)} className="w-full bg-[#001410] text-white py-4 text-xs font-bold uppercase tracking-widest hover:bg-[#00261f]">
+              Apply Filters
+            </button>
+          </div>
+        </div>
       </div>
     </main>
   );
