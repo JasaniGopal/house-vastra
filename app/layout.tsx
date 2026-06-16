@@ -4,6 +4,8 @@ import "./globals.scss";
 import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
 
+import { Providers } from "@/components/Providers";
+
 const bodoniModa = Bodoni_Moda({
   variable: "--font-bodoni-moda",
   subsets: ["latin"],
@@ -34,11 +36,13 @@ export default function RootLayout({
     >
 
       <body className="min-h-full flex flex-col bg-[#fcf9f8] text-[#1c1b1b] font-sans">
-        <WishlistProvider>
-          <CartProvider>
-            {children}
-          </CartProvider>
-        </WishlistProvider>
+        <Providers>
+          <WishlistProvider>
+            <CartProvider>
+              {children}
+            </CartProvider>
+          </WishlistProvider>
+        </Providers>
       </body>
     </html>
   );

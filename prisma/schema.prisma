@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum Role {
+  CUSTOMER
+  VENDOR
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  PREPARING
+  DISPATCHED
+  IN_USE
+  RETURNED
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  password      String?
+  role          Role      @default(CUSTOMER)
+  phone         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  vendorProfile Vendor?
+  orders        Order[]
+}
+
+model Vendor {
+  id              String    @id @default(uuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  boutiqueName    String
+  description     String?   @db.Text
+  logoUrl         String?
+  gstin           String?
+  bankAccount     String?
+  ifscCode        String?
+  status          String    @default("PENDING") // PENDING, ACTIVE, SUSPENDED
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  products        Product[]
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  products    Product[]
+}
+
+model Product {
+  id              String         @id @default(uuid())
+  vendorId        String
+  vendor          Vendor         @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  categoryId      String
+  category        Category       @relation(fields: [categoryId], references: [id])
+  name            String
+  description     String         @db.Text
+  retailValue     Float
+  rentalPrice4Day Float
+  rentalPrice8Day Float
+  sizes           String         // Comma separated e.g. "S,M,L"
+  images          ProductImage[]
+  isAvailable     Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  
+  orders          Order[]
+}
+
+model ProductImage {
+  id        String  @id @default(uuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  isPrimary Boolean @default(false)
+}
+
+model Order {
+  id              String      @id @default(uuid())
+  orderNumber     String      @unique
+  customerId      String
+  customer        User        @relation(fields: [customerId], references: [id])
+  productId       String
+  product         Product     @relation(fields: [productId], references: [id])
+  startDate       DateTime
+  endDate         DateTime
+  totalAmount     Float
+  status          OrderStatus @default(PENDING)
+  shippingAddress String      @db.Text
+  trackingId      String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}

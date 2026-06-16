@@ -75,10 +75,10 @@ export default function Footer() {
               Quick Links
             </h4>
             <nav className="flex flex-col gap-1">
-              <Link href="/search" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
+              <Link href="/collections" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
                 All Collections
               </Link>
-              <Link href="#how-it-works" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
+              <Link href="/how-it-works" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
                 How it Works
               </Link>
               <Link href="/about" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
@@ -96,16 +96,16 @@ export default function Footer() {
               Support
             </h4>
             <nav className="flex flex-col gap-1">
-              <Link href="/support/faqs" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
+              <Link href="/faqs" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
                 FAQs
               </Link>
-              <Link href="/support/shipping" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
+              <Link href="/shipping" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
                 Shipping & Returns
               </Link>
-              <Link href="/support/terms" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
+              <Link href="/terms" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
                 Terms of Service
               </Link>
-              <Link href="/support/privacy" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
+              <Link href="/privacy" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
                 Privacy Policy
               </Link>
             </nav>

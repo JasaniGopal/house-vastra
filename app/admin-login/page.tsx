@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 export default function AdminLogin() {
   const router = useRouter();
@@ -11,17 +12,27 @@ export default function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus("loading");
+    setError("");
     
-    // Simulate authentication
-    setTimeout(() => {
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    if (result?.error) {
+      setStatus("idle");
+      setError("Invalid admin credentials. Access Denied.");
+    } else {
       setStatus("success");
-      // Set admin cookie
-      document.cookie = "partner_role=admin; path=/; max-age=86400"; // 1 day expiration
       router.push("/admin");
-    }, 1200);
+      router.refresh();
+    }
   };
 
   return (
@@ -47,6 +58,12 @@ export default function AdminLogin() {
         <p className="font-sans text-sm md:text-base text-zinc-400 mb-10">
           Enter your superuser credentials to access God Mode.
         </p>
+
+        {error && (
+          <div className="mb-6 p-4 bg-rose-950/50 border border-rose-900 text-rose-400 text-sm font-bold rounded-lg">
+            {error}
+          </div>
+        )}
 
         {status === "success" ? (
           <div className="p-6 bg-zinc-900 border border-zinc-800 shadow-lg text-center">
