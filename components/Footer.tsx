@@ -75,7 +75,7 @@ export default function Footer() {
               Quick Links
             </h4>
             <nav className="flex flex-col gap-1">
-              <Link href="/search" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
+              <Link href="/collections" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
                 All Collections
               </Link>
               <Link href="/how-it-works" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
