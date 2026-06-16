@@ -34,7 +34,7 @@ export default async function VendorDashboard() {
     where: { vendorId: vendor.id },
     orderBy: { createdAt: "desc" },
     take: 5,
-    include: { category: true }
+    include: { category: true, images: true }
   });
 
   return (
@@ -134,7 +134,11 @@ export default async function VendorDashboard() {
                   <tr key={product.id} className="hover:bg-[#fcf9f8] transition-colors group">
                     <td className="px-6 py-4 font-bold text-[#001410]">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-zinc-100 rounded-md shrink-0"></div>
+                        {product.images && product.images.length > 0 ? (
+                          <img src={product.images[0].url} alt={product.name} className="w-10 h-10 rounded-md object-cover shrink-0 border border-zinc-200" />
+                        ) : (
+                          <div className="w-10 h-10 bg-zinc-100 rounded-md shrink-0 border border-zinc-200"></div>
+                        )}
                         <span className="line-clamp-1">{product.name}</span>
                       </div>
                     </td>

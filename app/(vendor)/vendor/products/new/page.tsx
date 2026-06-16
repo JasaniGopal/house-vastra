@@ -86,8 +86,8 @@ export default function AddProductPage() {
         description: formData.description,
         retailValue: parseFloat(formData.retailValue),
         vendorExpectedRent: parseFloat(formData.vendorExpectedRent),
-        sizes: sizesArray,
-        images: uploadedUrls.map(url => ({ url })) // API expects array of objects
+        sizes: formData.sizes,
+        images: uploadedUrls // API maps this array of strings
       };
 
       const res = await fetch("/api/vendor/products", {

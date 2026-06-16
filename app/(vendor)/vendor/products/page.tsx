@@ -23,7 +23,7 @@ export default async function VendorProductsPage() {
   const products = await prisma.product.findMany({
     where: { vendorId: vendor.id },
     orderBy: { createdAt: "desc" },
-    include: { category: true }
+    include: { category: true, images: true }
   });
 
   return (
@@ -61,6 +61,7 @@ export default async function VendorProductsPage() {
                   <th className="px-6 py-4">Retail Value</th>
                   <th className="px-6 py-4">Expected Rent</th>
                   <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100 text-[#414846]">
@@ -68,7 +69,11 @@ export default async function VendorProductsPage() {
                   <tr key={product.id} className="hover:bg-[#fcf9f8] transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-zinc-100 rounded-md shrink-0"></div>
+                        {product.images && product.images.length > 0 ? (
+                          <img src={product.images[0].url} alt={product.name} className="w-12 h-12 rounded-md object-cover shrink-0 border border-zinc-200" />
+                        ) : (
+                          <div className="w-12 h-12 bg-zinc-100 rounded-md shrink-0 border border-zinc-200"></div>
+                        )}
                         <div>
                           <p className="font-bold text-[#001410] line-clamp-1">{product.name}</p>
                           <p className="text-xs text-zinc-500 truncate w-48">{product.description}</p>
@@ -88,6 +93,11 @@ export default async function VendorProductsPage() {
                       {product.approvalStatus === "REJECTED" && (
                         <span className="bg-rose-100 text-rose-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Rejected</span>
                       )}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <Link href={`/vendor/products/${product.id}/edit`} className="text-xs font-bold text-[#775a19] hover:text-[#001410] uppercase tracking-wider hover:underline">
+                        Edit
+                      </Link>
                     </td>
                   </tr>
                 ))}
