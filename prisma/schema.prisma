@@ -22,6 +22,12 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id            String    @id @default(uuid())
   name          String?
@@ -73,12 +79,19 @@ model Product {
   category        Category       @relation(fields: [categoryId], references: [id])
   name            String
   description     String         @db.Text
-  retailValue     Float
-  rentalPrice4Day Float
-  rentalPrice8Day Float
-  sizes           String         // Comma separated e.g. "S,M,L"
-  images          ProductImage[]
-  isAvailable     Boolean        @default(true)
+  retailValue        Float
+  vendorExpectedRent Float
+
+  rentalPricePerDay  Float?
+  rentalPrice2Day    Float?
+  rentalPrice4Day    Float?
+  rentalPrice8Day    Float?
+
+  sizes              String         // Comma separated e.g. "S,M,L"
+  images             ProductImage[]
+  
+  approvalStatus     ApprovalStatus @default(PENDING)
+  isAvailable        Boolean        @default(false)
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   

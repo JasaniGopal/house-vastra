@@ -43,35 +43,72 @@ npx prisma studio
 
 ---
 
-## 3. Authentication (NextAuth.js)
+## 3. Database Architecture (The Tables)
 
-We need a secure way to let Customers, Vendors, and Admins log in and maintain a "session" while they browse the site.
+To keep the database lightning-fast and clean, we split the user data across multiple tables.
 
-### What is NextAuth?
-NextAuth is the standard authentication library for Next.js. It handles the complicated security parts of logging in, encrypting session tokens (JWTs), and checking if a user is logged in.
+### The Core `User` Table
+Every single person who registers (Customer, Vendor, or Admin) gets exactly **one row** in the main `User` table. This table holds the universal data needed for logging in:
+- `id`
+- `email`
+- `password`
+- `name`
+- `role` (This tells the system if they are a `CUSTOMER`, `VENDOR`, or `ADMIN`).
 
-### Key Files:
-- **`app/api/auth/[...nextauth]/route.ts`**: This is the "brain" of our login system. It contains the logic to take an email and password, look up the user in our MySQL database using Prisma, verify the encrypted password using `bcrypt`, and issue a secure session token containing their Role (`CUSTOMER`, `VENDOR`, or `ADMIN`).
-- **`app/api/auth/register/route.ts`**: This is the endpoint we hit when a new user signs up. It hashes their password and creates a row in the `User` table. If they sign up as a Vendor, it automatically creates a linked `Vendor` profile for them too.
-- **`middleware.ts`**: This file runs *before* every single page load. It checks if the user is trying to access a protected route (like `/admin` or `/vendor`). If they are, it checks their NextAuth session token. If they don't have the right role, it automatically kicks them back to the login page.
-- **`types/next-auth.d.ts`**: A tiny helper file that tells TypeScript that our session tokens include a custom `role` and `id` property.
+By keeping all logins in one single table, the security system works incredibly fast because it only ever has to search one place to see if an email exists and verify the password.
 
----
+### The Extended `Vendor` Table
+If a user is marked as a `VENDOR`, they get a second row created in a completely separate `Vendor` table. This table stores all the heavy business information that regular customers don't need:
+- `boutiqueName`
+- `gstin` (Tax ID)
+- `bankAccount` details
+- `logoUrl`
 
-## 4. How the Flow Works Together
-
-Here is what happens when a new Boutique Owner registers on the site:
-
-1. **Frontend:** The user fills out the sign-up form and hits submit.
-2. **API Route:** The frontend sends a `POST` request to `/api/auth/register`.
-3. **Security:** The API uses `bcrypt` to scramble the password into an unreadable hash.
-4. **Database (Prisma):** The API calls `prisma.user.create()` to save the user, and `prisma.vendor.create()` to create their boutique profile in MySQL.
-5. **Login:** The user then logs in. The frontend sends the credentials to `app/api/auth/[...nextauth]/route.ts`.
-6. **Verification:** NextAuth looks up the user, verifies the password, and creates a secure session token stored in the browser's cookies.
-7. **Access:** The user tries to visit `/vendor/products`. `middleware.ts` intercepts the request, sees the secure token says `role: VENDOR`, and allows them onto the page!
+This `Vendor` table is mathematically linked back to the `User` table (a "1-to-1 relationship"). This keeps the database clean because regular Customers don't end up with empty columns for `gstin` or `boutiqueName`.
 
 ---
 
-## 5. Connecting Frontend to Backend
+## 4. The Backend APIs
 
-All login pages (`/login`, `/register`, `/partner-login`, `/admin-login`) use the `signIn` function provided by `next-auth/react`. This function automatically sends the credentials to our NextAuth API endpoint and handles the session creation behind the scenes. We also use a `<SessionProvider>` wrapper in the root `layout.tsx` so any client component can check if a user is currently logged in.
+We have created exactly **2 Backend APIs** so far. Both are dedicated exclusively to handling Authentication and Security.
+
+### 1. The Registration API (`POST /api/auth/register`)
+- **What it does:** This is the custom endpoint we built for manual email/password signups. 
+- **How it works:** It accepts a user's details, securely scrambles (hashes) their password with `bcrypt`, and writes the new user into the MySQL database using Prisma. 
+- **Smart Provisioning:** If someone selects the "Vendor" role during signup, this API automatically provisions an empty `Vendor` profile (for their boutique details) connected to their new user account.
+
+### 2. The NextAuth API (`GET / POST /api/auth/[...nextauth]`)
+- **What it does:** This is the dynamic powerhouse endpoint provided by NextAuth.js. It acts as the "brain" of our login system.
+- **Manual Logins:** It handles verifying passwords when users log in with their email.
+- **Google Logins:** It manages the entire "Sign in with Google" flow (OAuth). It talks to Google, fetches the user's profile, creates an `Account` in our database if they are new, and securely merges them if they already registered with that email.
+- **Session Management:** It generates encrypted session cookies and handles safe logouts (`/api/auth/signout`).
+
+### 3. Category API (`GET /api/categories`)
+- **What it does:** A simple public endpoint that fetches the available clothing categories (like Lehengas, Sarees, etc.) from the database.
+- **Why we need it:** So the frontend forms can automatically populate their dropdown menus instead of hardcoding category names.
+
+### 4. Public Product APIs (`GET /api/products` & `GET /api/products/[id]`)
+- **What it does:** These public APIs are used by the homepage and product detail pages to fetch the clothing catalog.
+- **Security Check:** They act as a strict bouncer. They will *only* return products to the public if the database marks their `approvalStatus` as `APPROVED`. If a product is `PENDING`, these APIs pretend it doesn't exist.
+
+### 5. Vendor Upload API (`POST /api/vendor/products`)
+- **What it does:** This is the secure endpoint where Boutique Owners upload their new dresses.
+- **How it works:** It uses `getServerSession()` to mathematically prove the user is logged in as a `VENDOR`. It then accepts their product details and their `vendorExpectedRent`.
+- **The Workflow:** It completely ignores the live website. Instead, it forces the new product into a hidden `PENDING` state in the database, waiting for an Admin to review it.
+
+### 6. Admin Approval API (`PATCH /api/admin/products/[id]/approve`)
+- **What it does:** This highly-secure API is strictly locked down for `ADMIN` users only.
+- **How it works:** The Admin uses this endpoint to review a pending product. The Admin inputs the final calculated rental prices for 1, 2, 4, and 8 days. The API then updates the database, flips the status to `APPROVED`, and makes the product instantly go live on the homepage!
+
+---
+
+## 5. How the Authentication Flow Works Together
+
+Here is what happens when a new user interacts with our authentication system:
+
+1. **Frontend:** The user fills out the sign-up form and hits submit (or clicks the Google button).
+2. **API Route:** The frontend sends a request to our backend APIs (`/api/auth/register` or the NextAuth Google handler).
+3. **Database (Prisma):** The API calls `prisma.user.create()` to save the user in MySQL.
+4. **Login:** The frontend uses `signIn()` from `next-auth/react` to request a secure session.
+5. **Verification:** NextAuth looks up the user in the `User` table, verifies the identity, and creates a secure session token stored in the browser's cookies.
+6. **Access Control:** The user tries to visit a protected page (like `/vendor`). Our `proxy.ts` file intercepts the request, checks the session token to ensure their `role` is correct, and either allows them in or kicks them back to the login page!

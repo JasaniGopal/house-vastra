@@ -176,7 +176,7 @@ export default function PartnerLogin() {
             Are you a new designer or boutique owner?
           </p>
           <Link
-            href="/vendor-signup"
+            href="/partner-register"
             className="text-[13px] font-bold text-[#001410] uppercase tracking-[0.1em] underline underline-offset-4 decoration-2 hover:text-[#775a19] hover:decoration-[#775a19] transition-colors"
           >
             Become a Vendor

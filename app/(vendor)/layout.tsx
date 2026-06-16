@@ -1,12 +1,40 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useSession, signOut } from 'next-auth/react';
 
 export default function VendorLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: session, status } = useSession();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [vendorProfile, setVendorProfile] = useState<any>(null);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/partner-login");
+    }
+  }, [status, router]);
+
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        const res = await fetch("/api/vendor/profile");
+        if (res.ok) {
+          const data = await res.json();
+          setVendorProfile(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch vendor profile", error);
+      }
+    }
+    
+    if (session?.user?.role === "VENDOR") {
+      fetchProfile();
+    }
+  }, [session]);
 
   const navItems = [
     { name: 'Dashboard', href: '/vendor', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -75,19 +103,21 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
         <div className="p-4 border-t border-zinc-100 mb-safe">
           <div className="flex items-center gap-3 px-4 py-3 bg-zinc-50 rounded-xl border border-zinc-100">
             <div className="w-8 h-8 rounded-full bg-[#001410] text-white flex items-center justify-center font-serif font-bold text-xs shrink-0">
-              MM
+              {session?.user?.name ? session.user.name.charAt(0).toUpperCase() : 'V'}
             </div>
             <div className="overflow-hidden">
-              <p className="text-xs font-bold text-[#001410] truncate">Manish Malhotra</p>
-              <p className="text-[10px] text-zinc-500 uppercase tracking-wider truncate">Boutique Partner</p>
+              <p className="text-xs font-bold text-[#001410] truncate">{session?.user?.name || 'Loading...'}</p>
+              <p className="text-[10px] text-zinc-500 uppercase tracking-wider truncate">
+                {vendorProfile?.boutiqueName || 'Boutique Partner'}
+              </p>
             </div>
           </div>
-          <Link href="/" className="flex items-center gap-2 mt-4 px-4 py-2 text-xs text-zinc-400 hover:text-[#001410] transition-colors font-bold uppercase tracking-wider">
+          <button onClick={() => signOut({ callbackUrl: "/partner-login" })} className="w-full flex items-center gap-2 mt-4 px-4 py-2 text-xs text-zinc-400 hover:text-[#001410] transition-colors font-bold uppercase tracking-wider">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
             Logout
-          </Link>
+          </button>
         </div>
       </aside>
 
