@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -10,12 +12,28 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [error, setError] = useState("");
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus("loading");
-    setTimeout(() => {
+    setError("");
+
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    if (result?.error) {
+      setStatus("idle");
+      setError("Invalid email or password.");
+    } else {
       setStatus("success");
-    }, 1200);
+      router.push("/");
+      router.refresh();
+    }
   };
 
   return (
@@ -42,10 +60,16 @@ export default function LoginPage() {
           Log in to access your curated closet and bookings.
         </p>
 
+        {error && (
+          <div className="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-600 text-sm font-bold rounded-lg">
+            {error}
+          </div>
+        )}
+
         {status === "success" ? (
           <div className="p-6 bg-white border border-zinc-200 rounded-xl text-center shadow-sm">
             <h2 className="font-serif text-xl font-semibold text-[#001410] mb-2">Welcome Back!</h2>
-            <p className="font-sans text-sm text-[#5c6462] mb-6">Successfully logged in. Let's find your next dream outfit.</p>
+            <p className="font-sans text-sm text-[#5c6462] mb-6">Successfully logged in. Let&apos;s find your next dream outfit.</p>
             <Link
               href="/"
               className="inline-block w-full bg-[#001410] text-white py-3.5 rounded-md font-sans font-semibold text-sm hover:bg-[#00261f] transition-all"

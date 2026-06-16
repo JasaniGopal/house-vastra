@@ -11,13 +11,36 @@ export default function RegisterPage() {
   const [agree, setAgree] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!agree) return;
     setStatus("loading");
-    setTimeout(() => {
+    setError("");
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          role: "CUSTOMER",
+        }),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Registration failed");
+      }
+
       setStatus("success");
-    }, 1200);
+    } catch (err: any) {
+      setStatus("idle");
+      setError(err.message || "An error occurred during registration");
+    }
   };
 
   return (
@@ -43,6 +66,12 @@ export default function RegisterPage() {
         <p className="font-sans text-sm text-[#5c6462] leading-relaxed mb-8">
           Create an account to browse our exclusive vault of designer ethnic wear.
         </p>
+
+        {error && (
+          <div className="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-600 text-sm font-bold rounded-lg">
+            {error}
+          </div>
+        )}
 
         {status === "success" ? (
           <div className="p-6 bg-white border border-zinc-200 rounded-xl text-center shadow-sm">

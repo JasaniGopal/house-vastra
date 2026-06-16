@@ -2,8 +2,14 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 
 export default function PersonalInfoPage() {
+  const { data: session } = useSession();
+  const fullName = session?.user?.name || '';
+  const firstName = fullName.split(' ')[0] || '';
+  const lastName = fullName.split(' ').slice(1).join(' ') || '';
+  const email = session?.user?.email || '';
   return (
     <main className="min-h-screen bg-[#fcf9f8] font-sans pb-24">
       <div className="max-w-[600px] mx-auto px-4 md:px-8 pt-8 md:pt-12">
@@ -30,7 +36,7 @@ export default function PersonalInfoPage() {
                 <label className="text-[11px] uppercase tracking-wider font-bold text-zinc-500">First Name</label>
                 <input 
                   type="text" 
-                  defaultValue="Ananya"
+                  defaultValue={firstName}
                   className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 text-sm font-medium text-[#001410] focus:outline-none focus:border-[#775a19] focus:bg-white transition-colors"
                 />
               </div>
@@ -38,7 +44,7 @@ export default function PersonalInfoPage() {
                 <label className="text-[11px] uppercase tracking-wider font-bold text-zinc-500">Last Name</label>
                 <input 
                   type="text" 
-                  defaultValue="Sharma"
+                  defaultValue={lastName}
                   className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 text-sm font-medium text-[#001410] focus:outline-none focus:border-[#775a19] focus:bg-white transition-colors"
                 />
               </div>
@@ -49,7 +55,7 @@ export default function PersonalInfoPage() {
               <label className="text-[11px] uppercase tracking-wider font-bold text-zinc-500">Email Address</label>
               <input 
                 type="email" 
-                defaultValue="ananya.sharma@example.com"
+                defaultValue={email}
                 className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 text-sm font-medium text-[#001410] focus:outline-none focus:border-[#775a19] focus:bg-white transition-colors"
               />
             </div>
@@ -63,7 +69,7 @@ export default function PersonalInfoPage() {
                 </div>
                 <input 
                   type="tel" 
-                  defaultValue="98765 43210"
+                  defaultValue=""
                   className="flex-1 bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 text-sm font-medium text-[#001410] focus:outline-none focus:border-[#775a19] focus:bg-white transition-colors"
                 />
               </div>
@@ -74,7 +80,7 @@ export default function PersonalInfoPage() {
               <label className="text-[11px] uppercase tracking-wider font-bold text-zinc-500">Date of Birth <span className="lowercase font-normal normal-case">(For birthday surprises!)</span></label>
               <input 
                 type="date" 
-                defaultValue="1995-08-14"
+                defaultValue=""
                 className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 text-sm font-medium text-[#001410] focus:outline-none focus:border-[#775a19] focus:bg-white transition-colors"
               />
             </div>

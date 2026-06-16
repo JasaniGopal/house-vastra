@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 export default function PartnerLogin() {
   const router = useRouter();
@@ -12,17 +13,27 @@ export default function PartnerLogin() {
   const [rememberMe, setRememberMe] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus("loading");
+    setError("");
     
-    // Simulate authentication
-    setTimeout(() => {
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    if (result?.error) {
+      setStatus("idle");
+      setError("Invalid credentials. Please try again.");
+    } else {
       setStatus("success");
-      
-      document.cookie = "partner_role=vendor; path=/; max-age=86400";
       router.push("/vendor");
-    }, 1200);
+      router.refresh();
+    }
   };
 
   return (
@@ -48,6 +59,12 @@ export default function PartnerLogin() {
         <p className="font-sans text-sm md:text-base text-[#414846] mb-10">
           Enter your credentials to access your boutique dashboard.
         </p>
+
+        {error && (
+          <div className="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-600 text-sm font-bold rounded-lg">
+            {error}
+          </div>
+        )}
 
         {status === "success" ? (
           <div className="p-6 bg-white border border-zinc-200 shadow-sm text-center">

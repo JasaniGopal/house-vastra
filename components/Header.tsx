@@ -4,8 +4,10 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
+import { useSession, signOut } from "next-auth/react";
 
 export default function Header() {
+  const { data: session } = useSession();
   const { cartItems } = useCart();
   const { wishlistItems } = useWishlist();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -150,18 +152,38 @@ export default function Header() {
             <div className="flex items-center gap-3 md:gap-6">
               {/* User Controls (Desktop Only) */}
               <div className="hidden md:flex items-center gap-3">
-                <Link
-                  href="/login"
-                  className="text-sm font-sans font-bold tracking-wider text-[#414846] hover:text-[#775a19] transition-colors uppercase"
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/register"
-                  className="bg-[#001410] text-white text-xs font-sans py-2 px-4 border border-transparent rounded hover:border-[#775a19] hover:bg-[#00261f] transition-all font-bold uppercase tracking-wider cursor-pointer"
-                >
-                  Register
-                </Link>
+                {session ? (
+                  <div className="relative group flex items-center h-full py-2">
+                    <Link
+                      href="/profile"
+                      className="flex items-center gap-2 text-sm font-sans font-bold tracking-wider text-[#414846] hover:text-[#775a19] transition-colors uppercase"
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                      </svg>
+                      {session.user?.name?.split(' ')[0] || "Account"}
+                    </Link>
+                    <div className="absolute top-[120%] right-0 w-48 bg-white shadow-xl rounded-sm opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 py-2 border border-zinc-100 before:absolute before:-top-6 before:left-0 before:w-full before:h-6">
+                      <Link href="/profile" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">My Dashboard</Link>
+                      <button onClick={() => signOut({ callbackUrl: '/' })} className="w-full text-left block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Log Out</button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      className="text-sm font-sans font-bold tracking-wider text-[#414846] hover:text-[#775a19] transition-colors uppercase"
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      href="/register"
+                      className="bg-[#001410] text-white text-xs font-sans py-2 px-4 border border-transparent rounded hover:border-[#775a19] hover:bg-[#00261f] transition-all font-bold uppercase tracking-wider cursor-pointer"
+                    >
+                      Register
+                    </Link>
+                  </>
+                )}
               </div>
 
               {/* Utility Icons */}
@@ -274,16 +296,21 @@ export default function Header() {
         </button>
 
         {/* My Account Button */}
-        <Link
-          href="/profile"
-          onClick={() => setIsMobileMenuOpen(false)}
-          className="flex items-center gap-3 w-full bg-zinc-100 px-4 py-3 rounded-xl text-[#001410] font-sans font-semibold text-base mt-8 hover:bg-zinc-200 transition-colors cursor-pointer"
-        >
-          <svg className="w-5 h-5 text-[#001410]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-          </svg>
-          <span>My Account</span>
-        </Link>
+        {session && (
+          <Link
+            href="/profile"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="flex items-center gap-3 w-full bg-zinc-100 px-4 py-3 rounded-xl text-[#001410] font-sans font-semibold text-base mt-8 hover:bg-zinc-200 transition-colors cursor-pointer"
+          >
+            <svg className="w-5 h-5 text-[#001410]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            </svg>
+            <div className="flex flex-col">
+              <span>My Account</span>
+              <span className="text-xs text-zinc-500 font-normal">{session.user?.name}</span>
+            </div>
+          </Link>
+        )}
 
         {/* Search Input */}
         <form action="/collections" className="relative w-full mt-4 mb-6" onSubmit={() => setIsMobileMenuOpen(false)}>
@@ -407,20 +434,31 @@ export default function Header() {
 
         {/* Footer Login/Signup Buttons */}
         <div className="mt-auto pt-6 flex flex-col gap-3">
-          <Link
-            href="/login"
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="w-full bg-[#001410] text-white py-3.5 text-center font-sans font-bold text-sm rounded-md hover:bg-[#00261f] active:scale-[0.98] transition-all cursor-pointer"
-          >
-            Login
-          </Link>
-          <Link
-            href="/register"
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="w-full border border-[#001410] text-[#001410] bg-white py-3.5 text-center font-sans font-bold text-sm rounded-md hover:bg-[#FAF2E8]/30 active:scale-[0.98] transition-all cursor-pointer"
-          >
-            Sign Up
-          </Link>
+          {session ? (
+            <button
+              onClick={() => { setIsMobileMenuOpen(false); signOut({ callbackUrl: '/' }); }}
+              className="w-full border border-[#001410] text-[#001410] bg-white py-3.5 text-center font-sans font-bold text-sm rounded-md hover:bg-zinc-100 active:scale-[0.98] transition-all cursor-pointer"
+            >
+              Log Out
+            </button>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-full bg-[#001410] text-white py-3.5 text-center font-sans font-bold text-sm rounded-md hover:bg-[#00261f] active:scale-[0.98] transition-all cursor-pointer"
+              >
+                Login
+              </Link>
+              <Link
+                href="/register"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-full border border-[#001410] text-[#001410] bg-white py-3.5 text-center font-sans font-bold text-sm rounded-md hover:bg-[#FAF2E8]/30 active:scale-[0.98] transition-all cursor-pointer"
+              >
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
