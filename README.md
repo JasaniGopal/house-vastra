@@ -83,9 +83,26 @@ We have created exactly **2 Backend APIs** so far. Both are dedicated exclusivel
 - **Google Logins:** It manages the entire "Sign in with Google" flow (OAuth). It talks to Google, fetches the user's profile, creates an `Account` in our database if they are new, and securely merges them if they already registered with that email.
 - **Session Management:** It generates encrypted session cookies and handles safe logouts (`/api/auth/signout`).
 
+### 3. Category API (`GET /api/categories`)
+- **What it does:** A simple public endpoint that fetches the available clothing categories (like Lehengas, Sarees, etc.) from the database.
+- **Why we need it:** So the frontend forms can automatically populate their dropdown menus instead of hardcoding category names.
+
+### 4. Public Product APIs (`GET /api/products` & `GET /api/products/[id]`)
+- **What it does:** These public APIs are used by the homepage and product detail pages to fetch the clothing catalog.
+- **Security Check:** They act as a strict bouncer. They will *only* return products to the public if the database marks their `approvalStatus` as `APPROVED`. If a product is `PENDING`, these APIs pretend it doesn't exist.
+
+### 5. Vendor Upload API (`POST /api/vendor/products`)
+- **What it does:** This is the secure endpoint where Boutique Owners upload their new dresses.
+- **How it works:** It uses `getServerSession()` to mathematically prove the user is logged in as a `VENDOR`. It then accepts their product details and their `vendorExpectedRent`.
+- **The Workflow:** It completely ignores the live website. Instead, it forces the new product into a hidden `PENDING` state in the database, waiting for an Admin to review it.
+
+### 6. Admin Approval API (`PATCH /api/admin/products/[id]/approve`)
+- **What it does:** This highly-secure API is strictly locked down for `ADMIN` users only.
+- **How it works:** The Admin uses this endpoint to review a pending product. The Admin inputs the final calculated rental prices for 1, 2, 4, and 8 days. The API then updates the database, flips the status to `APPROVED`, and makes the product instantly go live on the homepage!
+
 ---
 
-## 5. How the Flow Works Together
+## 5. How the Authentication Flow Works Together
 
 Here is what happens when a new user interacts with our authentication system:
 
