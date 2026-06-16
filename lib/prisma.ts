@@ -5,7 +5,8 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-const connectionString = (process.env.DATABASE_URL as string).replace(/^mysql:\/\//, "mariadb://");
+const databaseUrl = process.env.DATABASE_URL || "mariadb://root:password@localhost:3306/dummy";
+const connectionString = databaseUrl.replace(/^mysql:\/\//, "mariadb://");
 const prisma = global.prisma || new PrismaClient({ adapter: new PrismaMariaDb(connectionString) });
 
 if (process.env.NODE_ENV !== "production") global.prisma = prisma;
