@@ -1,83 +1,82 @@
-# Rent Vastra - Architecture & Backend Guide
+# House of Vastra - Architecture & Backend Guide
 
-Welcome to the backend documentation for Rent Vastra. If you are new to databases and backend development in Next.js, this file will explain exactly what tools we are using, how they connect, and where to find the code.
+Welcome to the backend documentation for **House of Vastra**, a premium rental platform connecting high-end boutiques with customers. 
 
-## 1. The Technology Stack
-
-We are using a modern, type-safe stack:
-- **Framework:** Next.js (App Router)
-- **Database:** MySQL (Relational Database)
-- **ORM (Object-Relational Mapper):** Prisma
-- **Authentication:** NextAuth.js (Auth.js)
-- **Security:** `bcryptjs` (for hashing passwords)
-- **Styling:** Vanilla CSS & Tailwind CSS
+This file will explain exactly how the platform works, the tools we are using, and where to find the code. It is written in simple language so any developer or owner can easily understand it.
 
 ---
 
-## 2. The Database (Prisma + MySQL)
+## 1. The Technology Stack
 
-### What is Prisma?
-Prisma is a tool that allows us to talk to our MySQL database using clean, easy-to-read TypeScript code instead of writing raw SQL commands (like `SELECT * FROM Users`). 
+We are using a modern, fast, and secure set of technologies:
+- **Framework:** Next.js (App Router) - Handles both the frontend (UI) and the backend (APIs).
+- **Database:** MySQL (Relational Database) - Stores all our data safely.
+- **ORM (Object-Relational Mapper):** Prisma - Allows us to talk to our database using clean, easy-to-read TypeScript code instead of writing raw SQL commands.
+- **Authentication:** NextAuth.js (Auth.js) - Handles logging in securely.
+- **Security:** `bcryptjs` - Used to securely scramble (hash) passwords.
+- **Styling:** Vanilla CSS & Tailwind CSS - Used to make the platform look beautiful.
+
+---
+
+## 2. How the Database Works (Prisma)
+
+Instead of manually editing database tables, we use Prisma. Prisma acts as the "blueprint" for our entire database.
 
 ### Key Files:
-- **`prisma/schema.prisma`**: This is the most important database file. It acts as the "blueprint". We define our `User`, `Vendor`, `Product`, `ProductImage`, `Category`, and `Order` models here. 
-- **`lib/prisma.ts`**: This is our database connection file. It ensures we only connect to the database once (preventing server crashes from too many connections) and exports a `prisma` object that we can use anywhere in our code.
-- **`prisma.config.ts`**: Prisma 7 configuration file where the `DATABASE_URL` is parsed securely from the environment.
-
-### The Driver Adapter (MariaDB)
-Because Prisma 7 prevents hardcoding connection URLs inside `schema.prisma` directly, we use a "Driver Adapter" to securely connect to our MySQL database using an abstracted connection pool. 
-- We use the `@prisma/adapter-mariadb` package alongside the `mariadb` Node.js driver. 
-- MariaDB and MySQL share the exact same underlying protocol, making this the official and most performant way to connect Next.js securely to MySQL in Prisma 7.
+- **`prisma/schema.prisma`**: This is the most important database file. It defines our `User`, `Vendor`, `Product`, `Category`, `Order`, and `Payout` models. 
+- **`lib/prisma.ts`**: This file connects our application to the database securely.
+- **`prisma.config.ts`**: Connects Prisma to our specific MySQL database URL.
 
 ### Viewing the Database:
-You can always view your live database tables in a clean web interface by running:
+You can always view your live database tables in a clean, Excel-like web interface by opening a terminal and running:
 ```bash
 npx prisma studio
 ```
 
 ---
 
-## 3. Security & Portals Architecture
+## 3. The Three Portals
 
-We have built a completely secure, multi-portal architecture.
+House of Vastra is split into three distinct "portals" based on who is logging in. Every single person who registers gets exactly one row in the main `User` table, which dictates what they can access.
 
-### The Core `User` Table
-Every single person who registers (Customer, Vendor, or Admin) gets exactly **one row** in the main `User` table. This table holds the universal data needed for logging in.
-The `role` column dictates which portal the user can enter: `CUSTOMER`, `VENDOR`, or `ADMIN`.
+### 1. The Customer Journey (Public Homepage)
+- Customers browse the public homepage to view the clothing catalog.
+- **Security Check:** The website only shows products to the public if the Admin has marked their `approvalStatus` as `APPROVED` and `isAvailable` as `true`.
 
-### The Extended `Vendor` Table
-If a user is marked as a `VENDOR`, they get a second row created in a completely separate `Vendor` table. This table stores all the heavy business information (Boutique Name, GSTIN, Bank Account). This `Vendor` table is mathematically linked back to the `User` table.
+### 2. The Vendor Portal (`/vendor`)
+If a user registers as a "Boutique Owner", a second record is created in a separate `Vendor` table to hold their business information (Boutique Name, Bank Details). 
+- **Security:** Strict guards block anyone who is not a Vendor from accessing `/vendor`.
+- **Upload Flow:** Vendors upload their outfits and specify their "Expected Rent". The system immediately forces the newly uploaded product into a hidden `PENDING` state so the public cannot see it yet.
+- **Earnings Tracker:** Vendors can track their exact revenue, pending payouts, and order history.
 
-### 1. The Vendor Portal (`/vendor`)
-- **Security Guard:** `app/(vendor)/layout.tsx` blocks anyone who is not a `VENDOR`.
-- **Dashboard:** Real-time analytics showing live inventory, active orders, and earnings.
-- **Product Management:** Full CRUD (Create, Read, Update, Delete) capability.
-  - **Upload API (`POST /api/vendor/products`):** Vendors upload their outfits along with an expected rental price. The API forces the new product into a hidden `PENDING` state.
-  - **Advanced Image Gallery:** Allows vendors to upload new photos or delete specific photos seamlessly.
-- **Orders & Earnings:** Live trackers pulling from the database so vendors can track their rentals and payouts.
-
-### 2. The Admin Portal (`/admin`)
-- **Security Guard:** `app/(admin)/layout.tsx` strictly blocks anyone who is not an `ADMIN`.
-- **Overview Dashboard:** Tracks total platform inventory, total vendors, and flags pending approvals.
-- **Pending Approvals Queue (`/admin/approvals`):** Aggregates every single product across the globe that is waiting for approval.
-- **Review & Pricing Engine (`/admin/approvals/[id]`):** 
-  - Allows the Admin to review the vendor's uploaded photos and expected rent.
-  - Features an automated **Margin Calculator** to calculate house profit.
-  - Admin inputs the final `rentalPrice4Day` that customers will see.
-  - **Approval API (`PUT /api/admin/products/[id]/approve`):** Saves the final price, flips status to `APPROVED`, sets `isAvailable = true`, and pushes the dress to the live customer homepage.
+### 3. The Admin Portal (`/admin` & "God Mode")
+This is the command center for the platform owners.
+- **Security:** Strict guards block anyone who is not an `ADMIN` from accessing `/admin`.
+- **Pending Approvals Queue:** The Admin reviews every single dress uploaded by vendors. The Admin decides the final rental price that the customer will pay (adding House of Vastra's profit margin) and hits "Approve". Only then does the dress go live on the site.
+- **Live Inventory & Directory:** Admins can instantly take a specific dress offline, or completely "Suspend" an entire boutique (which cascades and takes all their dresses offline instantly).
+- **Financial Analytics & Payouts:** The Admin can view the total platform revenue, exactly how much money the platform has kept (Profit), and how much is owed to vendors. 
+- **The Payout Button:** When it's time to pay a vendor, the Admin clicks "Mark as Paid". This automatically zeroes out the vendor's pending balance and generates a permanent `Payout` receipt.
+- **Category Management:** Admins can dynamically add or delete clothing categories (e.g. Sarees, Sherwanis) directly from the UI without needing to write any code.
 
 ---
 
-## 4. The Customer APIs
+## 4. File Uploads
 
-### 1. The Registration & Auth APIs (`/api/auth/*`)
-- **`POST /api/auth/register`:** Custom endpoint for manual email/password signups. Smart provisioning creates an empty `Vendor` profile if "Vendor" role is selected.
-- **NextAuth (`/api/auth/[...nextauth]`):** Handles verifying passwords and managing the entire "Sign in with Google" OAuth flow.
+When vendors upload photos of their dresses:
+- The images are saved locally to `public/uploads/outfits/` using the `POST /api/upload` API.
+- A public-facing URL is generated and saved into the `ProductImage` database table so the website can display the image anywhere.
 
-### 2. Public Product APIs (`/api/products`)
-- **`GET /api/products` & `GET /api/products/[id]`:** These public APIs are used by the homepage and product detail pages to fetch the clothing catalog.
-- **Security Check:** They act as a strict bouncer. They will *only* return products to the public if the database marks their `approvalStatus` as `APPROVED` and `isAvailable` as `true`.
+---
 
-## 5. File Uploads
-- Local media uploads are handled via `POST /api/upload`.
-- Images are written directly to `public/uploads/outfits/` returning a public-facing URL string that is stored in the `ProductImage` database table.
+## 5. How to Run the Platform Locally
+
+To start the platform on your own computer:
+
+1. Open your terminal.
+2. Run the development server:
+   ```bash
+   npm run dev
+   ```
+3. Open your browser and go to `http://localhost:3000`.
+
+To log into the Admin portal, navigate to `http://localhost:3000/partner-login` and log in with an Admin account. To test as a vendor, log in with a Vendor account.

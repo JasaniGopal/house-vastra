@@ -36,7 +36,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const updated = await prisma.product.update({
       where: { id },
       data: {
-        rentalPrice4Day: parseFloat(rentalPrice),
+        rentalPricePerDay: parseFloat(rentalPrice),
         approvalStatus: "APPROVED",
         isAvailable: true // Make it live on the site!
       }

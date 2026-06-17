@@ -34,11 +34,14 @@ export default async function VendorEarningsPage() {
     }
   });
 
-  // Since we don't have a live checkout yet, this will naturally be 0.
   let totalEarnings = 0;
+  let pendingPayout = 0;
+
   orders.forEach(order => {
-    // Assuming vendor gets their expected rent. Admin might take a cut, but this is simple logic for now.
-    totalEarnings += order.product.vendorExpectedRent || 0; 
+    totalEarnings += order.vendorEarnings;
+    if (!order.payoutId) {
+      pendingPayout += order.vendorEarnings;
+    }
   });
 
   return (
@@ -58,7 +61,7 @@ export default async function VendorEarningsPage() {
         </div>
         <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm relative overflow-hidden">
            <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">Pending Payout</p>
-           <p className="font-serif text-4xl font-bold text-[#001410]">₹0</p>
+           <p className="font-serif text-4xl font-bold text-[#001410]">₹{pendingPayout.toLocaleString()}</p>
         </div>
         <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm relative overflow-hidden">
            <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">Total Rentals</p>
@@ -95,7 +98,14 @@ export default async function VendorEarningsPage() {
                     <td className="px-6 py-4">{order.createdAt.toLocaleDateString()}</td>
                     <td className="px-6 py-4 font-bold text-[#001410]">{order.product.name}</td>
                     <td className="px-6 py-4">#{order.id.split('-')[0].toUpperCase()}</td>
-                    <td className="px-6 py-4 font-bold text-[#001410]">₹{order.product.vendorExpectedRent}</td>
+                    <td className="px-6 py-4 font-bold text-[#001410]">₹{order.vendorEarnings}</td>
+                    <td className="px-6 py-4">
+                      {order.payoutId ? (
+                        <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Paid</span>
+                      ) : (
+                        <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Pending</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
