@@ -91,6 +91,7 @@ model Product {
   images             ProductImage[]
   
   approvalStatus     ApprovalStatus @default(PENDING)
+  rejectionReason    String?        @db.Text
   isAvailable        Boolean        @default(false)
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt

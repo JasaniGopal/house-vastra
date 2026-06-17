@@ -53,7 +53,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         retailValue: parseFloat(retailValue),
         vendorExpectedRent: parseFloat(vendorExpectedRent),
         sizes,
-        categoryId
+        categoryId,
+        approvalStatus: "PENDING",
+        rejectionReason: null
       }
     });
 
