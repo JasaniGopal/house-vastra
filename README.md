@@ -1,8 +1,8 @@
 # House of Vastra - Architecture & Backend Guide
 
-Welcome to the backend documentation for **House of Vastra**, a premium rental platform connecting high-end boutiques with customers. 
+Welcome to the backend documentation for **House of Vastra**, a premium luxury rental platform connecting high-end boutiques with customers. 
 
-This file will explain exactly how the platform works, the tools we are using, and where to find the code. It is written in simple language so any developer or owner can easily understand it.
+This file explains exactly how the platform works, the tools we are using, and where to find the code. It serves as a comprehensive developer guide and feature log.
 
 ---
 
@@ -10,65 +10,64 @@ This file will explain exactly how the platform works, the tools we are using, a
 
 We are using a modern, fast, and secure set of technologies:
 - **Framework:** Next.js (App Router) - Handles both the frontend (UI) and the backend (APIs).
-- **Database:** MySQL (Relational Database) - Stores all our data safely.
-- **ORM (Object-Relational Mapper):** Prisma - Allows us to talk to our database using clean, easy-to-read TypeScript code instead of writing raw SQL commands.
+- **Database:** MySQL (Relational Database)
+- **ORM:** Prisma - Allows us to talk to our database using clean, easy-to-read TypeScript code.
 - **Authentication:** NextAuth.js (Auth.js) - Handles logging in securely.
-- **Security:** `bcryptjs` - Used to securely scramble (hash) passwords.
-- **Styling:** Vanilla CSS & Tailwind CSS - Used to make the platform look beautiful.
+- **Security:** `bcryptjs` - Secure password hashing.
+- **Payment Gateway:** Razorpay - Manages checkout and order payments.
+- **Styling:** Vanilla CSS & Tailwind CSS - Used to create a luxury, dynamic, and glassmorphic user interface.
 
 ---
 
-## 2. How the Database Works (Prisma)
+## 2. Features Implemented So Far
 
-Instead of manually editing database tables, we use Prisma. Prisma acts as the "blueprint" for our entire database.
+### 🌟 Luxury Frontend Experience
+- **Dynamic Aesthetic UI:** The platform features a high-end luxury aesthetic utilizing modern typography, glassmorphism, dynamic micro-animations (e.g. pulsing status badges, smooth transitions), and high-resolution imagery.
+- **Homepage:** Complete with an immersive Hero section, dynamic "Trending Now" carousel, Occasions grid, Trust strips, "How it Works", and a dynamic Global Search overlay.
+- **Collections & Search:** Dynamic product filtering by category, occasion, and sizes.
+- **Product Detail Page:** Deeply immersive product view featuring image galleries (with mobile snap carousels), "Complete the Look" cross-sells, dynamic date-based rental calculation (enforcing a minimum 4-day rental), and detailed shipping & fit modals.
+- **Global Contexts:** Completely functional and persistent `CartContext` and `WishlistContext`. Badges on the navbar update dynamically, and heart icons on product cards react instantly to user actions. State is persisted across reloads using `localStorage`.
+- **Wishlist & Cart Pages:** Fully dynamic pages that pull from global state, allowing users to move wishlisted items directly into their shopping bag.
+
+### 💳 Checkout & Payments Flow
+- **Address & Payment Flow:** Clean, step-by-step UI allowing users to input delivery details and select payment methods.
+- **Razorpay Integration:** Full backend to frontend Razorpay integration (`/api/checkout/create-order` & `/api/checkout/verify`).
+- **Local Dev Mock:** Built-in Razorpay mock bypass to seamlessly test successful end-to-end checkouts locally without needing live credentials.
+- **Order Processing:** Upon payment success, individual `Order` records are created in the database and linked to the Customer, the Product, and the Vendor with an initial status of `PREPARING`.
+- **Profile Order History:** Users can navigate to their Profile -> Active Rentals and view their live orders dynamically fetched from the database, complete with precise status indicators.
+
+### 👔 The Vendor Portal (`/vendor`)
+- **Dashboard & Earnings:** Vendors can track their revenue, pending payouts, and historical orders.
+- **Product Uploads:** Vendors upload their outfits, select categories, and specify an "Expected Rent". The system immediately forces newly uploaded products into a hidden `PENDING` state. Images are securely uploaded and linked to the product.
+- **Security:** Strict guards block unauthorized access.
+
+### 👑 The Admin Portal (`/admin`)
+- **Pending Approvals Queue:** The Admin reviews every single dress uploaded by vendors. The Admin decides the final rental price that the customer will pay (adding House of Vastra's profit margin) and hits "Approve", setting the status to `APPROVED` and pushing it live.
+- **Live Inventory & Directory:** Admins can instantly take a specific dress offline, or completely "Suspend" an entire boutique.
+- **Financial Analytics & Payouts:** The Admin can view the total platform revenue, platform profit margin, and pending balances owed to vendors. 
+- **The Payout Button:** When it's time to pay a vendor, the Admin clicks "Mark as Paid" to zero out the pending balance and generate a permanent `Payout` receipt.
+- **Category Management:** Admins can dynamically add or delete clothing categories from the UI.
+
+---
+
+## 3. How the Database Works (Prisma)
+
+Instead of manually editing database tables, we use Prisma. 
 
 ### Key Files:
-- **`prisma/schema.prisma`**: This is the most important database file. It defines our `User`, `Vendor`, `Product`, `Category`, `Order`, and `Payout` models. 
-- **`lib/prisma.ts`**: This file connects our application to the database securely.
-- **`prisma.config.ts`**: Connects Prisma to our specific MySQL database URL.
+- **`prisma/schema.prisma`**: Defines our models: `User`, `Vendor`, `Product`, `Category`, `Order`, and `Payout`. 
+- **`lib/prisma.ts`**: Connects our application to the database securely.
+- **`prisma/seed.ts`**: Helper script to quickly populate the database with test categories and an initial admin account.
 
 ### Viewing the Database:
-You can always view your live database tables in a clean, Excel-like web interface by opening a terminal and running:
+Open a terminal and run:
 ```bash
 npx prisma studio
 ```
 
 ---
 
-## 3. The Three Portals
-
-House of Vastra is split into three distinct "portals" based on who is logging in. Every single person who registers gets exactly one row in the main `User` table, which dictates what they can access.
-
-### 1. The Customer Journey (Public Homepage)
-- Customers browse the public homepage to view the clothing catalog.
-- **Security Check:** The website only shows products to the public if the Admin has marked their `approvalStatus` as `APPROVED` and `isAvailable` as `true`.
-
-### 2. The Vendor Portal (`/vendor`)
-If a user registers as a "Boutique Owner", a second record is created in a separate `Vendor` table to hold their business information (Boutique Name, Bank Details). 
-- **Security:** Strict guards block anyone who is not a Vendor from accessing `/vendor`.
-- **Upload Flow:** Vendors upload their outfits and specify their "Expected Rent". The system immediately forces the newly uploaded product into a hidden `PENDING` state so the public cannot see it yet.
-- **Earnings Tracker:** Vendors can track their exact revenue, pending payouts, and order history.
-
-### 3. The Admin Portal (`/admin` & "God Mode")
-This is the command center for the platform owners.
-- **Security:** Strict guards block anyone who is not an `ADMIN` from accessing `/admin`.
-- **Pending Approvals Queue:** The Admin reviews every single dress uploaded by vendors. The Admin decides the final rental price that the customer will pay (adding House of Vastra's profit margin) and hits "Approve". Only then does the dress go live on the site.
-- **Live Inventory & Directory:** Admins can instantly take a specific dress offline, or completely "Suspend" an entire boutique (which cascades and takes all their dresses offline instantly).
-- **Financial Analytics & Payouts:** The Admin can view the total platform revenue, exactly how much money the platform has kept (Profit), and how much is owed to vendors. 
-- **The Payout Button:** When it's time to pay a vendor, the Admin clicks "Mark as Paid". This automatically zeroes out the vendor's pending balance and generates a permanent `Payout` receipt.
-- **Category Management:** Admins can dynamically add or delete clothing categories (e.g. Sarees, Sherwanis) directly from the UI without needing to write any code.
-
----
-
-## 4. File Uploads
-
-When vendors upload photos of their dresses:
-- The images are saved locally to `public/uploads/outfits/` using the `POST /api/upload` API.
-- A public-facing URL is generated and saved into the `ProductImage` database table so the website can display the image anywhere.
-
----
-
-## 5. How to Run the Platform Locally
+## 4. How to Run the Platform Locally
 
 To start the platform on your own computer:
 

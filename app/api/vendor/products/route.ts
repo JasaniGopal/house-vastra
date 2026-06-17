@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name, description, retailValue, vendorExpectedRent, sizes, categoryId, images } = body;
+    const { name, description, retailValue, vendorExpectedRent, vendorExpectedDeposit, sizes, categoryId, images } = body;
 
     // Basic validation
     if (!name || !description || !retailValue || !vendorExpectedRent || !sizes || !categoryId) {
@@ -54,6 +54,7 @@ export async function POST(req: Request) {
         description,
         retailValue: parseFloat(retailValue),
         vendorExpectedRent: parseFloat(vendorExpectedRent),
+        vendorExpectedDeposit: parseFloat(vendorExpectedDeposit),
         sizes,
         approvalStatus: "PENDING",
         isAvailable: false,

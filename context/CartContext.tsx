@@ -1,9 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 export interface CartItem {
-  id: number;
+  id: string | number;
   title: string;
   designer: string;
   size?: string;
@@ -11,41 +11,38 @@ export interface CartItem {
   duration: string;
   deposit: number;
   price: number;
+  startDate?: string;
+  endDate?: string;
 }
 
 interface CartContextType {
   cartItems: CartItem[];
   addToCart: (item: CartItem) => void;
-  removeFromCart: (id: number) => void;
+  removeFromCart: (id: string | number) => void;
   clearCart: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  // Start with empty cart, or mock data? 
-  // We'll use the mock data you previously had on checkout so the UI isn't completely empty when reloading.
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: 9991,
-      title: "Midnight Velvet Lehenga",
-      designer: "Sabyasachi Heritage Collection",
-      image: "/images/home/bag_midnight_lehenga.png",
-      duration: "4 Days: 12 Oct - 16 Oct",
-      deposit: 5000,
-      price: 12499,
-    },
-    {
-      id: 9992,
-      title: "Champagne Gold Sherwani",
-      designer: "Manish Malhotra",
-      size: "Size M",
-      image: "/images/home/bag_gold_sherwani.png",
-      duration: "4 Days: 14 Oct - 18 Oct",
-      deposit: 3500,
-      price: 8999,
-    },
-  ]);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('cart');
+    if (stored) {
+      try {
+        setCartItems(JSON.parse(stored));
+      } catch (e) {}
+    }
+    setIsLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem('cart', JSON.stringify(cartItems));
+    }
+  }, [cartItems, isLoaded]);
 
   const addToCart = (item: CartItem) => {
     setCartItems(prev => {
@@ -56,7 +53,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const removeFromCart = (id: number) => {
+  const removeFromCart = (id: string | number) => {
     setCartItems(prev => prev.filter(item => item.id !== id));
   };
 

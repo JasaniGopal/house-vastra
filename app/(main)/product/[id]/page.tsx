@@ -4,25 +4,21 @@ import React, { useState, useEffect, use } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
+import { useWishlist } from '@/context/WishlistContext';
 import { useRouter } from 'next/navigation';
 
-// Mock Product Data
-const MOCK_PRODUCT = {
-  id: 1,
-  brand: "SABYASACHI HERITAGE",
-  name: "Emerald Banarasi Heritage Lehenga",
-  rentalPrice: "14,500",
-  retailPrice: "4,20,000",
-  securityDeposit: "5,000",
-  totalPayable: "19,500",
-  mainImage: "/images/home/why-rent-vastra-home.jpg",
-  gallery: [
-    "/images/home/why-rent-vastra-home.jpg",
-    "/images/home/trending-home-2.jpg",
-    "/images/home/trending-home-3.jpg",
-    "/images/home/bag_midnight_lehenga.png"
-  ]
-};
+// Type for our dynamic product
+export interface DynamicProduct {
+  id: string;
+  brand: string;
+  name: string;
+  baseRentalPrice: number;
+  retailPrice: number;
+  baseSecurityDeposit: number;
+  mainImage: string;
+  gallery: string[];
+  availableSizes: string[];
+}
 
 // Mock "Complete the Look" Accessories
 const ACCESSORIES = [
@@ -51,11 +47,73 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const { addToCart } = useCart();
   const router = useRouter();
   const [selectedSize, setSelectedSize] = useState<string>('S');
-  const [activeImage, setActiveImage] = useState<string>(MOCK_PRODUCT.mainImage);
-  const [wishlisted, setWishlisted] = useState(false);
+  const [activeImage, setActiveImage] = useState<string>("/images/placeholder.jpg");
+  const { wishlistItems, toggleWishlist: contextToggleWishlist } = useWishlist();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
   const [showFitModal, setShowFitModal] = useState(false);
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [calculatedDays, setCalculatedDays] = useState(4);
+  const [product, setProduct] = useState<DynamicProduct | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const diffTime = end.getTime() - start.getTime();
+      if (diffTime > 0) {
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        setCalculatedDays(Math.max(diffDays, 4));
+      } else {
+        setCalculatedDays(4);
+      }
+    } else {
+      setCalculatedDays(4);
+    }
+  }, [startDate, endDate]);
+
+  const currentRentalPrice = product ? Math.round((product.baseRentalPrice / 4) * calculatedDays) : 0;
+  const currentDeposit = product ? product.baseSecurityDeposit : 0;
+  const currentTotal = currentRentalPrice + currentDeposit;
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const res = await fetch(`/api/products/${unwrappedParams.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          // Derive deposits and totals based on business logic
+          const rental = data.rentalPrice4Day || 0;
+          const deposit = data.securityDeposit || Math.round(rental * 0.3); // Use admin-set deposit or fallback to 30%
+          const retail = data.retailValue || (rental * 10);
+          const sizesArray = data.sizes ? data.sizes.split(',').map((s: string) => s.trim()).filter(Boolean) : ['S'];
+          
+          setProduct({
+            id: data.id,
+            brand: data.vendor?.boutiqueName || "Boutique",
+            name: data.name,
+            baseRentalPrice: rental,
+            retailPrice: retail,
+            baseSecurityDeposit: deposit,
+            mainImage: data.images?.[0]?.url || "/images/placeholder.jpg",
+            gallery: data.images?.map((img: any) => img.url) || ["/images/placeholder.jpg"],
+            availableSizes: sizesArray
+          });
+          setActiveImage(data.images?.[0]?.url || "/images/placeholder.jpg");
+          if (sizesArray.length > 0) setSelectedSize(sizesArray[0]);
+        } else {
+          showToast("Product not found");
+        }
+      } catch (err) {
+        console.error("Failed to fetch product", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProduct();
+  }, [unwrappedParams.id]);
 
   const showToast = (message: string) => {
     setToastMessage(message);
@@ -64,60 +122,84 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     }, 3000);
   };
 
-  const createCartItem = () => ({
-    id: MOCK_PRODUCT.id,
-    title: MOCK_PRODUCT.name,
-    designer: "House of Vastra", // Mock designer
-    image: MOCK_PRODUCT.mainImage,
-    size: selectedSize,
-    duration: "4 Days: 14 Oct - 18 Oct", // mock dates
-    deposit: parseInt(MOCK_PRODUCT.securityDeposit.replace(/,/g, '')),
-    price: parseInt(MOCK_PRODUCT.rentalPrice.replace(/,/g, '')),
-  });
+  const createCartItem = () => {
+    if (!product) return null;
+    
+    // Format duration string based on selected dates or fallback
+    let durationStr = "4 Days (Dates pending)";
+    if (startDate && endDate) {
+      const s = new Date(startDate);
+      const e = new Date(endDate);
+      const formatter = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' });
+      durationStr = `${calculatedDays} Days: ${formatter.format(s)} - ${formatter.format(e)}`;
+    }
+
+    return {
+      id: product.id,
+      title: product.name,
+      designer: product.brand,
+      image: product.mainImage,
+      size: selectedSize,
+      duration: durationStr,
+      deposit: currentDeposit,
+      price: currentRentalPrice,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+    };
+  };
 
   const handleAddToBag = () => {
-    addToCart(createCartItem());
-    showToast(`${MOCK_PRODUCT.name} added to your bag!`);
+    const item = createCartItem();
+    if (item) {
+      addToCart(item);
+      showToast(`${product?.name} added to your bag!`);
+    }
   };
 
   const handleRentNow = () => {
-    router.push('/checkout/' + unwrappedParams.id);
+    const query = new URLSearchParams();
+    if (startDate) query.set('start', startDate);
+    if (endDate) query.set('end', endDate);
+    if (selectedSize) query.set('size', selectedSize);
+    router.push(`/checkout/${unwrappedParams.id}?${query.toString()}`);
   };
 
-  useEffect(() => {
-    const saved = localStorage.getItem("wishlist");
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      const isWishlisted = parsed.some((i: any) => i.title === MOCK_PRODUCT.name);
-      setWishlisted(isWishlisted);
-    }
-  }, []);
+  const wishlisted = product ? wishlistItems.some(i => i.id === product.id) : false;
 
   const toggleWishlist = () => {
-    const saved = localStorage.getItem("wishlist");
-    let parsed = saved ? JSON.parse(saved) : [];
-    
-    if (wishlisted) {
-      // Remove
-      parsed = parsed.filter((i: any) => i.title !== MOCK_PRODUCT.name);
-      setWishlisted(false);
+    if (!product) return;
+    contextToggleWishlist({
+      id: product.id,
+      brand: product.brand,
+      name: product.name,
+      rentalPrice: product.baseRentalPrice.toString(),
+      retailPrice: product.retailPrice.toString(),
+      image: product.mainImage
+    });
+    if (!wishlisted) {
+      showToast(`${product.name} added to your wishlist!`);
     } else {
-      // Add
-      parsed.push({
-        designer: "House of Vastra", // Mock designer
-        title: MOCK_PRODUCT.name,
-        price: "₹" + MOCK_PRODUCT.rentalPrice,
-        duration: "/ 4 days",
-        image: MOCK_PRODUCT.mainImage,
-        link: `/product/${MOCK_PRODUCT.id}`,
-        alt: MOCK_PRODUCT.name,
-      });
-      setWishlisted(true);
-      showToast(`${MOCK_PRODUCT.name} added to your wishlist!`);
+      showToast(`${product.name} removed from your wishlist!`);
     }
-    localStorage.setItem("wishlist", JSON.stringify(parsed));
-    window.dispatchEvent(new Event("wishlistUpdated"));
   };
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-[#fcf9f8] flex items-center justify-center">
+        <h2 className="font-serif text-2xl text-[#001410]">Loading Product...</h2>
+      </main>
+    );
+  }
+
+  if (!product) {
+    return (
+      <main className="min-h-screen bg-[#fcf9f8] flex flex-col items-center justify-center p-8">
+        <h2 className="font-serif text-3xl text-[#001410] mb-4">Piece Not Found</h2>
+        <p className="text-zinc-500 mb-8">This piece may have been removed or is currently unavailable.</p>
+        <Link href="/collections" className="bg-[#001410] text-white px-8 py-4 font-bold text-xs uppercase tracking-wider">Back to Collections</Link>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#fcf9f8] font-sans pb-32 md:pb-24">
@@ -130,7 +212,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           <div className="w-full md:w-[55%] lg:w-[60%] flex flex-col md:flex-row gap-4 p-4 md:p-8">
             {/* Desktop Thumbnails */}
             <div className="hidden md:flex flex-col gap-4 w-[100px] shrink-0">
-              {MOCK_PRODUCT.gallery.map((img, idx) => (
+              {product.gallery.map((img, idx) => (
                 <button 
                   key={idx}
                   onClick={() => setActiveImage(img)}
@@ -143,14 +225,14 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             
             {/* Mobile Carousel & Desktop Main Image */}
             <div className="md:hidden flex overflow-x-auto snap-x snap-mandatory no-scrollbar w-full relative">
-              {MOCK_PRODUCT.gallery.map((img, idx) => (
+              {product.gallery.map((img, idx) => (
                 <div key={idx} className="relative aspect-[4/5] w-full shrink-0 snap-start bg-zinc-100 overflow-hidden">
-                   <Image src={img} alt={`${MOCK_PRODUCT.name} ${idx}`} fill priority={idx === 0} sizes="100vw" className="object-cover object-top" />
+                   <Image src={img} alt={`${product.name} ${idx}`} fill priority={idx === 0} sizes="100vw" className="object-cover object-top" />
                 </div>
               ))}
             </div>
             <div className="hidden md:block relative aspect-[3/4] w-full bg-zinc-100 flex-1 overflow-hidden">
-               <Image src={activeImage} alt={MOCK_PRODUCT.name} fill priority sizes="60vw" className="object-cover object-top" />
+               <Image src={activeImage} alt={product.name} fill priority sizes="60vw" className="object-cover object-top" />
             </div>
           </div>
 
@@ -159,19 +241,18 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             
             {/* Brand & Title */}
             <div className="mb-6">
-              <span className="text-[10px] md:text-xs font-bold tracking-[0.15em] text-[#A8813C] uppercase mb-2 block">{MOCK_PRODUCT.brand}</span>
-              <h1 className="font-serif text-3xl md:text-4xl text-[#001410] leading-tight">{MOCK_PRODUCT.name}</h1>
+              <h1 className="font-serif text-3xl md:text-4xl text-[#001410] leading-tight">{product.name}</h1>
             </div>
 
             {/* Pricing & Badge */}
             <div className="flex items-center gap-4 mb-3">
-              <div className="font-serif text-2xl font-medium text-[#001410]">₹{MOCK_PRODUCT.rentalPrice} <span className="font-sans text-xs text-zinc-500 font-normal">/ 4 days</span></div>
+              <div className="font-serif text-2xl font-medium text-[#001410]">₹{currentRentalPrice.toLocaleString()}</div>
               <div className="flex items-center gap-1.5 bg-[#f5efe6] px-2.5 py-1 rounded text-[#775a19] text-[10px] font-bold uppercase tracking-wider">
                 <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
                 Authenticity Guaranteed
               </div>
             </div>
-            <div className="text-xs text-zinc-500 mb-10 pb-10 border-b border-zinc-200">Retail Value: ₹{MOCK_PRODUCT.retailPrice}</div>
+            <div className="text-xs text-zinc-500 mb-10 pb-10 border-b border-zinc-200">Retail Value: ₹{product.retailPrice.toLocaleString()}</div>
 
             {/* Rental Period */}
             <div className="mb-8">
@@ -184,10 +265,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 <div className="relative">
                   <span className="absolute -top-2 left-2 bg-white px-1 text-[10px] text-zinc-500 font-bold uppercase tracking-wider z-10">From</span>
                   <input 
-                    type="text" 
-                    placeholder="Dec 14, 2024" 
-                    onFocus={(e) => (e.target.type = "date")}
-                    onBlur={(e) => (e.target.value === "" ? (e.target.type = "text") : null)}
+                    type="date" 
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
                     className="w-full border border-zinc-300 rounded px-3 md:px-4 py-3 text-sm focus:border-[#001410] focus:ring-0 outline-none" 
                   />
                   <svg className="hidden md:block w-4 h-4 absolute right-3 md:right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
@@ -195,10 +275,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 <div className="relative">
                   <span className="absolute -top-2 left-2 bg-white px-1 text-[10px] text-zinc-500 font-bold uppercase tracking-wider z-10">To</span>
                   <input 
-                    type="text" 
-                    placeholder="Dec 18, 2024" 
-                    onFocus={(e) => (e.target.type = "date")}
-                    onBlur={(e) => (e.target.value === "" ? (e.target.type = "text") : null)}
+                    type="date" 
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
                     className="w-full border border-zinc-300 rounded px-3 md:px-4 py-3 text-sm focus:border-[#001410] focus:ring-0 outline-none" 
                   />
                   <svg className="hidden md:block w-4 h-4 absolute right-3 md:right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
@@ -212,12 +291,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 <span className="text-[10px] md:text-xs font-bold tracking-wider text-[#001410] uppercase">Select Size</span>
                 <button onClick={() => setShowFitModal(true)} className="text-[10px] md:text-xs font-bold text-[#775a19] underline cursor-pointer hover:text-[#001410] transition-colors outline-none">Find My Fit</button>
               </div>
-              <div className="flex gap-2">
-                {['S', 'M', 'L', 'XL'].map(size => (
+              <div className="flex flex-wrap gap-2">
+                {product.availableSizes.map(size => (
                   <button 
                     key={size}
                     onClick={() => setSelectedSize(size)}
-                    className={`w-12 h-12 border transition-colors ${
+                    className={`min-w-[3rem] px-3 h-12 border transition-colors ${
                       selectedSize === size 
                         ? 'border-[#001410] bg-[#001410] font-bold text-white' 
                         : 'border-zinc-300 bg-white font-medium text-zinc-600 hover:border-[#001410] hover:text-[#001410]'
@@ -232,16 +311,16 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             {/* Cost Breakdown */}
             <div className="bg-[#f5f5f5] p-5 rounded-lg mb-8">
               <div className="flex justify-between text-xs text-zinc-600 mb-2">
-                <span>Rental Fee</span>
-                <span>₹{MOCK_PRODUCT.rentalPrice}</span>
+                <span>Rental Fee ({calculatedDays} Days)</span>
+                <span>₹{currentRentalPrice.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-xs text-zinc-600 mb-4 pb-4 border-b border-zinc-200">
                 <span className="flex items-center gap-1">Security Deposit <svg className="w-3 h-3 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></span>
-                <span>₹{MOCK_PRODUCT.securityDeposit} <span className="text-[10px] text-zinc-400">(Refundable)</span></span>
+                <span>₹{currentDeposit.toLocaleString()} <span className="text-[10px] text-zinc-400">(Refundable)</span></span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm font-bold text-[#001410]">Total Payable</span>
-                <span className="font-serif text-xl font-medium text-[#001410]">₹{MOCK_PRODUCT.totalPayable}</span>
+                <span className="font-serif text-xl font-medium text-[#001410]">₹{currentTotal.toLocaleString()}</span>
               </div>
             </div>
 

@@ -16,6 +16,7 @@ export default function AddProductPage() {
     description: "",
     retailValue: "",
     vendorExpectedRent: "",
+    vendorExpectedDeposit: "",
     sizes: ""
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -86,6 +87,7 @@ export default function AddProductPage() {
         description: formData.description,
         retailValue: parseFloat(formData.retailValue),
         vendorExpectedRent: parseFloat(formData.vendorExpectedRent),
+        vendorExpectedDeposit: parseFloat(formData.vendorExpectedDeposit),
         sizes: formData.sizes,
         images: uploadedUrls // API maps this array of strings
       };
@@ -178,7 +180,7 @@ export default function AddProductPage() {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#001410] mb-2 block">
                 Retail Value (₹)
@@ -191,7 +193,7 @@ export default function AddProductPage() {
                 className="w-full bg-white border border-zinc-300 px-4 py-3 text-sm focus:outline-none focus:border-[#001410] focus:ring-1 focus:ring-[#001410]"
                 required
               />
-              <p className="text-xs text-zinc-500 mt-1">The original market price of the outfit.</p>
+              <p className="text-xs text-zinc-500 mt-1">Original market price.</p>
             </div>
             <div>
               <label className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#001410] mb-2 block">
@@ -205,7 +207,21 @@ export default function AddProductPage() {
                 className="w-full bg-white border border-zinc-300 px-4 py-3 text-sm focus:outline-none focus:border-[#001410] focus:ring-1 focus:ring-[#001410]"
                 required
               />
-              <p className="text-xs text-zinc-500 mt-1">How much you want to earn per rental (Admin finalizes actual price).</p>
+              <p className="text-xs text-zinc-500 mt-1">Desired rental earning.</p>
+            </div>
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#001410] mb-2 block">
+                Expected Deposit (₹)
+              </label>
+              <input
+                type="number"
+                placeholder="e.g. 1200"
+                value={formData.vendorExpectedDeposit}
+                onChange={e => setFormData({...formData, vendorExpectedDeposit: e.target.value})}
+                className="w-full bg-white border border-zinc-300 px-4 py-3 text-sm focus:outline-none focus:border-[#001410] focus:ring-1 focus:ring-[#001410]"
+                required
+              />
+              <p className="text-xs text-zinc-500 mt-1">Desired security deposit.</p>
             </div>
           </div>
 

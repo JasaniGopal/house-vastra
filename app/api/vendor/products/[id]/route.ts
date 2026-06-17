@@ -43,7 +43,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     if (!existing) return NextResponse.json({ error: "Product not found" }, { status: 404 });
 
     const body = await req.json();
-    const { name, description, retailValue, vendorExpectedRent, sizes, categoryId, deletedImageIds, newImageUrls } = body;
+    const { name, description, retailValue, vendorExpectedRent, vendorExpectedDeposit, sizes, categoryId, deletedImageIds, newImageUrls } = body;
 
     const updated = await prisma.product.update({
       where: { id },
@@ -52,6 +52,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         description,
         retailValue: parseFloat(retailValue),
         vendorExpectedRent: parseFloat(vendorExpectedRent),
+        vendorExpectedDeposit: parseFloat(vendorExpectedDeposit),
         sizes,
         categoryId,
         approvalStatus: "PENDING",

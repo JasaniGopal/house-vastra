@@ -82,11 +82,13 @@ model Product {
   description     String         @db.Text
   retailValue        Float
   vendorExpectedRent Float
+  vendorExpectedDeposit Float @default(0)
 
   rentalPricePerDay  Float?
   rentalPrice2Day    Float?
   rentalPrice4Day    Float?
   rentalPrice8Day    Float?
+  securityDeposit    Float?
 
   sizes              String         // Comma separated e.g. "S,M,L"
   images             ProductImage[]
@@ -94,6 +96,7 @@ model Product {
   approvalStatus     ApprovalStatus @default(PENDING)
   rejectionReason    String?        @db.Text
   isAvailable        Boolean        @default(false)
+  isTrending         Boolean        @default(false)
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   

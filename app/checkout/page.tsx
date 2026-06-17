@@ -3,10 +3,11 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import Script from "next/script";
 import { useCart } from "@/context/CartContext";
 
 interface CartItem {
-  id: number;
+  id: string | number;
   title: string;
   designer: string;
   size?: string;
@@ -20,18 +21,98 @@ export default function CheckoutPage() {
   const { cartItems: items, removeFromCart, clearCart } = useCart();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  
+  const [selectedPayment, setSelectedPayment] = useState("card");
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [address, setAddress] = useState({
+    name: "Ananya Sharma",
+    flat: "Flat 402, Sea View Apartments",
+    street: "Juhu Tara Road",
+    city: "Mumbai, Maharashtra 400049",
+    phone: "+91 98XXX XXXXX"
+  });
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string | number) => {
     removeFromCart(id);
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
+    if (items.length === 0) return;
     setIsCheckoutLoading(true);
-    setTimeout(() => {
+
+    try {
+      // 1. Create order on server
+      const res = await fetch("/api/checkout/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: grandTotal }),
+      });
+      
+      const order = await res.json();
+      if (!order.id) {
+        throw new Error("Failed to create Razorpay order");
+      }
+
+      // 2. Initialize Razorpay popup
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_mock_key",
+        amount: order.amount,
+        currency: order.currency,
+        name: "Rent Vastra",
+        description: "Luxury Rental Order",
+        order_id: order.id,
+        handler: async function (response: any) {
+          // 3. Verify payment on server
+          const verifyRes = await fetch("/api/checkout/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              items: items,
+              address: address,
+              userId: null // In real app, pass actual session userId
+            }),
+          });
+          const verifyData = await verifyRes.json();
+          if (verifyData.success) {
+            setIsSuccess(true);
+            clearCart();
+          } else {
+            alert("Payment verification failed. Please contact support.");
+          }
+        },
+        prefill: {
+          name: address.name,
+          contact: address.phone,
+        },
+        theme: {
+          color: "#001410",
+        },
+      };
+
+      const rzpKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_mock_key";
+      if (rzpKey === "rzp_test_mock_key") {
+        options.handler({
+          razorpay_order_id: order.id,
+          razorpay_payment_id: "pay_mock_" + Math.random().toString(36).substring(2, 10),
+          razorpay_signature: "mock_signature",
+        });
+        return;
+      }
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on("payment.failed", function (response: any) {
+        alert(`Payment failed! ${response.error.description}`);
+      });
+      rzp.open();
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong during checkout.");
+    } finally {
       setIsCheckoutLoading(false);
-      setIsSuccess(true);
-      clearCart();
-    }, 1500);
+    }
   };
 
   const subtotal = items.reduce((acc, item) => acc + item.price, 0);
@@ -40,7 +121,9 @@ export default function CheckoutPage() {
   const grandTotal = subtotal + totalDeposit + deliveryFee;
 
   return (
-    <div className="min-h-screen bg-[#fcf9f8] text-[#1c1b1b] font-sans flex flex-col justify-between">
+    <>
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+      <div className="min-h-screen bg-[#fcf9f8] text-[#1c1b1b] font-sans flex flex-col justify-between">
       
       {/* Header Bar */}
       <header className="w-full bg-white border-b border-[#c1c8c5]/30 sticky top-0 z-30">
@@ -112,8 +195,152 @@ export default function CheckoutPage() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             
-            {/* Left Column: Bag Items list */}
-            <div className="lg:col-span-7 space-y-6">
+            {/* Left Column: Forms & Bag Items */}
+            <div className="lg:col-span-7 space-y-10">
+
+              {/* Delivery Address */}
+              <section>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-serif text-xl md:text-2xl font-bold text-[#001410]">1. Delivery Address</h2>
+                  <button 
+                    onClick={() => setIsEditingAddress(!isEditingAddress)} 
+                    className="text-sm font-bold text-[#775a19] hover:underline"
+                  >
+                    {isEditingAddress ? "Cancel" : "Change"}
+                  </button>
+                </div>
+                
+                {isEditingAddress ? (
+                  <div className="bg-white p-6 rounded-sm border border-black/10 flex flex-col gap-4 shadow-sm animate-fade-in">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Full Name</label>
+                        <input 
+                          type="text" 
+                          value={address.name}
+                          onChange={(e) => setAddress({...address, name: e.target.value})}
+                          className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" 
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Phone Number</label>
+                        <input 
+                          type="text" 
+                          value={address.phone}
+                          onChange={(e) => setAddress({...address, phone: e.target.value})}
+                          className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" 
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Flat, House no., Building</label>
+                        <input 
+                          type="text" 
+                          value={address.flat}
+                          onChange={(e) => setAddress({...address, flat: e.target.value})}
+                          className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" 
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Area, Street, Sector, Village</label>
+                        <input 
+                          type="text" 
+                          value={address.street}
+                          onChange={(e) => setAddress({...address, street: e.target.value})}
+                          className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" 
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Town/City & Pincode</label>
+                        <input 
+                          type="text" 
+                          value={address.city}
+                          onChange={(e) => setAddress({...address, city: e.target.value})}
+                          className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" 
+                        />
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => setIsEditingAddress(false)}
+                      className="mt-2 bg-[#001410] text-white py-3 px-6 rounded-sm font-sans font-bold text-xs tracking-widest uppercase hover:bg-[#00261f] transition-all self-start"
+                    >
+                      Save Address
+                    </button>
+                  </div>
+                ) : (
+                  <div className="bg-[#f5f3f0] p-6 rounded-sm border border-black/5 flex gap-4 items-start">
+                    <svg className="w-5 h-5 text-[#001410] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                    </svg>
+                    <div>
+                      <span className="block font-bold text-[#001410] mb-1">{address.name}</span>
+                      <span className="block text-sm text-[#414846] leading-relaxed">
+                        {address.flat},<br />
+                        {address.street},<br />
+                        {address.city}
+                      </span>
+                      <span className="block text-sm text-[#414846] mt-2">Phone: {address.phone}</span>
+                    </div>
+                  </div>
+                )}
+              </section>
+
+              {/* Payment Method */}
+              <section>
+                <h2 className="font-serif text-xl md:text-2xl font-bold text-[#001410] mb-4">2. Payment Method</h2>
+                
+                <div className="border border-black/10 rounded-sm overflow-hidden bg-white shadow-sm">
+                  
+                  {/* Card Option */}
+                  <div className={`border-b border-black/5 transition-colors ${selectedPayment === 'card' ? 'bg-white' : 'hover:bg-zinc-50'}`}>
+                    <label className="flex items-center gap-4 p-5 cursor-pointer">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPayment === 'card' ? 'border-[#001410]' : 'border-zinc-300'}`}>
+                        {selectedPayment === 'card' && <div className="w-2.5 h-2.5 rounded-full bg-[#001410]" />}
+                      </div>
+                      <input type="radio" className="hidden" checked={selectedPayment === 'card'} onChange={() => setSelectedPayment('card')} />
+                      <span className="font-sans font-bold text-sm text-[#001410] uppercase tracking-wider flex-1">Credit / Debit Card</span>
+                      <svg className="w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                      </svg>
+                    </label>
+                    
+                    {/* Expanded Card Form */}
+                    <div className={`overflow-hidden transition-all duration-300 px-5 ${selectedPayment === 'card' ? 'max-h-[500px] pb-6 opacity-100' : 'max-h-0 opacity-0'}`}>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Card Number</label>
+                          <input type="text" placeholder="XXXX XXXX XXXX XXXX" className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors font-mono placeholder:font-sans" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Expiry Date</label>
+                            <input type="text" placeholder="MM / YY" className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">CVV</label>
+                            <input type="text" placeholder="***" className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors font-mono placeholder:font-sans" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* UPI Option */}
+                  <div className={`transition-colors ${selectedPayment === 'upi' ? 'bg-white' : 'hover:bg-zinc-50'}`}>
+                    <label className="flex items-center gap-4 p-5 cursor-pointer">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPayment === 'upi' ? 'border-[#001410]' : 'border-zinc-300'}`}>
+                        {selectedPayment === 'upi' && <div className="w-2.5 h-2.5 rounded-full bg-[#001410]" />}
+                      </div>
+                      <input type="radio" className="hidden" checked={selectedPayment === 'upi'} onChange={() => setSelectedPayment('upi')} />
+                      <span className="font-sans font-bold text-sm text-[#001410] uppercase tracking-wider flex-1">UPI</span>
+                    </label>
+                  </div>
+                </div>
+              </section>
+
+              {/* Bag Items list */}
+              <section className="space-y-6">
+                <h2 className="font-serif text-xl md:text-2xl font-bold text-[#001410] mb-4">3. Items in Bag</h2>
               {items.map((item) => (
                 <div
                   key={item.id}
@@ -151,9 +378,11 @@ export default function CheckoutPage() {
                         <h3 className="font-serif text-[15px] sm:text-lg md:text-xl font-bold text-[#001410] pr-6 sm:pr-8 leading-tight">
                           {item.title}
                         </h3>
-                        <p className="font-sans text-[10px] sm:text-xs md:text-sm text-zinc-400 font-semibold uppercase tracking-wider mt-1">
-                          {item.designer} {item.size && `• ${item.size}`}
-                        </p>
+                        {item.size && (
+                          <p className="font-sans text-[10px] sm:text-xs md:text-sm text-zinc-400 font-semibold uppercase tracking-wider mt-1">
+                            Size: {item.size}
+                          </p>
+                        )}
 
                         {/* Rental Period */}
                         <div className="flex items-center gap-2 mt-4 text-[#414846] text-xs md:text-sm font-sans">
@@ -193,6 +422,7 @@ export default function CheckoutPage() {
 
                 </div>
               ))}
+              </section>
             </div>
 
             {/* Right Column: Order Summary Card */}
@@ -313,5 +543,6 @@ export default function CheckoutPage() {
       </main>
 
     </div>
+    </>
   );
 }

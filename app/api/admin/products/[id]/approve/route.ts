@@ -27,7 +27,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     }
 
     // Otherwise, it's an approval with a final rental price
-    const { rentalPrice } = body;
+    const { rentalPrice, securityDeposit, isTrending } = body;
 
     if (!rentalPrice || isNaN(rentalPrice) || rentalPrice <= 0) {
       return NextResponse.json({ error: "A valid final rental price is required for approval." }, { status: 400 });
@@ -37,6 +37,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       where: { id },
       data: {
         rentalPricePerDay: parseFloat(rentalPrice),
+        rentalPrice4Day: parseFloat(rentalPrice),
+        securityDeposit: parseFloat(securityDeposit || "0"),
+        isTrending: Boolean(isTrending),
         approvalStatus: "APPROVED",
         isAvailable: true // Make it live on the site!
       }
@@ -47,7 +50,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   } catch (error: any) {
     console.error("Admin Approval Error:", error);
     return NextResponse.json(
-      { error: "An error occurred while updating the product status." },
+      { error: "An error occurred while updating the product status: " + (error.message || String(error)) },
       { status: 500 }
     );
   }

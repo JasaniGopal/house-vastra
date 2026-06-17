@@ -3,111 +3,50 @@
 import React, { useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-
-const trendingProducts = [
-  {
-    designer: "Sabyasachi Mukherjee",
-    title: "Blush Pink Floral Lehenga",
-    price: "₹8,500",
-    duration: "/ 4 days",
-    image: "/images/home/trending-home-2.jpg",
-    link: "/product/pink-lehenga",
-    alt: "Blush pink designer floral lehenga by Sabyasachi",
-  },
-  {
-    designer: "Anita Dongre",
-    title: "Maroon Velvet Sherwani",
-    price: "₹12,000",
-    duration: "/ 4 days",
-    image: "/images/home/product_patola_sherwani.jpg",
-    link: "/product/maroon-sherwani",
-    alt: "Premium maroon velvet wedding sherwani by Anita Dongre",
-  },
-  {
-    designer: "Manish Malhotra",
-    title: "Ivory Silk Drape Saree",
-    price: "₹6,200",
-    duration: "/ 4 days",
-    image: "/images/home/trending-home-3.jpg",
-    link: "/product/ivory-saree",
-    alt: "Ivory silk drape saree with sequined details by Manish Malhotra",
-  },
-  {
-    designer: "Sabyasachi Mukherjee",
-    title: "Emerald Banarasi Lehenga",
-    price: "₹9,500",
-    duration: "/ 4 days",
-    image: "/images/home/hero_home_image_mobile.jpg",
-    link: "/product/emerald-lehenga",
-    alt: "Emerald banarasi heritage lehenga by Sabyasachi",
-  },
-  {
-    designer: "Anita Dongre",
-    title: "Classic Patola Sherwani",
-    price: "₹10,500",
-    duration: "/ 4 days",
-    image: "/images/home/product_patola_sherwani.jpg",
-    link: "/product/classic-patola-sherwani",
-    alt: "Traditional patola weave wedding sherwani",
-  },
-];
+import { useWishlist } from "@/context/WishlistContext";
 
 export default function Trending() {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [wishlisted, setWishlisted] = useState<Record<string, boolean>>({});
+  const { wishlistItems, toggleWishlist: contextToggleWishlist } = useWishlist();
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   React.useEffect(() => {
-    const loadWishlist = () => {
+    const fetchProducts = async () => {
       try {
-        const saved = localStorage.getItem("wishlist");
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          const map: Record<string, boolean> = {};
-          parsed.forEach((item: any) => {
-            map[item.title] = true;
-          });
-          setWishlisted(map);
-        } else {
-          setWishlisted({});
+        const res = await fetch("/api/products?trending=true");
+        if (res.ok) {
+          const data = await res.json();
+          // Map backend data to frontend structure expected by wishlist/ui
+          const mapped = data.slice(0, 8).map((p: any) => ({
+            id: p.id,
+            title: p.name,
+            price: `₹${p.rentalPrice4Day?.toLocaleString() || "0"}`,
+            image: p.images?.[0]?.url || "/images/placeholder.jpg",
+            link: `/product/${p.id}`,
+            alt: p.name,
+          }));
+          setProducts(mapped);
         }
-      } catch (e) {
-        console.error("Failed to load wishlist", e);
+      } catch (err) {
+        console.error("Failed to fetch trending products", err);
+      } finally {
+        setLoading(false);
       }
     };
-    
-    loadWishlist();
-    window.addEventListener("wishlistUpdated", loadWishlist);
-    return () => window.removeEventListener("wishlistUpdated", loadWishlist);
+    fetchProducts();
   }, []);
 
-  const toggleWishlist = (e: React.MouseEvent, product: typeof trendingProducts[0]) => {
+  const toggleWishlist = (e: React.MouseEvent, product: any) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    setWishlisted((prev) => {
-      const isCurrentlyWishlisted = !!prev[product.title];
-      const newState = { ...prev, [product.title]: !isCurrentlyWishlisted };
-      
-      try {
-        const saved = localStorage.getItem("wishlist");
-        let items: any[] = [];
-        if (saved) items = JSON.parse(saved);
-        
-        if (!isCurrentlyWishlisted) {
-          if (!items.find((i) => i.title === product.title)) {
-            items.push(product);
-          }
-        } else {
-          items = items.filter((i) => i.title !== product.title);
-        }
-        
-        localStorage.setItem("wishlist", JSON.stringify(items));
-        window.dispatchEvent(new Event("wishlistUpdated"));
-      } catch (err) {
-        console.error("Failed to update wishlist", err);
-      }
-      
-      return newState;
+    contextToggleWishlist({
+      id: product.id,
+      brand: "House of Vastra", // Default since it's not mapped from API initially in Trending
+      name: product.title,
+      rentalPrice: product.price.replace("₹", "").replace(",", ""),
+      retailPrice: "0",
+      image: product.image
     });
   };
 
@@ -163,7 +102,16 @@ export default function Trending() {
           className="flex overflow-x-auto gap-6 pb-6 -mx-6 px-6 md:mx-0 md:px-0 scrollbar-none snap-x snap-mandatory"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
-          {trendingProducts.map((product, idx) => (
+          {loading ? (
+            <div className="w-full flex items-center justify-center py-20 text-zinc-500 font-serif">
+              Loading latest trends...
+            </div>
+          ) : products.length === 0 ? (
+            <div className="w-full flex items-center justify-center py-20 text-zinc-500 font-serif">
+              New arrivals coming soon.
+            </div>
+          ) : (
+            products.map((product, idx) => (
             <Link
               key={idx}
               href={product.link}
@@ -187,9 +135,9 @@ export default function Trending() {
                 >
                   <svg
                     className={`w-5 h-5 transition-colors duration-300 ${
-                      wishlisted[product.title] ? "fill-red-500 text-red-500" : "text-zinc-700"
+                      wishlistItems.some(i => i.id === product.id) ? "fill-red-500 text-red-500" : "text-zinc-700"
                     }`}
-                    fill={wishlisted[product.title] ? "currentColor" : "none"}
+                    fill={wishlistItems.some(i => i.id === product.id) ? "currentColor" : "none"}
                     viewBox="0 0 24 24"
                     stroke="currentColor"
                     strokeWidth="1.5"
@@ -204,27 +152,23 @@ export default function Trending() {
               </div>
 
               {/* Product Info Area */}
-              <div className="flex flex-col text-left">
-                {/* Designer Label */}
-                <span className="text-[10px] md:text-xs font-sans text-zinc-400 mt-3 font-semibold uppercase tracking-wider">
-                  {product.designer}
-                </span>
-
-                {/* Product Title */}
-                <h3 className="font-serif text-base md:text-lg font-semibold text-[#001410] mt-1 line-clamp-1 group-hover:text-[#775a19] transition-colors duration-300">
+              <div className="flex flex-col flex-1 p-4 pb-5">
+                <h3 className="font-serif text-base md:text-lg text-[#001410] leading-snug mb-3">
                   {product.title}
                 </h3>
-
-                {/* Pricing Details */}
-                <div className="flex items-baseline gap-1 mt-1.5 font-serif text-base md:text-lg font-bold text-[#001410]">
-                  <span>{product.price}</span>
-                  <span className="text-xs md:text-sm font-sans font-normal text-zinc-500 tracking-wide">
-                    {product.duration}
-                  </span>
+                
+                <div className="mt-auto flex items-end justify-between">
+                  <div className="font-serif text-lg md:text-xl font-medium text-[#001410]">
+                    {product.price}
+                  </div>
+                  <div className="text-[10px] md:text-xs font-bold text-[#A8813C] uppercase tracking-wider md:hidden border-b border-[#A8813C] pb-0.5">
+                    Rent Now
+                  </div>
                 </div>
               </div>
             </Link>
-          ))}
+            ))
+          )}
         </div>
 
       </div>

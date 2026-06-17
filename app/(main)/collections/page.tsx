@@ -6,76 +6,19 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useWishlist } from '@/context/WishlistContext';
 
-// Mock Product Data
-const MOCK_PRODUCTS = [
-  {
-    id: 1,
-    brand: "SABYASACHI HERITAGE",
-    name: "Emerald Banarasi Heritage Lehenga",
-    rentalPrice: "14,500",
-    retailPrice: "4,20,000",
-    image: "/images/home/why-rent-vastra-home.jpg"
-  },
-  {
-    id: 2,
-    brand: "MANISH MALHOTRA",
-    name: "Nocturnal Sequin Cocktail Saree",
-    rentalPrice: "8,500",
-    retailPrice: "1,85,000",
-    image: "/images/home/trending-home-2.jpg"
-  },
-  {
-    id: 3,
-    brand: "ANITA DONGRE",
-    name: "Ivory Silk Hand-Embroidered Sherwani",
-    rentalPrice: "12,000",
-    retailPrice: "2,40,000",
-    image: "/images/home/product_patola_sherwani.jpg"
-  },
-  {
-    id: 4,
-    brand: "RAW MANGO",
-    name: "Rani Gota Patti Silk Saree",
-    rentalPrice: "5,500",
-    retailPrice: "85,000",
-    image: "/images/home/trending-home-3.jpg"
-  },
-  {
-    id: 5,
-    brand: "MANISH MALHOTRA",
-    name: "Midnight Velvet Zardosi Sherwani",
-    rentalPrice: "24,000",
-    retailPrice: "4,50,000",
-    image: "/images/home/bag_gold_sherwani.png"
-  },
-  {
-    id: 6,
-    brand: "RAW MANGO",
-    name: "Ruby Kanjeevaram Classic Saree",
-    rentalPrice: "9,500",
-    retailPrice: "1,10,000",
-    image: "/images/home/occassion_weddings.png"
-  },
-  {
-    id: 7,
-    brand: "RITU KUMAR",
-    name: "Botanical Hand-Painted Anarkali",
-    rentalPrice: "14,800",
-    retailPrice: "1,80,000",
-    image: "/images/home/bag_midnight_lehenga.png"
-  },
-  {
-    id: 8,
-    brand: "TARUN TAHILIANI",
-    name: "Rose Crystal Couture Lehenga",
-    rentalPrice: "32,000",
-    retailPrice: "5,50,000",
-    image: "/images/home/occassion_cocktail.png"
-  }
-];
+// Dynamic Product Interface
+export interface DisplayProduct {
+  id: string;
+  brand: string;
+  name: string;
+  rentalPrice: string;
+  retailPrice: string;
+  image: string;
+  category: string;
+}
 
 // Reusable Product Card Component
-const ProductCard = ({ product, priority = false }: { product: typeof MOCK_PRODUCTS[0], priority?: boolean }) => {
+const ProductCard = ({ product, priority = false }: { product: DisplayProduct, priority?: boolean }) => {
   const { wishlistItems, toggleWishlist } = useWishlist();
   const isInWishlist = wishlistItems.some(item => item.id === product.id);
 
@@ -110,7 +53,6 @@ const ProductCard = ({ product, priority = false }: { product: typeof MOCK_PRODU
 
       {/* Product Details */}
       <div className="flex flex-col flex-1">
-        <span className="text-[9px] md:text-[10px] font-bold tracking-[0.15em] text-[#A8813C] uppercase mb-1">{product.brand}</span>
         <h3 className="font-serif text-base md:text-lg text-[#001410] leading-snug mb-3 pr-4">{product.name}</h3>
         
         <div className="mt-auto flex items-end justify-between">
@@ -118,9 +60,7 @@ const ProductCard = ({ product, priority = false }: { product: typeof MOCK_PRODU
             <div className="font-serif text-lg md:text-xl font-medium text-[#001410]">₹{product.rentalPrice}</div>
             <div className="text-[10px] md:text-xs text-zinc-500 mt-0.5">Retail: ₹{product.retailPrice}</div>
           </div>
-          {/* Action text changes based on breakpoint to match design */}
           <div className="text-[10px] md:text-xs font-bold text-[#A8813C] uppercase tracking-wider md:hidden border-b border-[#A8813C] pb-0.5">Rent Now</div>
-          <div className="text-[10px] md:text-[11px] font-medium text-zinc-500 hidden md:block">Rental / 4 Days</div>
         </div>
       </div>
     </Link>
@@ -140,6 +80,35 @@ function CollectionsContent() {
   );
   const [selectedSize, setSelectedSize] = useState<string>('S');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+  const [products, setProducts] = useState<DisplayProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch("/api/products");
+        if (res.ok) {
+          const data = await res.json();
+          const mapped = data.map((p: any) => ({
+            id: p.id,
+            brand: p.vendor?.boutiqueName || "Boutique",
+            name: p.name,
+            rentalPrice: p.rentalPrice4Day?.toLocaleString() || "0",
+            retailPrice: p.retailValue?.toLocaleString() || "0",
+            image: p.images?.[0]?.url || "/images/placeholder.jpg",
+            category: p.category?.name || "Uncategorized",
+          }));
+          setProducts(mapped);
+        }
+      } catch (err) {
+        console.error("Failed to fetch products", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   // Update occasion filter if URL changes directly
   useEffect(() => {
@@ -173,17 +142,25 @@ function CollectionsContent() {
     setSelectedSize('');
   };
 
-  // Mock filtering logic for demonstration
-  const filteredProducts = MOCK_PRODUCTS.filter(product => {
-    if (selectedCategories.length > 0 && !selectedCategories.some(cat => product.name.includes(cat) || product.brand.includes(cat.split(' ')[0].toUpperCase()))) {
-      // Just a mock way to make the list smaller when multiple filters are applied
-      return Math.random() > 0.5; // Simulate filtering
+  // Filter logic
+  const filteredProducts = products.filter(product => {
+    // Category filter
+    if (selectedCategories.length > 0 && !selectedCategories.some(cat => product.category.toLowerCase().includes(cat.toLowerCase()) || product.name.toLowerCase().includes(cat.toLowerCase()))) {
+      return false;
+    }
+    // Occasion filter (mocked based on name for now since we don't have occasions in DB yet)
+    if (selectedOccasions.length > 0) {
+      const isOccasionMatch = selectedOccasions.some(occ => {
+        if (occ.toLowerCase() === 'weddings') return product.category.toLowerCase().includes('lehenga') || product.category.toLowerCase().includes('sherwani') || product.category.toLowerCase().includes('saree');
+        if (occ.toLowerCase() === 'cocktail') return product.category.toLowerCase().includes('gown') || product.category.toLowerCase().includes('saree');
+        return true; // fallback
+      });
+      if (!isOccasionMatch) return false;
     }
     return true;
   });
 
-  // Mock an actual empty state if too many filters are clicked (simulate empty)
-  const isEmptyState = selectedCategories.length >= 3 && selectedOccasions.length >= 2;
+  const isEmptyState = !loading && filteredProducts.length === 0;
 
   return (
     <main className="min-h-screen bg-[#fcf9f8] font-sans pb-24">
@@ -336,7 +313,11 @@ function CollectionsContent() {
 
         {/* --- Product Grid & Empty State --- */}
         <div className="flex-1 flex flex-col">
-          {isEmptyState ? (
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 md:py-32 text-center h-full">
+              <h2 className="font-serif text-2xl md:text-3xl text-[#001410] mb-3">Loading Collections...</h2>
+            </div>
+          ) : isEmptyState ? (
             <div className="flex flex-col items-center justify-center py-20 md:py-32 text-center h-full">
               <div className="w-16 h-16 md:w-20 md:h-20 bg-zinc-100 rounded-full flex items-center justify-center mb-6">
                 <svg className="w-8 h-8 md:w-10 md:h-10 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>

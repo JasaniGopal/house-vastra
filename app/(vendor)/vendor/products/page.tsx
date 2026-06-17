@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import ProductStatusToggle from "@/components/Vendor/ProductStatusToggle";
 
 export default async function VendorProductsPage() {
   const session = await getServerSession(authOptions);
@@ -86,7 +87,10 @@ export default async function VendorProductsPage() {
                       <td className="px-6 py-4 font-bold text-[#001410]">₹{product.vendorExpectedRent?.toString()}</td>
                       <td className="px-6 py-4">
                         {product.approvalStatus === "APPROVED" && (
-                          <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Live</span>
+                          <div>
+                            <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Live</span>
+                            <ProductStatusToggle productId={product.id} initialAvailability={product.isAvailable} />
+                          </div>
                         )}
                         {product.approvalStatus === "PENDING" && (
                           <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Pending Review</span>

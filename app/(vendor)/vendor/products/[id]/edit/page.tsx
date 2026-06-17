@@ -28,6 +28,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     description: "",
     retailValue: "",
     vendorExpectedRent: "",
+    vendorExpectedDeposit: "",
     sizes: "",
     approvalStatus: "",
     rejectionReason: null as string | null,
@@ -56,6 +57,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           description: product.description,
           retailValue: product.retailValue.toString(),
           vendorExpectedRent: product.vendorExpectedRent.toString(),
+          vendorExpectedDeposit: product.vendorExpectedDeposit.toString(),
           sizes: product.sizes,
           approvalStatus: product.approvalStatus,
           rejectionReason: product.rejectionReason,
@@ -215,7 +217,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={4} className="w-full border border-zinc-300 px-4 py-3 text-sm focus:outline-none focus:border-[#001410]" required />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#001410] mb-2 block">Retail Value (₹)</label>
               <input type="number" value={formData.retailValue} onChange={e => setFormData({...formData, retailValue: e.target.value})} className="w-full border border-zinc-300 px-4 py-3 text-sm focus:outline-none focus:border-[#001410]" required />
@@ -223,6 +225,10 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             <div>
               <label className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#001410] mb-2 block">Your Expected Rent (₹)</label>
               <input type="number" value={formData.vendorExpectedRent} onChange={e => setFormData({...formData, vendorExpectedRent: e.target.value})} className="w-full border border-zinc-300 px-4 py-3 text-sm focus:outline-none focus:border-[#001410]" required />
+            </div>
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#001410] mb-2 block">Expected Deposit (₹)</label>
+              <input type="number" value={formData.vendorExpectedDeposit} onChange={e => setFormData({...formData, vendorExpectedDeposit: e.target.value})} className="w-full border border-zinc-300 px-4 py-3 text-sm focus:outline-none focus:border-[#001410]" required />
             </div>
           </div>
 

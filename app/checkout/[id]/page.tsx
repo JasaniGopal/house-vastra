@@ -3,23 +3,67 @@
 import React, { useState, use } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import Script from "next/script";
 
-const getProductById = (id: string) => {
-  return {
-    id: parseInt(id) || 1,
-    title: "Emerald Banarasi Heritage Lehenga",
-    designer: "Sabyasachi",
-    image: "/images/home/why-rent-vastra-home.jpg",
-    duration: "4 Days: 14 Oct - 18 Oct",
-    deposit: 5000,
-    price: 14500,
-  };
-};
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
-export default function DirectCheckoutPage({ params }: { params: Promise<{ id: string }> }) {
-  const unwrappedParams = use(params);
-  const item = getProductById(unwrappedParams.id);
-  const items = [item];
+function CheckoutContent({ unwrappedParams }: { unwrappedParams: any }) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const res = await fetch(`/api/products/${unwrappedParams.id}`);
+        if (res.ok) {
+          const product = await res.json();
+          const start = searchParams.get('start');
+          const end = searchParams.get('end');
+          const size = searchParams.get('size') || "Custom";
+          
+          let calculatedDays = 4;
+          let durationStr = "4 Days (Dates pending)";
+          if (start && end) {
+            const s = new Date(start);
+            const e = new Date(end);
+            const diffTime = e.getTime() - s.getTime();
+            if (diffTime > 0) {
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              calculatedDays = Math.max(diffDays, 4);
+              const formatter = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' });
+              durationStr = `${calculatedDays} Days: ${formatter.format(s)} - ${formatter.format(e)}`;
+            }
+          }
+
+          const baseRental = product.rentalPrice4Day || 0;
+          const currentRentalPrice = Math.round((baseRental / 4) * calculatedDays);
+          const currentDeposit = product.securityDeposit || Math.round(baseRental * 0.3);
+
+          setItems([{
+            id: product.id,
+            title: product.name,
+            designer: product.vendor?.boutiqueName || "Boutique",
+            image: product.images?.[0]?.url || "/images/placeholder.jpg",
+            size: size,
+            duration: durationStr,
+            deposit: currentDeposit,
+            price: currentRentalPrice,
+            startDate: start || undefined,
+            endDate: end || undefined
+          }]);
+        }
+      } catch (err) {
+        console.error("Failed to load product", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProduct();
+  }, [unwrappedParams.id, searchParams]);
   
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -34,12 +78,82 @@ export default function DirectCheckoutPage({ params }: { params: Promise<{ id: s
     phone: "+91 98XXX XXXXX"
   });
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
+    if (items.length === 0) return;
     setIsCheckoutLoading(true);
-    setTimeout(() => {
+
+    try {
+      // 1. Create order on server
+      const res = await fetch("/api/checkout/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: grandTotal }),
+      });
+      
+      const order = await res.json();
+      if (!order.id) {
+        throw new Error("Failed to create Razorpay order");
+      }
+
+      // 2. Initialize Razorpay popup
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_mock_key",
+        amount: order.amount,
+        currency: order.currency,
+        name: "Rent Vastra",
+        description: "Luxury Rental Order",
+        order_id: order.id,
+        handler: async function (response: any) {
+          // 3. Verify payment on server
+          const verifyRes = await fetch("/api/checkout/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              items: items,
+              address: address,
+              userId: null // In real app, pass actual session userId
+            }),
+          });
+          const verifyData = await verifyRes.json();
+          if (verifyData.success) {
+            setIsSuccess(true);
+          } else {
+            alert("Payment verification failed. Please contact support.");
+          }
+        },
+        prefill: {
+          name: address.name,
+          contact: address.phone,
+        },
+        theme: {
+          color: "#001410",
+        },
+      };
+
+      const rzpKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_mock_key";
+      if (rzpKey === "rzp_test_mock_key") {
+        options.handler({
+          razorpay_order_id: order.id,
+          razorpay_payment_id: "pay_mock_" + Math.random().toString(36).substring(2, 10),
+          razorpay_signature: "mock_signature",
+        });
+        return;
+      }
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on("payment.failed", function (response: any) {
+        alert(`Payment failed! ${response.error.description}`);
+      });
+      rzp.open();
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong during checkout.");
+    } finally {
       setIsCheckoutLoading(false);
-      setIsSuccess(true);
-    }, 2000);
+    }
   };
 
   const subtotal = items.reduce((acc, item) => acc + item.price, 0);
@@ -72,7 +186,9 @@ export default function DirectCheckoutPage({ params }: { params: Promise<{ id: s
   }
 
   return (
-    <div className="min-h-screen bg-[#fcf9f8] text-[#1c1b1b] font-sans">
+    <>
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+      <div className="min-h-screen bg-[#fcf9f8] text-[#1c1b1b] font-sans">
       {/* Header Bar */}
       <header className="w-full bg-white border-b border-[#c1c8c5]/30 sticky top-0 z-30">
         <div className="mx-auto max-w-[1280px] px-4 md:px-16 py-5 flex items-center justify-between">
@@ -94,14 +210,18 @@ export default function DirectCheckoutPage({ params }: { params: Promise<{ id: s
 
       {/* Main Grid */}
       <main className="mx-auto max-w-[1280px] px-4 md:px-16 py-8 md:py-12">
-        {items.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center py-24">
+            <h2 className="font-serif text-2xl text-[#001410]">Loading checkout...</h2>
+          </div>
+        ) : items.length === 0 ? (
           <div className="max-w-[420px] mx-auto w-full text-center py-24">
             <svg className="w-16 h-16 mx-auto text-zinc-300 mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
             </svg>
-            <h2 className="font-serif text-2xl font-bold text-[#001410] mb-2">Your Bag is Empty</h2>
+            <h2 className="font-serif text-2xl font-bold text-[#001410] mb-2">Item Not Found</h2>
             <p className="font-sans text-sm text-[#5c6462] leading-relaxed mb-8">
-              Explore our collection of heritage designer ethnic wear and book your dream outfit.
+              We couldn't load the details for this item.
             </p>
             <Link
               href="/"
@@ -401,5 +521,20 @@ export default function DirectCheckoutPage({ params }: { params: Promise<{ id: s
 
       </main>
     </div>
+    <Script src="https://checkout.razorpay.com/v1/checkout.js" />
+    </>
+  );
+}
+
+export default function DirectCheckoutPage({ params }: { params: Promise<{ id: string }> }) {
+  const unwrappedParams = use(params);
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#fcf9f8] flex items-center justify-center">
+        <h2 className="font-serif text-2xl text-[#001410]">Loading checkout...</h2>
+      </div>
+    }>
+      <CheckoutContent unwrappedParams={unwrappedParams} />
+    </Suspense>
   );
 }

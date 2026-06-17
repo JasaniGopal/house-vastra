@@ -5,12 +5,14 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category");
+    const trending = searchParams.get("trending") === "true";
 
     const products = await prisma.product.findMany({
       where: {
         isAvailable: true,
         approvalStatus: "APPROVED",
         ...(category ? { category: { slug: category } } : {}),
+        ...(trending ? { isTrending: true } : {}),
       },
       include: {
         images: true,

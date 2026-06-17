@@ -16,6 +16,8 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
   
   // Admin fields
   const [rentalPrice, setRentalPrice] = useState("");
+  const [securityDeposit, setSecurityDeposit] = useState("");
+  const [isTrending, setIsTrending] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [rejectionReasonInput, setRejectionReasonInput] = useState("");
 
@@ -32,6 +34,9 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
         if (data.vendorExpectedRent) {
           const suggestedPrice = Math.ceil(data.vendorExpectedRent * 1.2);
           setRentalPrice(suggestedPrice.toString());
+        }
+        if (data.vendorExpectedDeposit) {
+          setSecurityDeposit(data.vendorExpectedDeposit.toString());
         }
         
       } catch (err: any) {
@@ -57,7 +62,9 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          rentalPrice: parseFloat(rentalPrice)
+          rentalPrice: parseFloat(rentalPrice),
+          securityDeposit: parseFloat(securityDeposit || "0"),
+          isTrending
         })
       });
 
@@ -205,9 +212,13 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
                  <span className="text-xs font-bold uppercase tracking-wider text-[#775a19]">Vendor Wants</span>
                  <span className="font-serif text-xl font-bold text-[#775a19]">₹{product.vendorExpectedRent?.toLocaleString()}</span>
                </div>
+               <div className="flex justify-between items-center pb-4 border-b border-zinc-100">
+                 <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Vendor Exp. Deposit</span>
+                 <span className="font-serif text-lg font-medium text-zinc-600">₹{product.vendorExpectedDeposit?.toLocaleString()}</span>
+               </div>
              </div>
 
-             <div>
+             <div className="mb-6">
                 <label className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#001410] mb-2 block">
                   Set Final Rental Price (₹)
                 </label>
@@ -225,6 +236,33 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
                 <p className="text-[10px] text-zinc-500 mt-2 font-medium">
                   This is the exact price the customer will see and pay on the website.
                 </p>
+             </div>
+
+             <div className="mb-6">
+                <label className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#001410] mb-2 block">
+                  Set Final Security Deposit (₹)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-serif text-xl text-zinc-400">₹</span>
+                  <input 
+                    type="number" 
+                    value={securityDeposit} 
+                    onChange={e => setSecurityDeposit(e.target.value)} 
+                    className="w-full border border-zinc-300 rounded-xl pl-8 pr-4 py-3 font-serif text-xl text-[#001410] focus:outline-none focus:border-emerald-500" 
+                    placeholder="0.00"
+                    required 
+                  />
+                </div>
+             </div>
+
+             <div className="flex items-center gap-3 bg-amber-50 p-4 rounded-xl border border-amber-200 cursor-pointer" onClick={() => setIsTrending(!isTrending)}>
+               <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${isTrending ? 'bg-amber-500 border-amber-500' : 'bg-white border-amber-300'}`}>
+                 {isTrending && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+               </div>
+               <div>
+                 <p className="text-sm font-bold text-amber-900">Show in Trending Carousel</p>
+                 <p className="text-[10px] text-amber-700">Display this outfit prominently on the homepage.</p>
+               </div>
              </div>
           </div>
 
