@@ -148,20 +148,46 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     };
   };
 
-  const handleAddToBag = () => {
+  const handleAddToBag = async () => {
     const item = createCartItem();
     if (item) {
-      addToCart(item);
-      showToast(`${product?.name} added to your bag!`);
+      try {
+        const res = await fetch(`/api/products/${unwrappedParams.id}/availability?start=${item.startDate}&end=${item.endDate}`);
+        const data = await res.json();
+        if (!data.available) {
+          showToast("This item is not available for the selected dates.");
+          return;
+        }
+        addToCart(item);
+        showToast(`${product?.name} added to your bag!`);
+      } catch (err) {
+        showToast("Error checking availability. Please try again.");
+      }
     }
   };
 
-  const handleRentNow = () => {
-    const query = new URLSearchParams();
-    if (startDate) query.set('start', startDate);
-    if (endDate) query.set('end', endDate);
-    if (selectedSize) query.set('size', selectedSize);
-    router.push(`/checkout/${unwrappedParams.id}?${query.toString()}`);
+  const handleRentNow = async () => {
+    if (!startDate || !endDate) {
+      showToast("Please select your rental dates first");
+      return;
+    }
+    
+    try {
+      const res = await fetch(`/api/products/${unwrappedParams.id}/availability?start=${startDate}&end=${endDate}`);
+      const data = await res.json();
+      if (!data.available) {
+        showToast("This item is not available for the selected dates.");
+        return;
+      }
+      
+      const query = new URLSearchParams();
+      query.set('start', startDate);
+      query.set('end', endDate);
+      if (selectedSize) query.set('size', selectedSize);
+      router.push(`/checkout/${unwrappedParams.id}?${query.toString()}`);
+    } catch (err) {
+      showToast("Error checking availability. Please try again.");
+    }
   };
 
   const wishlisted = product ? wishlistItems.some(i => i.id === product.id) : false;

@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name, description, retailValue, vendorExpectedRent, vendorExpectedDeposit, sizes, categoryId, images } = body;
+    const { name, description, retailValue, vendorExpectedRent, vendorExpectedDeposit, sizes, categoryId, occasionIds, images } = body;
 
     // Basic validation
     if (!name || !description || !retailValue || !vendorExpectedRent || !sizes || !categoryId) {
@@ -42,6 +42,13 @@ export async function POST(req: Request) {
             url,
             isPrimary: index === 0, // First image is primary
           })),
+        }
+      : undefined;
+
+    // Prepare occasions payload if provided
+    const occasionPayload = occasionIds && Array.isArray(occasionIds) && occasionIds.length > 0
+      ? {
+          connect: occasionIds.map((id: string) => ({ id }))
         }
       : undefined;
 
@@ -59,10 +66,12 @@ export async function POST(req: Request) {
         approvalStatus: "PENDING",
         isAvailable: false,
         images: imagePayload,
+        occasions: occasionPayload,
       },
       include: {
         images: true,
         category: true,
+        occasions: true,
       },
     });
 

@@ -99,9 +99,12 @@ export default async function VendorProductsPage() {
                           <span className="bg-rose-100 text-rose-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Rejected</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-6 py-4 text-right flex flex-col gap-2 items-end">
                         <Link href={`/vendor/products/${product.id}/edit`} className="text-xs font-bold text-[#775a19] hover:text-[#001410] uppercase tracking-wider hover:underline">
                           Edit
+                        </Link>
+                        <Link href={`/vendor/products/${product.id}/calendar`} className="text-xs font-bold text-zinc-500 hover:text-[#001410] uppercase tracking-wider hover:underline">
+                          Calendar
                         </Link>
                       </td>
                     </tr>

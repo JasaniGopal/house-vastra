@@ -77,6 +77,12 @@ export default async function AdminLayout({
               </svg>
               Categories
             </Link>
+            <Link href="/admin/occasions" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-[#414846] hover:bg-zinc-50 hover:text-[#001410] transition-colors group">
+              <svg className="w-5 h-5 text-zinc-400 group-hover:text-[#775a19] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+              </svg>
+              Occasions
+            </Link>
           </div>
         </nav>
 

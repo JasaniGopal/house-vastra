@@ -72,6 +72,14 @@ model Category {
   products    Product[]
 }
 
+model Occasion {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  products    Product[]
+}
+
 model Product {
   id              String         @id @default(uuid())
   vendorId        String
@@ -92,6 +100,7 @@ model Product {
 
   sizes              String         // Comma separated e.g. "S,M,L"
   images             ProductImage[]
+  occasions          Occasion[]
   
   approvalStatus     ApprovalStatus @default(PENDING)
   rejectionReason    String?        @db.Text
@@ -100,7 +109,18 @@ model Product {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   
-  orders          Order[]
+  orders             Order[]
+  blockedDates       BlockedDate[]
+}
+
+model BlockedDate {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  startDate DateTime
+  endDate   DateTime
+  reason    String?
+  createdAt DateTime @default(now())
 }
 
 model ProductImage {

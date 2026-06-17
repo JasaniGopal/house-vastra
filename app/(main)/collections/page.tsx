@@ -15,6 +15,7 @@ export interface DisplayProduct {
   retailPrice: string;
   image: string;
   category: string;
+  occasions: string[];
 }
 
 // Reusable Product Card Component
@@ -82,6 +83,8 @@ function CollectionsContent() {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   const [products, setProducts] = useState<DisplayProduct[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [occasions, setOccasions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -98,6 +101,7 @@ function CollectionsContent() {
             retailPrice: p.retailValue?.toLocaleString() || "0",
             image: p.images?.[0]?.url || "/images/placeholder.jpg",
             category: p.category?.name || "Uncategorized",
+            occasions: p.occasions?.map((occ: any) => occ.name) || [],
           }));
           setProducts(mapped);
         }
@@ -107,7 +111,34 @@ function CollectionsContent() {
         setLoading(false);
       }
     };
+
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch("/api/categories");
+        if (res.ok) {
+          const data = await res.json();
+          setCategories(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch categories", err);
+      }
+    };
+
+    const fetchOccasions = async () => {
+      try {
+        const res = await fetch("/api/occasions");
+        if (res.ok) {
+          const data = await res.json();
+          setOccasions(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch occasions", err);
+      }
+    };
+
     fetchProducts();
+    fetchCategories();
+    fetchOccasions();
   }, []);
 
   // Update occasion filter if URL changes directly
@@ -148,13 +179,9 @@ function CollectionsContent() {
     if (selectedCategories.length > 0 && !selectedCategories.some(cat => product.category.toLowerCase().includes(cat.toLowerCase()) || product.name.toLowerCase().includes(cat.toLowerCase()))) {
       return false;
     }
-    // Occasion filter (mocked based on name for now since we don't have occasions in DB yet)
+    // Occasion filter (dynamic)
     if (selectedOccasions.length > 0) {
-      const isOccasionMatch = selectedOccasions.some(occ => {
-        if (occ.toLowerCase() === 'weddings') return product.category.toLowerCase().includes('lehenga') || product.category.toLowerCase().includes('sherwani') || product.category.toLowerCase().includes('saree');
-        if (occ.toLowerCase() === 'cocktail') return product.category.toLowerCase().includes('gown') || product.category.toLowerCase().includes('saree');
-        return true; // fallback
-      });
+      const isOccasionMatch = selectedOccasions.some(occ => product.occasions.includes(occ));
       if (!isOccasionMatch) return false;
     }
     return true;
@@ -232,21 +259,19 @@ function CollectionsContent() {
           <div className="flex flex-col gap-4">
             <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Category</span>
             <div className="flex flex-col gap-3">
-              {[
-                'Lehengas', 'Sarees', 'Sherwanis', 'Anarkalis', 'Kurtas & Sets', 
-                'Dresses & Gowns', 'Suits & Blazers', 'Tops & Shirts', 'Trousers & Skirts',
-                'Jewelry', 'Footwear', 'Bags & Clutches', 'Headwear'
-              ].map(cat => (
-                <label key={cat} className="flex items-center gap-3 cursor-pointer group">
+              {categories.length > 0 ? categories.map(cat => (
+                <label key={cat.id} className="flex items-center gap-3 cursor-pointer group">
                   <input 
                     type="checkbox" 
-                    checked={selectedCategories.includes(cat)}
-                    onChange={() => toggleCategory(cat)}
+                    checked={selectedCategories.includes(cat.name)}
+                    onChange={() => toggleCategory(cat.name)}
                     className="w-4 h-4 rounded border-zinc-300 text-[#001410] focus:ring-[#775a19]"
                   />
-                  <span className="text-xs text-zinc-600 group-hover:text-[#001410] transition-colors">{cat}</span>
+                  <span className="text-xs text-zinc-600 group-hover:text-[#001410] transition-colors">{cat.name}</span>
                 </label>
-              ))}
+              )) : (
+                <div className="text-xs text-zinc-400">Loading categories...</div>
+              )}
             </div>
           </div>
 
@@ -254,17 +279,19 @@ function CollectionsContent() {
           <div className="flex flex-col gap-4">
             <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Occasion</span>
             <div className="flex flex-col gap-3">
-              {['Weddings', 'Cocktail', 'Haldi', 'Reception'].map(occ => (
-                <label key={occ} className="flex items-center gap-3 cursor-pointer group">
+              {occasions.length > 0 ? occasions.map(occ => (
+                <label key={occ.id} className="flex items-center gap-3 cursor-pointer group">
                   <input 
                     type="checkbox" 
-                    checked={selectedOccasions.includes(occ)}
-                    onChange={() => toggleOccasion(occ)}
+                    checked={selectedOccasions.includes(occ.name)}
+                    onChange={() => toggleOccasion(occ.name)}
                     className="w-4 h-4 rounded border-zinc-300 text-[#001410] focus:ring-[#775a19]"
                   />
-                  <span className="text-xs text-zinc-600 group-hover:text-[#001410] transition-colors">{occ}</span>
+                  <span className="text-xs text-zinc-600 group-hover:text-[#001410] transition-colors">{occ.name}</span>
                 </label>
-              ))}
+              )) : (
+                <div className="text-xs text-zinc-400">Loading occasions...</div>
+              )}
             </div>
           </div>
 
@@ -389,21 +416,19 @@ function CollectionsContent() {
             <div className="flex flex-col gap-4">
               <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Category</span>
               <div className="grid grid-cols-2 gap-3">
-                {[
-                  'Lehengas', 'Sarees', 'Sherwanis', 'Anarkalis', 'Kurtas & Sets', 
-                  'Dresses & Gowns', 'Suits & Blazers', 'Tops & Shirts', 'Trousers & Skirts',
-                  'Jewelry', 'Footwear', 'Bags & Clutches', 'Headwear'
-                ].map(cat => (
-                  <label key={`mob-${cat}`} className="flex items-center gap-3 cursor-pointer">
+                {categories.length > 0 ? categories.map(cat => (
+                  <label key={`mob-${cat.id}`} className="flex items-center gap-3 cursor-pointer">
                     <input 
                       type="checkbox" 
-                      checked={selectedCategories.includes(cat)}
-                      onChange={() => toggleCategory(cat)}
+                      checked={selectedCategories.includes(cat.name)}
+                      onChange={() => toggleCategory(cat.name)}
                       className="w-4 h-4 rounded border-zinc-300 text-[#001410] focus:ring-[#775a19]"
                     />
-                    <span className="text-xs text-zinc-600">{cat}</span>
+                    <span className="text-xs text-zinc-600">{cat.name}</span>
                   </label>
-                ))}
+                )) : (
+                  <div className="text-xs text-zinc-400">Loading categories...</div>
+                )}
               </div>
             </div>
 

@@ -80,9 +80,30 @@ function CheckoutContent({ unwrappedParams }: { unwrappedParams: any }) {
 
   const handleCheckout = async () => {
     if (items.length === 0) return;
+    
+    // Validation for missing dates
+    if (items.some(item => !item.startDate || !item.endDate)) {
+      alert("Please select rental dates before checking out.");
+      return;
+    }
+
     setIsCheckoutLoading(true);
 
     try {
+      // 0. Validate availability
+      const valRes = await fetch("/api/checkout/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items }),
+      });
+      const valData = await valRes.json();
+      
+      if (!valData.available) {
+        alert("Sorry, this item is no longer available for the selected dates.");
+        setIsCheckoutLoading(false);
+        return;
+      }
+
       // 1. Create order on server
       const res = await fetch("/api/checkout/create-order", {
         method: "POST",

@@ -17,6 +17,7 @@ export async function GET(req: Request) {
       include: {
         images: true,
         category: true,
+        occasions: true,
         vendor: {
           select: {
             boutiqueName: true,

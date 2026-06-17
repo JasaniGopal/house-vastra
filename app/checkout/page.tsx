@@ -15,6 +15,8 @@ interface CartItem {
   duration: string;
   deposit: number;
   price: number;
+  startDate?: string;
+  endDate?: string;
 }
 
 export default function CheckoutPage() {
@@ -38,9 +40,30 @@ export default function CheckoutPage() {
 
   const handleCheckout = async () => {
     if (items.length === 0) return;
+    
+    // Validation for missing dates
+    if (items.some(item => !item.startDate || !item.endDate)) {
+      alert("Please select rental dates for all items in your bag before checking out.");
+      return;
+    }
+
     setIsCheckoutLoading(true);
 
     try {
+      // 0. Validate availability
+      const valRes = await fetch("/api/checkout/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items }),
+      });
+      const valData = await valRes.json();
+      
+      if (!valData.available) {
+        alert("Sorry, some items in your bag are no longer available for the selected dates. Please review your bag.");
+        setIsCheckoutLoading(false);
+        return;
+      }
+
       // 1. Create order on server
       const res = await fetch("/api/checkout/create-order", {
         method: "POST",

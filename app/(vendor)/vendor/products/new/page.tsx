@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 export default function AddProductPage() {
   const router = useRouter();
   const [categories, setCategories] = useState<any[]>([]);
+  const [occasions, setOccasions] = useState<any[]>([]);
+  const [selectedOccasionIds, setSelectedOccasionIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -38,7 +40,19 @@ export default function AddProductPage() {
         console.error("Failed to load categories", err);
       }
     }
+    async function fetchOccasions() {
+      try {
+        const res = await fetch("/api/occasions");
+        if (res.ok) {
+          const data = await res.json();
+          setOccasions(data);
+        }
+      } catch (err) {
+        console.error("Failed to load occasions", err);
+      }
+    }
     fetchCategories();
+    fetchOccasions();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -89,7 +103,8 @@ export default function AddProductPage() {
         vendorExpectedRent: parseFloat(formData.vendorExpectedRent),
         vendorExpectedDeposit: parseFloat(formData.vendorExpectedDeposit),
         sizes: formData.sizes,
-        images: uploadedUrls // API maps this array of strings
+        images: uploadedUrls, // API maps this array of strings
+        occasionIds: selectedOccasionIds
       };
 
       const res = await fetch("/api/vendor/products", {
@@ -163,6 +178,31 @@ export default function AddProductPage() {
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
               </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#001410] mb-2 block">
+              Occasions
+            </label>
+            <div className="flex flex-wrap gap-3">
+              {occasions.map(occ => (
+                <label key={occ.id} className="flex items-center gap-2 cursor-pointer border border-zinc-200 px-3 py-2 rounded-lg hover:bg-zinc-50">
+                  <input
+                    type="checkbox"
+                    checked={selectedOccasionIds.includes(occ.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedOccasionIds(prev => [...prev, occ.id]);
+                      } else {
+                        setSelectedOccasionIds(prev => prev.filter(id => id !== occ.id));
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-zinc-300 text-[#001410] focus:ring-[#775a19]"
+                  />
+                  <span className="text-sm font-medium text-zinc-700">{occ.name}</span>
+                </label>
+              ))}
             </div>
           </div>
 
