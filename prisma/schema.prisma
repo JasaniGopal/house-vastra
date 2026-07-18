@@ -66,6 +66,7 @@ model Vendor {
   
   products        Product[]
   payouts         Payout[]
+  supportTickets  SupportTicket[]
 }
 
 model Category {
@@ -273,6 +274,17 @@ model Review {
   rating      Int      // 1-5
   comment     String?  @db.Text
   isApproved  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SupportTicket {
+  id          String   @id @default(uuid())
+  vendorId    String
+  vendor      Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  subject     String
+  message     String   @db.Text
+  status      String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

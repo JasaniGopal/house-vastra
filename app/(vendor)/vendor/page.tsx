@@ -122,16 +122,21 @@ export default async function VendorDashboard() {
         </div>
 
         {/* Metric 4 (Total Inventory - LIVE) */}
-        <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm relative overflow-hidden group">
+        <Link href="/vendor/products" className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm relative overflow-hidden group hover:border-[#775a19] transition-all cursor-pointer block">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
             <svg className="w-16 h-16 text-[#775a19]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" /></svg>
           </div>
-          <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2 relative z-10">Total Inventory</p>
-          <p className="font-serif text-3xl font-bold text-[#001410] relative z-10">{totalInventory}</p>
-          <div className="mt-4 flex items-center gap-2 relative z-10">
-            <span className="text-zinc-400 text-xs">Total outfits uploaded</span>
+          <div className="flex justify-between items-start relative z-10">
+            <div>
+              <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2 group-hover:text-[#775a19] transition-colors">Total Inventory</p>
+              <p className="font-serif text-3xl font-bold text-[#001410]">{totalInventory}</p>
+            </div>
+            <svg className="w-5 h-5 text-zinc-300 group-hover:text-[#775a19] group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
           </div>
-        </div>
+          <div className="mt-4 flex items-center gap-2 relative z-10">
+            <span className="text-zinc-400 text-xs">Manage all outfits</span>
+          </div>
+        </Link>
       </div>
 
       {/* Recent Uploads Section */}

@@ -4,6 +4,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from 'next/link';
+import DownloadCsvButton from "./DownloadCsvButton";
 
 export default async function VendorEarningsPage() {
   const session = await getServerSession(authOptions);
@@ -141,7 +142,10 @@ export default async function VendorEarningsPage() {
 
         {/* Payout History */}
         <div>
-          <h2 className="font-serif text-xl font-bold text-[#001410] mb-4">Payout History</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-serif text-xl font-bold text-[#001410]">Payout History</h2>
+            <DownloadCsvButton payouts={payouts} />
+          </div>
           <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
             {payouts.length === 0 ? (
               <div className="p-8 text-center text-zinc-500 text-sm">
