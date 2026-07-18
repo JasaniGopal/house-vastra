@@ -42,6 +42,6 @@ export async function POST(
     return NextResponse.json(newBlockedDate, { status: 201 });
   } catch (error: any) {
     console.error("Failed to add blocked date:", error);
-    return NextResponse.json({ error: "Failed to add blocked date" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to add blocked date", details: error.message }, { status: 500 });
   }
 }

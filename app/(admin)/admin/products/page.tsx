@@ -11,6 +11,8 @@ export default function LiveInventoryPage() {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<"OFFLINE" | "ONLINE">("OFFLINE");
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  
+  const [selectedVendorId, setSelectedVendorId] = useState<string>("ALL");
 
   useEffect(() => {
     fetchProducts();
@@ -64,6 +66,14 @@ export default function LiveInventoryPage() {
 
 
 
+  const vendors = Array.from(new Set(products.filter(p => p.vendor).map(p => p.vendor.id))).map(id => {
+    return products.find(p => p.vendor?.id === id)?.vendor;
+  });
+
+  const filteredProducts = selectedVendorId === "ALL" 
+    ? products 
+    : products.filter(p => p.vendor?.id === selectedVendorId);
+
   if (loading) return <div className="p-8 text-zinc-500 font-medium">Loading inventory...</div>;
 
   return (
@@ -72,6 +82,18 @@ export default function LiveInventoryPage() {
         <div>
           <h1 className="font-serif text-3xl md:text-4xl font-medium text-[#001410] tracking-tight">Live Inventory</h1>
           <p className="text-[#414846] mt-2 text-sm md:text-base">Manage all approved products currently on the platform.</p>
+        </div>
+        <div>
+          <select 
+            value={selectedVendorId}
+            onChange={(e) => setSelectedVendorId(e.target.value)}
+            className="px-4 py-2 bg-white border border-zinc-200 rounded-xl text-sm font-bold text-[#001410] focus:outline-none focus:border-[#775a19]"
+          >
+            <option value="ALL">All Boutiques</option>
+            {vendors.map(vendor => (
+              <option key={vendor.id} value={vendor.id}>{vendor.boutiqueName}</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -83,10 +105,10 @@ export default function LiveInventoryPage() {
 
       <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          {products.length === 0 ? (
+          {filteredProducts.length === 0 ? (
             <div className="p-16 text-center">
               <h3 className="text-[#001410] font-serif text-xl font-medium mb-2">No Approved Products</h3>
-              <p className="text-zinc-500 text-sm mb-6">There are currently no live products on the platform.</p>
+              <p className="text-zinc-500 text-sm mb-6">There are currently no live products matching this filter.</p>
             </div>
           ) : (
             <table className="w-full text-sm text-left text-[#414846]">
@@ -100,7 +122,7 @@ export default function LiveInventoryPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
-                {products.map((product) => (
+                {filteredProducts.map((product) => (
                   <tr key={product.id} className="hover:bg-[#fcf9f8] transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">

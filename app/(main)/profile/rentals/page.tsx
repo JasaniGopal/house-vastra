@@ -10,10 +10,13 @@ export default function ActiveRentalsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/user/orders')
+    fetch('/api/profile/orders')
       .then(res => res.json())
       .then(data => {
-        setOrders(data.orders || []);
+        const activeOrders = data.filter((o: any) => 
+          !["RETURNED", "COMPLETED", "CANCELLED"].includes(o.status)
+        );
+        setOrders(activeOrders || []);
         setLoading(false);
       })
       .catch(err => {

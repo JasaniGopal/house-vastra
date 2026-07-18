@@ -20,7 +20,7 @@ export async function GET(req: Request) {
           include: {
             images: true,
             vendor: {
-              select: { boutiqueName: true }
+              select: { id: true, boutiqueName: true }
             }
           }
         }

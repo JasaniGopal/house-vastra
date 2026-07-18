@@ -44,6 +44,8 @@ model User {
   orders        Order[]
   accounts      Account[]
   sessions      Session[]
+  wishlistItems WishlistItem[]
+  cartItems     CartItem[]
 }
 
 model Vendor {
@@ -111,6 +113,8 @@ model Product {
   
   orders             Order[]
   blockedDates       BlockedDate[]
+  wishlistedBy       WishlistItem[]
+  inCarts            CartItem[]
 }
 
 model BlockedDate {
@@ -200,4 +204,27 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model WishlistItem {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size      String?
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime @default(now())
 }

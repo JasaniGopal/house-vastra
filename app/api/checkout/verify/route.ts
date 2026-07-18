@@ -47,9 +47,29 @@ export async function POST(req: Request) {
     }
 
     for (const item of items) {
-      // Calculate basic earnings
-      const platformFee = Math.round(item.price * 0.15); // 15% platform fee
-      const vendorEarnings = item.price - platformFee;
+      // Fetch the product from the DB to get the original vendor expectations
+      const dbProduct = await prisma.product.findUnique({
+        where: { id: item.id }
+      });
+
+      let vendorEarnings = 0;
+      let platformFee = 0;
+
+      if (dbProduct && dbProduct.vendorExpectedRent) {
+        // Option A: Vendor gets exactly what they asked for, Platform keeps the markup
+        vendorEarnings = dbProduct.vendorExpectedRent;
+        platformFee = item.price - vendorEarnings;
+
+        // Safety check: if Admin listed it for LESS than the vendor asked for (shouldn't happen, but just in case)
+        if (platformFee < 0) {
+          platformFee = 0;
+          vendorEarnings = item.price;
+        }
+      } else {
+        // Fallback if product not found or no expected rent set
+        platformFee = Math.round(item.price * 0.15); // 15% platform fee
+        vendorEarnings = item.price - platformFee;
+      }
 
       const newOrder = await prisma.order.create({
         data: {
@@ -67,6 +87,11 @@ export async function POST(req: Request) {
       });
       createdOrders.push(newOrder);
     }
+
+    // Clear the cart in the DB since checkout succeeded
+    await prisma.cartItem.deleteMany({
+      where: { userId: customerId }
+    });
 
     return NextResponse.json({ success: true, orders: createdOrders });
   } catch (error) {
