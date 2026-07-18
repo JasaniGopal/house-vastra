@@ -63,6 +63,18 @@ export default async function AdminLayout({
             </svg>
             Global Orders
           </Link>
+          <Link href="/admin/returns" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-[#414846] hover:bg-zinc-50 hover:text-[#001410] transition-colors group">
+            <svg className="w-5 h-5 text-zinc-400 group-hover:text-[#775a19] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z" />
+            </svg>
+            Returns & Deposits
+          </Link>
+          <Link href="/admin/customers" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-[#414846] hover:bg-zinc-50 hover:text-[#001410] transition-colors group">
+            <svg className="w-5 h-5 text-zinc-400 group-hover:text-[#775a19] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            Customers CRM
+          </Link>
           <div className="pt-4 mt-2 border-t border-zinc-100">
             <p className="px-4 text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Management</p>
             <Link href="/admin/payouts" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-[#414846] hover:bg-zinc-50 hover:text-[#001410] transition-colors group">
@@ -82,6 +94,12 @@ export default async function AdminLayout({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
               </svg>
               Occasions
+            </Link>
+            <Link href="/admin/promotions" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-[#414846] hover:bg-zinc-50 hover:text-[#001410] transition-colors group">
+              <svg className="w-5 h-5 text-zinc-400 group-hover:text-[#775a19] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11" />
+              </svg>
+              Promotions
             </Link>
           </div>
         </nav>

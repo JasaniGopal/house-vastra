@@ -24,6 +24,22 @@ export default function GlobalOrdersPage() {
     }
   };
 
+  const handleStatusChange = async (orderId: string, newStatus: string) => {
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) throw new Error("Failed to update status");
+      
+      // Optimistically update
+      setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
   if (loading) return <div className="p-8 text-zinc-500 font-medium">Loading global orders...</div>;
 
   return (
@@ -82,9 +98,19 @@ export default function GlobalOrdersPage() {
                     </td>
                     <td className="px-6 py-4 font-bold text-[#001410]">₹{order.totalAmount?.toString()}</td>
                     <td className="px-6 py-4">
-                      <span className="bg-zinc-100 text-zinc-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
-                        {order.status}
-                      </span>
+                      <select
+                        value={order.status}
+                        onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                        className="bg-zinc-50 border border-zinc-200 text-zinc-800 text-[10px] font-bold px-2 py-1.5 rounded-lg uppercase tracking-wider focus:outline-none focus:border-[#775a19]"
+                      >
+                        <option value="PENDING">PENDING</option>
+                        <option value="PREPARING">PREPARING</option>
+                        <option value="DISPATCHED">DISPATCHED</option>
+                        <option value="IN_USE">IN_USE</option>
+                        <option value="RETURNED">RETURNED</option>
+                        <option value="COMPLETED">COMPLETED</option>
+                        <option value="CANCELLED">CANCELLED</option>
+                      </select>
                     </td>
                   </tr>
                 ))}

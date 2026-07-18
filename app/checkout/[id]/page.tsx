@@ -135,7 +135,8 @@ function CheckoutContent({ unwrappedParams }: { unwrappedParams: any }) {
               razorpay_signature: response.razorpay_signature,
               items: items,
               address: address,
-              userId: null // In real app, pass actual session userId
+              userId: null, // In real app, pass actual session userId
+              couponCode: appliedCoupon?.code || null
             }),
           });
           const verifyData = await verifyRes.json();
@@ -177,10 +178,45 @@ function CheckoutContent({ unwrappedParams }: { unwrappedParams: any }) {
     }
   };
 
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountAmount: number } | null>(null);
+  const [couponError, setCouponError] = useState("");
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return;
+    setIsValidatingCoupon(true);
+    setCouponError("");
+    
+    try {
+      const res = await fetch("/api/checkout/validate-coupon", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: couponCode, subtotal }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to validate coupon");
+      
+      setAppliedCoupon({ code: data.code, discountAmount: data.discountAmount });
+      setCouponCode("");
+    } catch (err: any) {
+      setCouponError(err.message);
+      setAppliedCoupon(null);
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    setCouponError("");
+  };
+
   const subtotal = items.reduce((acc, item) => acc + item.price, 0);
   const totalDeposit = items.reduce((acc, item) => acc + item.deposit, 0);
-  // Delivery fee not in screenshot summary, so omitted to match design exactly
-  const grandTotal = subtotal + totalDeposit;
+  const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+  const grandTotal = subtotal - discountAmount + totalDeposit;
 
   if (isSuccess) {
     return (
@@ -509,6 +545,49 @@ function CheckoutContent({ unwrappedParams }: { unwrappedParams: any }) {
                       </div>
                     </div>
                   ))}
+
+                  {/* Promo Code Input */}
+                  <div className="py-4 border-y border-black/5 mb-4">
+                    <span className="block text-sm font-bold text-[#001410] mb-3">Apply Promo Code</span>
+                    {appliedCoupon ? (
+                      <div className="flex items-center justify-between bg-[#775a19]/10 border border-[#775a19]/20 p-3 rounded-sm">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-5 h-5 text-[#775a19]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className="font-bold text-[#775a19] text-sm tracking-wide">{appliedCoupon.code}</span>
+                        </div>
+                        <button onClick={removeCoupon} className="text-[#775a19] hover:text-[#001410] text-xs font-bold uppercase tracking-widest cursor-pointer">Remove</button>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="flex gap-2">
+                          <input 
+                            type="text" 
+                            value={couponCode}
+                            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                            placeholder="e.g. WELCOME500" 
+                            className="flex-1 px-4 py-3 bg-[#faf9f8] border border-black/10 rounded-sm text-sm font-bold text-[#001410] focus:outline-none focus:border-[#775a19] uppercase tracking-widest placeholder:normal-case placeholder:tracking-normal placeholder:font-normal"
+                          />
+                          <button 
+                            onClick={handleApplyCoupon}
+                            disabled={isValidatingCoupon || !couponCode}
+                            className="px-6 py-3 bg-[#001410] text-white rounded-sm font-bold text-sm hover:bg-[#775a19] transition-colors disabled:opacity-50 cursor-pointer shrink-0"
+                          >
+                            {isValidatingCoupon ? "..." : "Apply"}
+                          </button>
+                        </div>
+                        {couponError && <p className="text-red-500 text-xs font-bold mt-2">{couponError}</p>}
+                      </div>
+                    )}
+                  </div>
+
+                  {appliedCoupon && (
+                    <div className="flex justify-between items-center text-emerald-600 font-bold text-sm mb-4">
+                      <span>Discount ({appliedCoupon.code})</span>
+                      <span>-₹{appliedCoupon.discountAmount.toLocaleString('en-IN')}</span>
+                    </div>
+                  )}
 
                   {/* Grand Total */}
                   <div className="pt-6 mt-2 border-t border-black/10">

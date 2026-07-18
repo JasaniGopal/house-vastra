@@ -10,7 +10,8 @@ export async function POST(req: Request) {
       razorpay_signature, 
       items, 
       address, 
-      userId 
+      userId,
+      couponCode
     } = await req.json();
 
     const secret = process.env.RAZORPAY_KEY_SECRET || "rzp_test_mock_secret";
@@ -46,6 +47,42 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No customer found to attach order" }, { status: 400 });
     }
 
+    // Process Coupon if provided
+    let totalDiscount = 0;
+    const subtotal = items.reduce((acc: number, item: any) => acc + item.price, 0);
+
+    if (couponCode) {
+      const coupon = await prisma.coupon.findUnique({ where: { code: couponCode } });
+      if (coupon && coupon.isActive && (coupon.usageLimit === null || coupon.usageCount < coupon.usageLimit)) {
+        
+        // Rigorous check for oncePerUser limit
+        if (coupon.oncePerUser) {
+          const previousOrder = await prisma.order.findFirst({
+            where: {
+              customerId: customerId,
+              couponCode: coupon.code
+            }
+          });
+          if (previousOrder) {
+            return NextResponse.json({ error: "Promo code has already been used by this customer." }, { status: 400 });
+          }
+        }
+
+        if (coupon.discountType === "PERCENTAGE") {
+          totalDiscount = Math.round(subtotal * (coupon.discountValue / 100));
+        } else {
+          totalDiscount = coupon.discountValue;
+        }
+        if (totalDiscount > subtotal) totalDiscount = subtotal;
+
+        // Increment usage count
+        await prisma.coupon.update({
+          where: { id: coupon.id },
+          data: { usageCount: { increment: 1 } }
+        });
+      }
+    }
+
     for (const item of items) {
       // Fetch the product from the DB to get the original vendor expectations
       const dbProduct = await prisma.product.findUnique({
@@ -71,6 +108,15 @@ export async function POST(req: Request) {
         vendorEarnings = item.price - platformFee;
       }
 
+      // Distribute discount proportionally
+      let itemDiscount = 0;
+      if (totalDiscount > 0 && subtotal > 0) {
+        itemDiscount = Math.round((item.price / subtotal) * totalDiscount);
+      }
+
+      // Platform absorbs the discount
+      platformFee = platformFee - itemDiscount;
+
       const newOrder = await prisma.order.create({
         data: {
           orderNumber: `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -78,11 +124,13 @@ export async function POST(req: Request) {
           productId: item.id,
           startDate: item.startDate ? new Date(item.startDate) : new Date(),
           endDate: item.endDate ? new Date(item.endDate) : new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
-          totalAmount: item.price + item.deposit,
+          totalAmount: item.price - itemDiscount + item.deposit,
           shippingAddress: addressString,
           status: "PREPARING",
           platformFee: platformFee,
           vendorEarnings: vendorEarnings,
+          couponCode: couponCode || null,
+          discountAmount: itemDiscount
         }
       });
       createdOrders.push(newOrder);

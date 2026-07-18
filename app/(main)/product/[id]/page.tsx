@@ -135,7 +135,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     }
 
     return {
-      id: product.id,
+      id: Date.now().toString(),
+      productId: product.id,
       title: product.name,
       designer: product.brand,
       image: product.mainImage,
