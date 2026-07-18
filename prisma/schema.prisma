@@ -47,6 +47,7 @@ model User {
   sessions      Session[]
   wishlistItems WishlistItem[]
   cartItems     CartItem[]
+  reviews       Review[]
 }
 
 model Vendor {
@@ -116,6 +117,7 @@ model Product {
   blockedDates       BlockedDate[]
   wishlistedBy       WishlistItem[]
   inCarts            CartItem[]
+  reviews            Review[]
 }
 
 model BlockedDate {
@@ -149,6 +151,7 @@ model Order {
   status          OrderStatus @default(PENDING)
   shippingAddress String      @db.Text
   trackingId      String?
+  courierPartner  String?
   platformFee     Float       @default(0)
   vendorEarnings  Float       @default(0)
   depositStatus   String      @default("HELD") // HELD, REFUNDED, WITHHELD
@@ -158,6 +161,8 @@ model Order {
   payout          Payout?     @relation(fields: [payoutId], references: [id])
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+  dispute         Dispute?
+  reviews         Review[]    @relation("OrderReviews")
 }
 
 model Payout {
@@ -244,4 +249,30 @@ model Coupon {
   oncePerUser   Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+model Dispute {
+  id          String   @id @default(uuid())
+  orderId     String   @unique
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  reason      String   @db.Text
+  adminNotes  String?  @db.Text
+  status      String   @default("OPEN") // OPEN, RESOLVED_REFUND, RESOLVED_WITHHOLD
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  customerId  String
+  customer    User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderId     String?
+  order       Order?   @relation("OrderReviews", fields: [orderId], references: [id], onDelete: SetNull)
+  rating      Int      // 1-5
+  comment     String?  @db.Text
+  isApproved  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

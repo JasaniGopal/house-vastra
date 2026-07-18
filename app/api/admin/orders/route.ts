@@ -23,6 +23,9 @@ export async function GET(req: Request) {
               select: { id: true, boutiqueName: true }
             }
           }
+        },
+        dispute: {
+          select: { status: true, reason: true }
         }
       },
       orderBy: { createdAt: "desc" }

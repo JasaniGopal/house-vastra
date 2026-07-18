@@ -134,22 +134,42 @@ export default async function AdminDashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm">
-           <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">Total Orders</p>
-           <p className="font-serif text-3xl font-bold text-[#001410]">{orderStats._count._all}</p>
-        </div>
-        <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm">
-           <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">Successfully Completed</p>
-           <p className="font-serif text-3xl font-bold text-emerald-600">{successfulOrders}</p>
-        </div>
-        <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm">
-           <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">Returned</p>
-           <p className="font-serif text-3xl font-bold text-[#775a19]">{returnedOrders}</p>
-        </div>
-        <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm">
-           <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">Cancelled / Failed</p>
-           <p className="font-serif text-3xl font-bold text-rose-600">{cancelledOrders}</p>
-        </div>
+        <Link href="/admin/orders" className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm hover:border-[#775a19] hover:shadow-md transition-all group cursor-pointer block">
+           <div className="flex justify-between items-start">
+             <div>
+               <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2 group-hover:text-[#775a19] transition-colors">Total Orders</p>
+               <p className="font-serif text-3xl font-bold text-[#001410]">{orderStats._count._all}</p>
+             </div>
+             <svg className="w-4 h-4 text-zinc-300 group-hover:text-[#775a19] group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+           </div>
+        </Link>
+        <Link href="/admin/orders?status=COMPLETED" className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm hover:border-emerald-400 hover:shadow-md transition-all group cursor-pointer block">
+           <div className="flex justify-between items-start">
+             <div>
+               <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2 group-hover:text-emerald-600 transition-colors">Successfully Completed</p>
+               <p className="font-serif text-3xl font-bold text-emerald-600">{successfulOrders}</p>
+             </div>
+             <svg className="w-4 h-4 text-zinc-300 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+           </div>
+        </Link>
+        <Link href="/admin/returns" className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm hover:border-[#775a19] hover:shadow-md transition-all group cursor-pointer block">
+           <div className="flex justify-between items-start">
+             <div>
+               <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2 group-hover:text-[#775a19] transition-colors">Returned</p>
+               <p className="font-serif text-3xl font-bold text-[#775a19]">{returnedOrders}</p>
+             </div>
+             <svg className="w-4 h-4 text-zinc-300 group-hover:text-[#775a19] group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+           </div>
+        </Link>
+        <Link href="/admin/orders?status=CANCELLED" className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm hover:border-rose-300 hover:shadow-md transition-all group cursor-pointer block">
+           <div className="flex justify-between items-start">
+             <div>
+               <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2 group-hover:text-rose-600 transition-colors">Cancelled / Failed</p>
+               <p className="font-serif text-3xl font-bold text-rose-600">{cancelledOrders}</p>
+             </div>
+             <svg className="w-4 h-4 text-zinc-300 group-hover:text-rose-500 group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+           </div>
+        </Link>
       </div>
 
     </div>
