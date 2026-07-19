@@ -611,7 +611,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 ]}
                 className="font-sans"
                 classNames={{
-                  day_selected: "bg-[#001410] text-white hover:bg-[#00261f]",
+                  selected: "bg-[#001410] text-white hover:bg-[#00261f]",
                 }}
               />
             </div>
