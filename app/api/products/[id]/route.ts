@@ -21,6 +21,11 @@ export async function GET(
             id: true,
           },
         },
+        reviews: {
+          where: { isApproved: true },
+          include: { customer: { select: { name: true, image: true } } },
+          orderBy: { createdAt: 'desc' }
+        },
       },
     });
 

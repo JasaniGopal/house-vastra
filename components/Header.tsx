@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import SlideOutCart from "./Cart/SlideOutCart";
 
 export default function Header() {
@@ -14,8 +15,18 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
+  const router = useRouter();
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      setIsSearchOpen(false);
+      router.push(`/collections?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   const toggleMobileExpanded = (category: string) => {
     if (mobileExpanded === category) setMobileExpanded(null);
@@ -472,11 +483,12 @@ export default function Header() {
               <svg className="w-6 h-6 md:w-8 md:h-8 text-zinc-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
               </svg>
-              <form action="/collections" className="flex-1">
+              <form onSubmit={handleSearch} className="flex-1">
                 <input 
                   type="text" 
                   autoFocus 
-                  name="q"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search for Lehengas, Designers, or Colors..." 
                   className="w-full bg-transparent border-none text-xl md:text-3xl lg:text-4xl font-serif text-[#001410] placeholder:text-zinc-300 focus:outline-none focus:ring-0"
                 />

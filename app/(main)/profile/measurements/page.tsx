@@ -1,26 +1,95 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 export default function MeasurementsPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [isUpdating, setIsUpdating] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsUpdating(true);
-    setTimeout(() => {
-      setIsUpdating(false);
-      setToastMessage("Measurement Profile Updated Successfully!");
-      setTimeout(() => setToastMessage(null), 3000);
-    }, 1000);
+  const [formData, setFormData] = useState({
+    height: "",
+    bust: "",
+    waist: "",
+    hips: "",
+    customNotes: ""
+  });
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    } else if (status === "authenticated") {
+      fetchMeasurements();
+    }
+  }, [status]);
+
+  const fetchMeasurements = async () => {
+    try {
+      const res = await fetch('/api/profile/measurements');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.id) {
+          setFormData({
+            height: data.height || "",
+            bust: data.bust || "",
+            waist: data.waist || "",
+            hips: data.hips || "",
+            customNotes: data.customNotes || ""
+          });
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const res = await fetch('/api/profile/measurements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      if (res.ok) {
+        showToast("Measurement Profile saved successfully!");
+      } else {
+        showToast("Failed to save profile.");
+      }
+    } catch (err) {
+      showToast("Error saving profile.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="min-h-screen bg-[#fcf9f8] flex items-center justify-center">Loading...</div>;
+  }
 
   return (
     <main className="min-h-screen bg-[#fcf9f8] font-sans pb-24">
-      <div className="max-w-[600px] mx-auto px-4 md:px-8 pt-8 md:pt-12">
-        
+      <div className="max-w-[800px] mx-auto px-4 md:px-8 pt-8 md:pt-12">
         {/* Header */}
         <div className="mb-8">
           <Link href="/profile" className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-[#775a19] transition-colors mb-4 group">
@@ -29,100 +98,76 @@ export default function MeasurementsPage() {
             </svg>
             Back to Profile
           </Link>
-          <div className="flex items-center gap-4">
-             <h1 className="font-serif text-3xl md:text-4xl font-medium text-[#001410] tracking-tight">Measurement Profile</h1>
-             <span className="bg-[#FAF2E8] text-[#A8813C] text-[10px] font-bold tracking-widest px-3 py-1 rounded-full uppercase border border-[#E8D8BA]">Updated</span>
-          </div>
-          <p className="text-[#414846] mt-2 text-sm md:text-base">We use these exact measurements to perfectly tailor your rentals before dispatch.</p>
+          <h1 className="font-serif text-3xl md:text-4xl font-medium text-[#001410] tracking-tight">Measurement Profile</h1>
+          <p className="text-[#414846] mt-2 text-sm md:text-base">Ensure a perfect fit for your luxury rentals.</p>
         </div>
 
-        {/* Form */}
-        <div className="bg-white p-6 md:p-8 rounded-2xl border border-[#c1c8c5]/40 shadow-sm relative overflow-hidden">
-          {/* Subtle tape measure graphic in background */}
-          <div className="absolute top-0 right-4 w-8 h-full border-l-2 border-r-2 border-dashed border-[#E8D8BA] opacity-20 pointer-events-none flex flex-col justify-between py-8">
-             {[...Array(10)].map((_, i) => (
-                <div key={i} className="w-full border-t border-solid border-[#A8813C] h-px"></div>
-             ))}
+        <form onSubmit={handleSubmit} className="bg-white p-6 md:p-8 rounded-2xl border border-zinc-200 shadow-sm flex flex-col gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-xs font-bold text-[#001410] uppercase tracking-wider mb-2">Height</label>
+              <input 
+                type="text" 
+                name="height"
+                value={formData.height}
+                onChange={handleChange}
+                placeholder="e.g. 5'6&quot;"
+                className="w-full border border-zinc-300 rounded px-4 py-3 text-sm focus:border-[#001410] focus:ring-0 outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-[#001410] uppercase tracking-wider mb-2">Bust (Inches)</label>
+              <input 
+                type="text" 
+                name="bust"
+                value={formData.bust}
+                onChange={handleChange}
+                placeholder="e.g. 34&quot;"
+                className="w-full border border-zinc-300 rounded px-4 py-3 text-sm focus:border-[#001410] focus:ring-0 outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-[#001410] uppercase tracking-wider mb-2">Waist (Inches)</label>
+              <input 
+                type="text" 
+                name="waist"
+                value={formData.waist}
+                onChange={handleChange}
+                placeholder="e.g. 28&quot;"
+                className="w-full border border-zinc-300 rounded px-4 py-3 text-sm focus:border-[#001410] focus:ring-0 outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-[#001410] uppercase tracking-wider mb-2">Hips (Inches)</label>
+              <input 
+                type="text" 
+                name="hips"
+                value={formData.hips}
+                onChange={handleChange}
+                placeholder="e.g. 38&quot;"
+                className="w-full border border-zinc-300 rounded px-4 py-3 text-sm focus:border-[#001410] focus:ring-0 outline-none"
+              />
+            </div>
           </div>
-
-          <form className="flex flex-col gap-8 relative z-10">
-            
-            {/* General */}
-            <div>
-               <h3 className="font-serif text-xl font-medium text-[#001410] mb-4 border-b border-zinc-100 pb-2">General Sizing</h3>
-               <div className="grid grid-cols-2 gap-6">
-                 <div className="flex flex-col gap-2">
-                   <label className="text-[11px] uppercase tracking-wider font-bold text-zinc-500">Height</label>
-                   <div className="flex gap-2">
-                     <input type="text" defaultValue="5" className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 text-sm font-medium text-center text-[#001410]" />
-                     <span className="self-center text-sm font-bold text-zinc-400">ft</span>
-                     <input type="text" defaultValue="6" className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 text-sm font-medium text-center text-[#001410]" />
-                     <span className="self-center text-sm font-bold text-zinc-400">in</span>
-                   </div>
-                 </div>
-                 <div className="flex flex-col gap-2">
-                   <label className="text-[11px] uppercase tracking-wider font-bold text-zinc-500">Standard Top Size</label>
-                   <select defaultValue="M" className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 text-sm font-medium text-[#001410] focus:outline-none appearance-none">
-                     <option value="XS">XS</option>
-                     <option value="S">S</option>
-                     <option value="M">M</option>
-                     <option value="L">L</option>
-                     <option value="XL">XL</option>
-                   </select>
-                 </div>
-               </div>
-            </div>
-
-            {/* Exact Measurements */}
-            <div>
-               <h3 className="font-serif text-xl font-medium text-[#001410] mb-4 border-b border-zinc-100 pb-2">Body Measurements (Inches)</h3>
-               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                 
-                 <div className="flex flex-col gap-2">
-                   <label className="text-[11px] uppercase tracking-wider font-bold text-zinc-500">Bust / Chest</label>
-                   <div className="relative">
-                     <input type="text" defaultValue="36" className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 text-sm font-medium text-[#001410] focus:border-[#775a19]" />
-                     <span className="absolute right-4 top-3 text-sm font-bold text-zinc-400">in</span>
-                   </div>
-                 </div>
-
-                 <div className="flex flex-col gap-2">
-                   <label className="text-[11px] uppercase tracking-wider font-bold text-zinc-500">Natural Waist</label>
-                   <div className="relative">
-                     <input type="text" defaultValue="28" className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 text-sm font-medium text-[#001410] focus:border-[#775a19]" />
-                     <span className="absolute right-4 top-3 text-sm font-bold text-zinc-400">in</span>
-                   </div>
-                 </div>
-
-                 <div className="flex flex-col gap-2">
-                   <label className="text-[11px] uppercase tracking-wider font-bold text-zinc-500">Hips</label>
-                   <div className="relative">
-                     <input type="text" defaultValue="38" className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 text-sm font-medium text-[#001410] focus:border-[#775a19]" />
-                     <span className="absolute right-4 top-3 text-sm font-bold text-zinc-400">in</span>
-                   </div>
-                 </div>
-
-               </div>
-               <p className="text-xs text-zinc-500 mt-4 italic bg-zinc-50 p-3 rounded-lg">
-                 *For lehengas, your skirt will be tailored exactly to your natural waist measurement.
-               </p>
-            </div>
-
-            {/* Action */}
-            <div className="mt-2 pt-6 border-t border-zinc-100 flex items-center justify-end">
-              <button 
-                type="submit" 
-                onClick={handleSubmit}
-                disabled={isUpdating}
-                className={`bg-[#001410] text-white py-3.5 px-8 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#00261f] hover:shadow-lg transition-all active:scale-[0.98] ${isUpdating ? 'opacity-80 cursor-not-allowed' : ''}`}
-              >
-                {isUpdating ? 'Updating...' : 'Update Profile'}
-              </button>
-            </div>
-
-          </form>
-        </div>
-
+          <div>
+            <label className="block text-xs font-bold text-[#001410] uppercase tracking-wider mb-2">Custom Tailoring Notes</label>
+            <textarea 
+              name="customNotes"
+              value={formData.customNotes}
+              onChange={handleChange}
+              placeholder="e.g. Please ensure blouse length is slightly longer, prefer loose fit around arms."
+              className="w-full border border-zinc-300 rounded px-4 py-3 text-sm focus:border-[#001410] focus:ring-0 outline-none h-32 resize-none"
+            ></textarea>
+          </div>
+          
+          <button 
+            type="submit"
+            disabled={saving}
+            className="w-full md:w-auto self-end bg-[#001410] text-white px-8 py-4 rounded text-xs font-bold uppercase tracking-wider hover:bg-[#00261f] transition-all disabled:opacity-50"
+          >
+            {saving ? "Saving..." : "Save Profile"}
+          </button>
+        </form>
       </div>
 
       {/* Custom Toast Notification */}
@@ -130,13 +175,12 @@ export default function MeasurementsPage() {
         <div className="fixed bottom-8 right-4 md:right-8 z-50 transition-all duration-300 transform translate-y-0 opacity-100">
           <div className="bg-[#001410] text-white px-6 py-4 rounded-sm shadow-2xl flex items-center gap-3 border border-[#775a19]/30">
             <svg className="w-5 h-5 text-[#775a19]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
             </svg>
             <span className="font-sans text-xs md:text-[13px] uppercase font-bold tracking-wider">{toastMessage}</span>
           </div>
         </div>
       )}
-
     </main>
   );
 }

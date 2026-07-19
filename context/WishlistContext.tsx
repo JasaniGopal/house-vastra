@@ -37,11 +37,11 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
             const data = await res.json();
             const formatted = data.map((d: any) => ({
               id: d.productId,
-              brand: d.product.brand,
-              name: d.product.title,
-              rentalPrice: d.product.rentalPrice.toString(),
-              retailPrice: d.product.retailPrice.toString(),
-              image: d.product.images[0]?.url || "/placeholder.jpg"
+              brand: d.product?.vendor?.boutiqueName || "Boutique",
+              name: d.product.name,
+              rentalPrice: (d.product.rentalPrice4Day || 0).toString(),
+              retailPrice: (d.product.retailValue || 0).toString(),
+              image: d.product.images?.[0]?.url || "/images/placeholder.jpg"
             }));
             setWishlistItems(formatted);
           }

@@ -125,7 +125,7 @@ export default function VendorSupportPage() {
           <div className="bg-[#faf9f8] p-6 rounded-2xl border border-zinc-100">
             <h3 className="font-bold text-[#001410] mb-2">Emergency?</h3>
             <p className="text-sm text-zinc-500 mb-4">For urgent issues regarding a live rental or an immediate pickup, please call us.</p>
-            <p className="font-mono text-sm font-bold text-[#001410]">+91 98765 43210</p>
+            <p className="font-mono text-sm font-bold text-[#001410]">+91 9168899557</p>
             <p className="text-xs text-zinc-400 mt-1">Available 9 AM - 8 PM (IST)</p>
           </div>
         </div>

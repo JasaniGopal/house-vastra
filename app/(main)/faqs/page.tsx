@@ -56,7 +56,7 @@ export default function FaqsPage() {
 
         <div className="mt-12 p-6 bg-[#FAF2E8] border border-[#E8D8BA] rounded-xl text-center">
           <p className="text-[#001410] font-medium mb-2">Still have questions?</p>
-          <p className="text-sm text-zinc-600">Email us at support@rentvastra.com or call +91 98765 43210.</p>
+          <p className="text-sm text-zinc-600">Email us at support@rentvastra.com or call +91 9168899557.</p>
         </div>
       </div>
     </div>

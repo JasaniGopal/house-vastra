@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import OrderTimeline from '@/components/Profile/OrderTimeline';
 
 export default function ActiveRentalsPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -96,6 +97,10 @@ export default function ActiveRentalsPage() {
                           <span className="font-medium text-[#001410]">₹{order.totalAmount.toLocaleString()}</span>
                         </div>
                       </div>
+                    </div>
+                    {/* Timeline */}
+                    <div className="mt-4 px-2">
+                      <OrderTimeline currentStatus={order.status} />
                     </div>
                     
                     {/* Actions */}

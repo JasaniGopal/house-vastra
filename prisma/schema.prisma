@@ -48,6 +48,7 @@ model User {
   wishlistItems WishlistItem[]
   cartItems     CartItem[]
   reviews       Review[]
+  measurements  MeasurementProfile?
 }
 
 model Vendor {
@@ -285,6 +286,19 @@ model SupportTicket {
   subject     String
   message     String   @db.Text
   status      String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model MeasurementProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  height      String?
+  bust        String?
+  waist       String?
+  hips        String?
+  customNotes String?  @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
