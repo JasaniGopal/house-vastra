@@ -4,7 +4,10 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Script from "next/script";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
+import { useEffect } from "react";
 
 interface CartItem {
   id: string | number;
@@ -20,6 +23,14 @@ interface CartItem {
 }
 
 export default function CheckoutPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login?callbackUrl=/checkout");
+    }
+  }, [status, router]);
   const { cartItems: items, removeFromCart, clearCart } = useCart();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -40,6 +51,11 @@ export default function CheckoutPage() {
 
   const handleCheckout = async () => {
     if (items.length === 0) return;
+    
+    if (status === "unauthenticated") {
+      router.push("/login?callbackUrl=/checkout");
+      return;
+    }
     
     // Validation for missing dates
     if (items.some(item => !item.startDate || !item.endDate)) {

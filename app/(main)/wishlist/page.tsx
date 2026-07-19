@@ -26,6 +26,7 @@ export default function WishlistPage() {
     e.preventDefault();
     addToCart({
       id: item.id,
+      productId: item.id,
       title: item.name,
       designer: item.brand,
       image: item.image,
