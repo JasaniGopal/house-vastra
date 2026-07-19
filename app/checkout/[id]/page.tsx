@@ -7,10 +7,12 @@ import Script from "next/script";
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import { useSession } from 'next-auth/react';
 
 function CheckoutContent({ unwrappedParams }: { unwrappedParams: any }) {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { data: session } = useSession();
   
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -135,7 +137,7 @@ function CheckoutContent({ unwrappedParams }: { unwrappedParams: any }) {
               razorpay_signature: response.razorpay_signature,
               items: items,
               address: address,
-              userId: null, // In real app, pass actual session userId
+              userId: session?.user?.id || null, // Pass actual session userId
               couponCode: appliedCoupon?.code || null
             }),
           });

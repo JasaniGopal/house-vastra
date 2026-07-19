@@ -84,9 +84,11 @@ export async function POST(req: Request) {
     }
 
     for (const item of items) {
+      const actualProductId = item.productId || item.id;
+
       // Fetch the product from the DB to get the original vendor expectations
       const dbProduct = await prisma.product.findUnique({
-        where: { id: item.id }
+        where: { id: actualProductId }
       });
 
       let vendorEarnings = 0;
@@ -121,7 +123,7 @@ export async function POST(req: Request) {
         data: {
           orderNumber: `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
           customerId: customerId,
-          productId: item.id,
+          productId: actualProductId,
           startDate: item.startDate ? new Date(item.startDate) : new Date(),
           endDate: item.endDate ? new Date(item.endDate) : new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
           totalAmount: item.price - itemDiscount + item.deposit,
