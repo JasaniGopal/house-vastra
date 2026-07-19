@@ -5,8 +5,11 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import ProductStatusToggle from "@/components/Vendor/ProductStatusToggle";
+import ProductCategoryFilter from "./ProductCategoryFilter";
 
-export default async function VendorProductsPage() {
+export default async function VendorProductsPage({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
+  const params = await searchParams;
+  const categoryFilter = params.category;
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user || (session.user.role !== "VENDOR" && session.user.role !== "ADMIN")) {
@@ -21,8 +24,16 @@ export default async function VendorProductsPage() {
     redirect("/partner-login");
   }
 
+  const categories = await prisma.category.findMany({
+    orderBy: { name: 'asc' },
+    select: { id: true, name: true }
+  });
+
   const products = await prisma.product.findMany({
-    where: { vendorId: vendor.id },
+    where: { 
+      vendorId: vendor.id,
+      ...(categoryFilter ? { categoryId: categoryFilter } : {})
+    },
     orderBy: { createdAt: "desc" },
     include: { category: true, images: true }
   });
@@ -35,9 +46,12 @@ export default async function VendorProductsPage() {
           <h1 className="font-serif text-3xl md:text-4xl font-medium text-[#001410] tracking-tight">My Products</h1>
           <p className="text-[#414846] mt-2 text-sm md:text-base">Manage your boutique's uploaded inventory.</p>
         </div>
-        <Link href="/vendor/products/new" className="bg-[#001410] text-white py-3 px-6 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#00261f] hover:shadow-lg transition-all w-fit shrink-0">
-          + Add New Outfit
-        </Link>
+        <div className="flex items-center gap-4">
+          <ProductCategoryFilter categories={categories} />
+          <Link href="/vendor/products/new" className="bg-[#001410] text-white py-3 px-6 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#00261f] hover:shadow-lg transition-all w-fit shrink-0">
+            + Add New Outfit
+          </Link>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">

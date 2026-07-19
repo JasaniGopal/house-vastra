@@ -80,6 +80,7 @@ function CollectionsContent() {
     occasionParam ? [occasionParam] : []
   );
   const [selectedSize, setSelectedSize] = useState<string>('S');
+  const [selectedSort, setSelectedSort] = useState<string>('newest');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   const [products, setProducts] = useState<DisplayProduct[]>([]);
@@ -89,8 +90,23 @@ function CollectionsContent() {
 
   useEffect(() => {
     const fetchProducts = async () => {
+      setLoading(true);
       try {
-        const res = await fetch("/api/products");
+        const query = new URLSearchParams();
+        if (selectedCategories.length > 0) {
+          query.set('category', selectedCategories.join(','));
+        }
+        if (selectedOccasions.length > 0) {
+          query.set('occasion', selectedOccasions.join(','));
+        }
+        query.set('sort', selectedSort);
+        
+        const qParam = searchParams.get('q');
+        if (qParam) {
+          query.set('q', qParam);
+        }
+
+        const res = await fetch(`/api/products?${query.toString()}`);
         if (res.ok) {
           const data = await res.json();
           const mapped = data.map((p: any) => ({
@@ -112,6 +128,10 @@ function CollectionsContent() {
       }
     };
 
+    fetchProducts();
+  }, [selectedCategories, selectedOccasions, selectedSort, searchParams]);
+
+  useEffect(() => {
     const fetchCategories = async () => {
       try {
         const res = await fetch("/api/categories");
@@ -136,7 +156,6 @@ function CollectionsContent() {
       }
     };
 
-    fetchProducts();
     fetchCategories();
     fetchOccasions();
   }, []);
@@ -173,19 +192,9 @@ function CollectionsContent() {
     setSelectedSize('');
   };
 
-  // Filter logic
-  const filteredProducts = products.filter(product => {
-    // Category filter
-    if (selectedCategories.length > 0 && !selectedCategories.some(cat => product.category.toLowerCase().includes(cat.toLowerCase()) || product.name.toLowerCase().includes(cat.toLowerCase()))) {
-      return false;
-    }
-    // Occasion filter (dynamic)
-    if (selectedOccasions.length > 0) {
-      const isOccasionMatch = selectedOccasions.some(occ => product.occasions.includes(occ));
-      if (!isOccasionMatch) return false;
-    }
-    return true;
-  });
+  // Since we are doing backend filtering now, products state is already filtered.
+  // We can just use 'products' directly for rendering, except maybe Size which isn't backend-filtered yet.
+  const filteredProducts = products; // or add size filtering if needed
 
   const isEmptyState = !loading && filteredProducts.length === 0;
 
@@ -227,10 +236,10 @@ function CollectionsContent() {
             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{isEmptyState ? 0 : filteredProducts.length} Pieces Found</span>
             <div className="relative flex items-center gap-2 cursor-pointer">
               <span className="text-[10px] font-bold text-[#001410] uppercase tracking-wider pointer-events-none">Sort By:</span>
-              <select defaultValue="New Arrivals" className="bg-transparent border-none text-[10px] font-bold text-[#001410] uppercase tracking-wider focus:ring-0 appearance-none pr-4 py-2 cursor-pointer w-full z-10">
-                <option value="New Arrivals">New Arrivals</option>
-                <option value="Price: Low to High">Price: Low to High</option>
-                <option value="Price: High to Low">Price: High to Low</option>
+              <select value={selectedSort} onChange={(e) => setSelectedSort(e.target.value)} className="bg-transparent border-none text-[10px] font-bold text-[#001410] uppercase tracking-wider focus:ring-0 appearance-none pr-4 py-2 cursor-pointer w-full z-10">
+                <option value="newest">New Arrivals</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
               </select>
               <svg className="w-3 h-3 text-[#001410] absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none z-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
@@ -246,10 +255,10 @@ function CollectionsContent() {
           <div className="flex flex-col gap-3">
             <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Sort By</span>
             <div className="relative">
-               <select defaultValue="New Arrivals" className="w-full bg-zinc-100/50 border-none rounded-lg px-4 py-3 text-xs font-medium text-[#001410] focus:ring-0 appearance-none cursor-pointer">
-                 <option value="New Arrivals">New Arrivals</option>
-                 <option value="Price: Low to High">Price: Low to High</option>
-                 <option value="Price: High to Low">Price: High to Low</option>
+               <select value={selectedSort} onChange={(e) => setSelectedSort(e.target.value)} className="w-full bg-zinc-100/50 border-none rounded-lg px-4 py-3 text-xs font-medium text-[#001410] focus:ring-0 appearance-none cursor-pointer">
+                 <option value="newest">New Arrivals</option>
+                 <option value="price_asc">Price: Low to High</option>
+                 <option value="price_desc">Price: High to Low</option>
                </select>
                <svg className="w-3 h-3 text-zinc-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
             </div>
@@ -403,10 +412,10 @@ function CollectionsContent() {
             <div className="flex flex-col gap-3">
               <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Sort By</span>
               <div className="relative">
-                 <select defaultValue="New Arrivals" className="w-full bg-zinc-100/50 border-none rounded-lg px-4 py-3 text-xs font-medium text-[#001410] focus:ring-0 appearance-none">
-                   <option value="New Arrivals">New Arrivals</option>
-                   <option value="Price: Low to High">Price: Low to High</option>
-                   <option value="Price: High to Low">Price: High to Low</option>
+                 <select value={selectedSort} onChange={(e) => setSelectedSort(e.target.value)} className="w-full bg-zinc-100/50 border-none rounded-lg px-4 py-3 text-xs font-medium text-[#001410] focus:ring-0 appearance-none">
+                   <option value="newest">New Arrivals</option>
+                   <option value="price_asc">Price: Low to High</option>
+                   <option value="price_desc">Price: High to Low</option>
                  </select>
                  <svg className="w-3 h-3 text-zinc-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
               </div>

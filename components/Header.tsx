@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useSession, signOut } from "next-auth/react";
+import SlideOutCart from "./Cart/SlideOutCart";
 
 export default function Header() {
   const { data: session } = useSession();
@@ -13,6 +14,7 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
 
   const toggleMobileExpanded = (category: string) => {
@@ -238,9 +240,9 @@ export default function Header() {
                 </Link>
 
                 {/* Cart Bag */}
-                <Link
-                  href="/checkout"
-                  className="relative p-1.5 text-[#001410] hover:text-[#775a19] transition-colors"
+                <button
+                  onClick={() => setIsCartOpen(true)}
+                  className="relative p-1.5 text-[#001410] hover:text-[#775a19] transition-colors cursor-pointer"
                   aria-label="View shopping cart"
                 >
                   <svg
@@ -262,7 +264,7 @@ export default function Header() {
                       {cartItems.length}
                     </span>
                   )}
-                </Link>
+                </button>
               </div>
             </div>
           </div>
@@ -506,6 +508,9 @@ export default function Header() {
           </div>
         </div>
       )}
+
+      {/* Slide Out Cart */}
+      <SlideOutCart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>
   );
 }
