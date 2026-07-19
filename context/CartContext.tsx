@@ -41,13 +41,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
             const formatted = data.map((d: any) => ({
               id: d.id, // the cart item ID
               productId: d.productId,
-              title: d.product.title,
-              designer: d.product.brand,
+              title: d.product.name || "Product",
+              designer: d.product.vendor?.boutiqueName || "Boutique",
               size: d.size || undefined,
               image: d.product.images[0]?.url || "/placeholder.jpg",
               duration: "4 Days", // Default for now
-              deposit: d.product.securityDeposit,
-              price: d.product.rentalPrice,
+              deposit: d.product.securityDeposit || 0,
+              price: d.product.rentalPrice4Day || 0,
               startDate: d.startDate ? new Date(d.startDate).toISOString() : undefined,
               endDate: d.endDate ? new Date(d.endDate).toISOString() : undefined,
             }));

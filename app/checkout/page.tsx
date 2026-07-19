@@ -361,62 +361,9 @@ export default function CheckoutPage() {
                 )}
               </section>
 
-              {/* Payment Method */}
-              <section>
-                <h2 className="font-serif text-xl md:text-2xl font-bold text-[#001410] mb-4">2. Payment Method</h2>
-                
-                <div className="border border-black/10 rounded-sm overflow-hidden bg-white shadow-sm">
-                  
-                  {/* Card Option */}
-                  <div className={`border-b border-black/5 transition-colors ${selectedPayment === 'card' ? 'bg-white' : 'hover:bg-zinc-50'}`}>
-                    <label className="flex items-center gap-4 p-5 cursor-pointer">
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPayment === 'card' ? 'border-[#001410]' : 'border-zinc-300'}`}>
-                        {selectedPayment === 'card' && <div className="w-2.5 h-2.5 rounded-full bg-[#001410]" />}
-                      </div>
-                      <input type="radio" className="hidden" checked={selectedPayment === 'card'} onChange={() => setSelectedPayment('card')} />
-                      <span className="font-sans font-bold text-sm text-[#001410] uppercase tracking-wider flex-1">Credit / Debit Card</span>
-                      <svg className="w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
-                      </svg>
-                    </label>
-                    
-                    {/* Expanded Card Form */}
-                    <div className={`overflow-hidden transition-all duration-300 px-5 ${selectedPayment === 'card' ? 'max-h-[500px] pb-6 opacity-100' : 'max-h-0 opacity-0'}`}>
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Card Number</label>
-                          <input type="text" placeholder="XXXX XXXX XXXX XXXX" className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors font-mono placeholder:font-sans" />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Expiry Date</label>
-                            <input type="text" placeholder="MM / YY" className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" />
-                          </div>
-                          <div>
-                            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">CVV</label>
-                            <input type="text" placeholder="***" className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors font-mono placeholder:font-sans" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* UPI Option */}
-                  <div className={`transition-colors ${selectedPayment === 'upi' ? 'bg-white' : 'hover:bg-zinc-50'}`}>
-                    <label className="flex items-center gap-4 p-5 cursor-pointer">
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPayment === 'upi' ? 'border-[#001410]' : 'border-zinc-300'}`}>
-                        {selectedPayment === 'upi' && <div className="w-2.5 h-2.5 rounded-full bg-[#001410]" />}
-                      </div>
-                      <input type="radio" className="hidden" checked={selectedPayment === 'upi'} onChange={() => setSelectedPayment('upi')} />
-                      <span className="font-sans font-bold text-sm text-[#001410] uppercase tracking-wider flex-1">UPI</span>
-                    </label>
-                  </div>
-                </div>
-              </section>
-
               {/* Bag Items list */}
               <section className="space-y-6">
-                <h2 className="font-serif text-xl md:text-2xl font-bold text-[#001410] mb-4">3. Items in Bag</h2>
+                <h2 className="font-serif text-xl md:text-2xl font-bold text-[#001410] mb-4 mt-8">2. Items in Bag</h2>
               {items.map((item) => (
                 <div
                   key={item.id}
@@ -519,11 +466,16 @@ export default function CheckoutPage() {
 
                   {/* Security Deposit Info */}
                   <div className="flex justify-between items-center">
-                    <span className="flex items-center gap-1.5">
+                    <span className="relative group flex items-center gap-1.5 cursor-pointer">
                       <span>Security Deposit</span>
-                      <svg className="w-3.5 h-3.5 text-zinc-400 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                      <svg className="w-3.5 h-3.5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 111.063.852l-.708 2.836a.75.75 0 001.063.852l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
                       </svg>
+                      {/* Tooltip */}
+                      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-max px-3 py-1.5 bg-[#001410] text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg uppercase tracking-wider">
+                        Refundable in 7 days
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#001410]"></div>
+                      </div>
                     </span>
                     <span className="font-semibold text-[#001410]">₹{totalDeposit.toLocaleString()}</span>
                   </div>

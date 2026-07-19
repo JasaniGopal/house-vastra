@@ -380,84 +380,80 @@ function CheckoutContent({ unwrappedParams }: { unwrappedParams: any }) {
                 )}
               </section>
 
-              {/* Payment Method */}
+              {/* Payment Details */}
               <section>
-                <h2 className="font-serif text-xl md:text-2xl font-bold text-[#001410] mb-4">2. Payment Method</h2>
+                <h2 className="font-serif text-xl md:text-2xl font-bold text-[#001410] mb-4">2. Payment Details</h2>
                 
-                <div className="border border-black/10 rounded-sm overflow-hidden bg-white shadow-sm">
-                  
-                  {/* Card Option */}
-                  <div className={`border-b border-black/5 transition-colors ${selectedPayment === 'card' ? 'bg-white' : 'hover:bg-zinc-50'}`}>
-                    <label className="flex items-center gap-4 p-5 cursor-pointer">
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPayment === 'card' ? 'border-[#001410]' : 'border-zinc-300'}`}>
-                        {selectedPayment === 'card' && <div className="w-2.5 h-2.5 rounded-full bg-[#001410]" />}
-                      </div>
-                      <input type="radio" className="hidden" checked={selectedPayment === 'card'} onChange={() => setSelectedPayment('card')} />
-                      <span className="font-sans font-bold text-sm text-[#001410] uppercase tracking-wider flex-1">Credit / Debit Card</span>
-                      <svg className="w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
-                      </svg>
-                    </label>
-                    
-                    {/* Expanded Card Form */}
-                    <div className={`overflow-hidden transition-all duration-300 px-5 ${selectedPayment === 'card' ? 'max-h-[500px] pb-6 opacity-100' : 'max-h-0 opacity-0'}`}>
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Card Number</label>
-                          <input type="text" placeholder="XXXX XXXX XXXX XXXX" className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors font-mono placeholder:font-sans" />
+                <div className="bg-white border border-black/10 rounded-sm p-6 shadow-sm">
+                  {/* Promo Code Input */}
+                  <div className="mb-6">
+                    <span className="block text-sm font-bold text-[#001410] mb-3">Apply Promo Code</span>
+                    {appliedCoupon ? (
+                      <div className="flex items-center justify-between bg-[#775a19]/10 border border-[#775a19]/20 p-3 rounded-sm">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-5 h-5 text-[#775a19]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className="font-bold text-[#775a19] text-sm tracking-wide">{appliedCoupon.code}</span>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Expiry Date</label>
-                            <input type="text" placeholder="MM / YY" className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" />
-                          </div>
-                          <div>
-                            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">CVV</label>
-                            <input type="text" placeholder="***" className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors font-mono placeholder:font-sans" />
-                          </div>
-                        </div>
+                        <button onClick={removeCoupon} className="text-[#775a19] hover:text-[#001410] text-xs font-bold uppercase tracking-widest cursor-pointer">Remove</button>
                       </div>
+                    ) : (
+                      <div>
+                        <div className="flex gap-2">
+                          <input 
+                            type="text" 
+                            value={couponCode}
+                            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                            placeholder="e.g. WELCOME500" 
+                            className="flex-1 px-4 py-3 bg-[#faf9f8] border border-black/10 rounded-sm text-sm font-bold text-[#001410] focus:outline-none focus:border-[#775a19] uppercase tracking-widest placeholder:normal-case placeholder:tracking-normal placeholder:font-normal"
+                          />
+                          <button 
+                            onClick={handleApplyCoupon}
+                            disabled={isValidatingCoupon || !couponCode}
+                            className="px-6 py-3 bg-[#001410] text-white rounded-sm font-bold text-sm hover:bg-[#775a19] transition-colors disabled:opacity-50 cursor-pointer shrink-0"
+                          >
+                            {isValidatingCoupon ? "..." : "Apply"}
+                          </button>
+                        </div>
+                        {couponError && <p className="text-red-500 text-xs font-bold mt-2">{couponError}</p>}
+                      </div>
+                    )}
+                  </div>
+
+                  {appliedCoupon && (
+                    <div className="flex justify-between items-center text-emerald-600 font-bold text-sm mb-4">
+                      <span>Discount ({appliedCoupon.code})</span>
+                      <span>-₹{appliedCoupon.discountAmount.toLocaleString('en-IN')}</span>
                     </div>
-                  </div>
+                  )}
 
-                  {/* UPI Option */}
-                  <div className={`border-b border-black/5 transition-colors ${selectedPayment === 'upi' ? 'bg-white' : 'hover:bg-zinc-50'}`}>
-                    <label className="flex items-center gap-4 p-5 cursor-pointer">
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPayment === 'upi' ? 'border-[#001410]' : 'border-zinc-300'}`}>
-                        {selectedPayment === 'upi' && <div className="w-2.5 h-2.5 rounded-full bg-[#001410]" />}
-                      </div>
-                      <input type="radio" className="hidden" checked={selectedPayment === 'upi'} onChange={() => setSelectedPayment('upi')} />
-                      <div className="flex-1">
-                        <span className="font-sans font-bold text-sm text-[#001410] uppercase tracking-wider block">UPI (Google Pay, PhonePe)</span>
-                        {/* Mock UPI badges */}
-                        <div className="flex gap-2 mt-2">
-                           <span className="px-2 py-0.5 bg-zinc-100 text-[10px] font-bold text-zinc-500 rounded-sm">GPay</span>
-                           <span className="px-2 py-0.5 bg-zinc-100 text-[10px] font-bold text-zinc-500 rounded-sm">BHIM</span>
-                           <span className="px-2 py-0.5 bg-zinc-100 text-[10px] font-bold text-zinc-500 rounded-sm">Paytm</span>
-                        </div>
-                      </div>
-                      <svg className="w-5 h-5 text-zinc-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
-                      </svg>
-                    </label>
+                  {/* Grand Total */}
+                  <div className="pt-6 mt-2 border-t border-black/10">
+                    <div className="flex justify-between items-end mb-2">
+                      <span className="font-serif text-xl font-bold text-[#001410]">Total Payable</span>
+                      <span className="font-serif text-2xl font-bold text-[#001410]">
+                        ₹{grandTotal.toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                    <span className="block text-[9px] text-zinc-500 mb-8">*Security deposit is fully refundable post-rental inspection.</span>
+                    
+                    <button
+                      onClick={handleCheckout}
+                      disabled={isCheckoutLoading}
+                      className="w-full bg-[#001410] text-white py-4 font-sans font-bold text-sm tracking-widest uppercase hover:bg-[#00261f] active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-xl"
+                    >
+                      {isCheckoutLoading ? "Processing..." : `Pay ₹${grandTotal.toLocaleString('en-IN')}`}
+                    </button>
+                    
+                    <p className="text-center text-[9px] text-zinc-400 mt-4 leading-relaxed px-4">
+                      By placing this order, you agree to our <span className="underline decoration-zinc-300 underline-offset-2 cursor-pointer hover:text-zinc-600">Rental Agreement</span> and confirm that you have read our <span className="underline decoration-zinc-300 underline-offset-2 cursor-pointer hover:text-zinc-600">Cancellations Policy</span>.
+                    </p>
                   </div>
-
-                  {/* Net Banking Option */}
-                  <div className={`transition-colors ${selectedPayment === 'netbanking' ? 'bg-white' : 'hover:bg-zinc-50'}`}>
-                    <label className="flex items-center gap-4 p-5 cursor-pointer">
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPayment === 'netbanking' ? 'border-[#001410]' : 'border-zinc-300'}`}>
-                        {selectedPayment === 'netbanking' && <div className="w-2.5 h-2.5 rounded-full bg-[#001410]" />}
-                      </div>
-                      <input type="radio" className="hidden" checked={selectedPayment === 'netbanking'} onChange={() => setSelectedPayment('netbanking')} />
-                      <span className="font-sans font-bold text-sm text-[#001410] uppercase tracking-wider flex-1">Net Banking</span>
-                      <svg className="w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
-                      </svg>
-                    </label>
-                  </div>
-
                 </div>
               </section>
+
+
 
               {/* Trust Badges bottom left */}
               <div className="flex gap-6 mt-4">
@@ -534,11 +530,16 @@ function CheckoutContent({ unwrappedParams }: { unwrappedParams: any }) {
                           <span className="text-[#001410] font-medium">₹{item.price.toLocaleString('en-IN')}</span>
                         </div>
                         <div className="flex justify-between items-center text-zinc-600">
-                          <span className="flex items-center gap-1.5">
+                          <span className="relative group flex items-center gap-1.5 cursor-pointer">
                             Security Deposit
                             <svg className="w-3.5 h-3.5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 111.063.852l-.708 2.836a.75.75 0 001.063.852l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
                             </svg>
+                            {/* Tooltip */}
+                            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-max px-3 py-1.5 bg-[#001410] text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg uppercase tracking-wider">
+                              Refundable in 7 days
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#001410]"></div>
+                            </div>
                           </span>
                           <span className="text-[#775a19] font-medium">₹{item.deposit.toLocaleString('en-IN')}</span>
                         </div>
@@ -546,71 +547,7 @@ function CheckoutContent({ unwrappedParams }: { unwrappedParams: any }) {
                     </div>
                   ))}
 
-                  {/* Promo Code Input */}
-                  <div className="py-4 border-y border-black/5 mb-4">
-                    <span className="block text-sm font-bold text-[#001410] mb-3">Apply Promo Code</span>
-                    {appliedCoupon ? (
-                      <div className="flex items-center justify-between bg-[#775a19]/10 border border-[#775a19]/20 p-3 rounded-sm">
-                        <div className="flex items-center gap-2">
-                          <svg className="w-5 h-5 text-[#775a19]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span className="font-bold text-[#775a19] text-sm tracking-wide">{appliedCoupon.code}</span>
-                        </div>
-                        <button onClick={removeCoupon} className="text-[#775a19] hover:text-[#001410] text-xs font-bold uppercase tracking-widest cursor-pointer">Remove</button>
-                      </div>
-                    ) : (
-                      <div>
-                        <div className="flex gap-2">
-                          <input 
-                            type="text" 
-                            value={couponCode}
-                            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                            placeholder="e.g. WELCOME500" 
-                            className="flex-1 px-4 py-3 bg-[#faf9f8] border border-black/10 rounded-sm text-sm font-bold text-[#001410] focus:outline-none focus:border-[#775a19] uppercase tracking-widest placeholder:normal-case placeholder:tracking-normal placeholder:font-normal"
-                          />
-                          <button 
-                            onClick={handleApplyCoupon}
-                            disabled={isValidatingCoupon || !couponCode}
-                            className="px-6 py-3 bg-[#001410] text-white rounded-sm font-bold text-sm hover:bg-[#775a19] transition-colors disabled:opacity-50 cursor-pointer shrink-0"
-                          >
-                            {isValidatingCoupon ? "..." : "Apply"}
-                          </button>
-                        </div>
-                        {couponError && <p className="text-red-500 text-xs font-bold mt-2">{couponError}</p>}
-                      </div>
-                    )}
-                  </div>
 
-                  {appliedCoupon && (
-                    <div className="flex justify-between items-center text-emerald-600 font-bold text-sm mb-4">
-                      <span>Discount ({appliedCoupon.code})</span>
-                      <span>-₹{appliedCoupon.discountAmount.toLocaleString('en-IN')}</span>
-                    </div>
-                  )}
-
-                  {/* Grand Total */}
-                  <div className="pt-6 mt-2 border-t border-black/10">
-                    <div className="flex justify-between items-end mb-2">
-                      <span className="font-serif text-xl font-bold text-[#001410]">Total Payable</span>
-                      <span className="font-serif text-2xl font-bold text-[#001410]">
-                        ₹{grandTotal.toLocaleString('en-IN')}
-                      </span>
-                    </div>
-                    <span className="block text-[9px] text-zinc-500 mb-8">*Security deposit is fully refundable post-rental inspection.</span>
-                    
-                    <button
-                      onClick={handleCheckout}
-                      disabled={isCheckoutLoading}
-                      className="w-full bg-[#001410] text-white py-4 font-sans font-bold text-sm tracking-widest uppercase hover:bg-[#00261f] active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-xl"
-                    >
-                      {isCheckoutLoading ? "Processing..." : `Pay ₹${grandTotal.toLocaleString('en-IN')}`}
-                    </button>
-                    
-                    <p className="text-center text-[9px] text-zinc-400 mt-4 leading-relaxed px-4">
-                      By placing this order, you agree to our <span className="underline decoration-zinc-300 underline-offset-2 cursor-pointer hover:text-zinc-600">Rental Agreement</span> and confirm that you have read our <span className="underline decoration-zinc-300 underline-offset-2 cursor-pointer hover:text-zinc-600">Cancellations Policy</span>.
-                    </p>
-                  </div>
 
                 </div>
               </div>
