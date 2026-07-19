@@ -12,6 +12,7 @@ export async function GET(
       include: {
         images: true,
         category: true,
+        occasions: true,
         vendor: {
           select: {
             boutiqueName: true,
@@ -19,6 +20,11 @@ export async function GET(
             logoUrl: true,
             id: true,
           },
+        },
+        reviews: {
+          where: { isApproved: true },
+          include: { customer: { select: { name: true, image: true } } },
+          orderBy: { createdAt: 'desc' }
         },
       },
     });

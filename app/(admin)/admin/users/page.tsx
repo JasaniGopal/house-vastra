@@ -64,7 +64,7 @@ export default function AdminUsers() {
                 </td>
                 <td className="px-6 py-4 text-xs">
                   <p>priya.patel@example.com</p>
-                  <p className="text-zinc-500 mt-0.5">+91 98765 43210</p>
+                  <p className="text-zinc-500 mt-0.5">+91 9168899557</p>
                 </td>
                 <td className="px-6 py-4 font-bold text-[#001410]">14</td>
                 <td className="px-6 py-4">

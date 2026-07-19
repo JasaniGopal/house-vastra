@@ -3,56 +3,54 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden. Admin access required." }, { status: 403 });
+      return NextResponse.json({ error: "Unauthorized. Admin access required." }, { status: 403 });
     }
 
+    const { id } = await params;
     const body = await req.json();
-    const { rentalPricePerDay, rentalPrice2Day, rentalPrice4Day, rentalPrice8Day, status } = body;
-
-    // Optional: allow admin to simply reject the product
-    if (status === "REJECTED") {
-      const rejectedProduct = await prisma.product.update({
+    
+    if (body.approvalStatus === "REJECTED") {
+      const updated = await prisma.product.update({
         where: { id },
         data: {
           approvalStatus: "REJECTED",
-          isAvailable: false,
-        },
+          rejectionReason: body.rejectionReason,
+          isAvailable: false
+        }
       });
-      return NextResponse.json({ message: "Product rejected", product: rejectedProduct });
+      return NextResponse.json({ message: "Product rejected", product: updated });
     }
 
-    // Otherwise, assume approval and require prices
-    if (!rentalPricePerDay || !rentalPrice2Day || !rentalPrice4Day || !rentalPrice8Day) {
-      return NextResponse.json({ error: "Missing final pricing tiers for approval" }, { status: 400 });
+    // Otherwise, it's an approval with a final rental price
+    const { rentalPrice, securityDeposit, isTrending } = body;
+
+    if (!rentalPrice || isNaN(rentalPrice) || rentalPrice <= 0) {
+      return NextResponse.json({ error: "A valid final rental price is required for approval." }, { status: 400 });
     }
 
-    const approvedProduct = await prisma.product.update({
+    const updated = await prisma.product.update({
       where: { id },
       data: {
-        rentalPricePerDay: parseFloat(rentalPricePerDay),
-        rentalPrice2Day: parseFloat(rentalPrice2Day),
-        rentalPrice4Day: parseFloat(rentalPrice4Day),
-        rentalPrice8Day: parseFloat(rentalPrice8Day),
+        rentalPricePerDay: parseFloat(rentalPrice),
+        rentalPrice4Day: parseFloat(rentalPrice),
+        securityDeposit: parseFloat(securityDeposit || "0"),
+        isTrending: Boolean(isTrending),
         approvalStatus: "APPROVED",
-        isAvailable: true, // Make it live on the site
-      },
+        isAvailable: true // Make it live on the site!
+      }
     });
 
-    return NextResponse.json({ message: "Product approved successfully", product: approvedProduct });
+    return NextResponse.json({ message: "Product approved and published successfully", product: updated });
 
   } catch (error: any) {
-    console.error("Admin product approval error:", error);
+    console.error("Admin Approval Error:", error);
     return NextResponse.json(
-      { error: "An error occurred while approving the product." },
+      { error: "An error occurred while updating the product status: " + (error.message || String(error)) },
       { status: 500 }
     );
   }

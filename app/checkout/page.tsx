@@ -3,10 +3,14 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import Script from "next/script";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
+import { useEffect } from "react";
 
 interface CartItem {
-  id: number;
+  id: string | number;
   title: string;
   designer: string;
   size?: string;
@@ -14,33 +18,188 @@ interface CartItem {
   duration: string;
   deposit: number;
   price: number;
+  startDate?: string;
+  endDate?: string;
 }
 
 export default function CheckoutPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login?callbackUrl=/checkout");
+    }
+  }, [status, router]);
   const { cartItems: items, removeFromCart, clearCart } = useCart();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  
+  const [selectedPayment, setSelectedPayment] = useState("card");
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [address, setAddress] = useState({
+    name: "Ananya Sharma",
+    flat: "Flat 402, Sea View Apartments",
+    street: "Juhu Tara Road",
+    city: "Mumbai, Maharashtra 400049",
+    phone: "+91 98XXX XXXXX"
+  });
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string | number) => {
     removeFromCart(id);
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
+    if (items.length === 0) return;
+    
+    if (status === "unauthenticated") {
+      router.push("/login?callbackUrl=/checkout");
+      return;
+    }
+    
+    // Validation for missing dates
+    if (items.some(item => !item.startDate || !item.endDate)) {
+      alert("Please select rental dates for all items in your bag before checking out.");
+      return;
+    }
+
     setIsCheckoutLoading(true);
-    setTimeout(() => {
+
+    try {
+      // 0. Validate availability
+      const valRes = await fetch("/api/checkout/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items }),
+      });
+      const valData = await valRes.json();
+      
+      if (!valData.available) {
+        alert("Sorry, some items in your bag are no longer available for the selected dates. Please review your bag.");
+        setIsCheckoutLoading(false);
+        return;
+      }
+
+      // 1. Create order on server
+      const res = await fetch("/api/checkout/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: grandTotal }),
+      });
+      
+      const order = await res.json();
+      if (!order.id) {
+        throw new Error("Failed to create Razorpay order");
+      }
+
+      // 2. Initialize Razorpay popup
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_mock_key",
+        amount: order.amount,
+        currency: order.currency,
+        name: "Rent Vastra",
+        description: "Luxury Rental Order",
+        order_id: order.id,
+        handler: async function (response: any) {
+          // 3. Verify payment on server
+          const verifyRes = await fetch("/api/checkout/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              items: items,
+              address: address,
+              userId: session?.user?.id,
+              couponCode: appliedCoupon?.code || null
+            }),
+          });
+          const verifyData = await verifyRes.json();
+          if (verifyData.success) {
+            setIsSuccess(true);
+            clearCart();
+          } else {
+            alert("Payment verification failed. Please contact support.");
+          }
+        },
+        prefill: {
+          name: address.name,
+          contact: address.phone,
+        },
+        theme: {
+          color: "#001410",
+        },
+      };
+
+      const rzpKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_mock_key";
+      if (rzpKey === "rzp_test_mock_key") {
+        options.handler({
+          razorpay_order_id: order.id,
+          razorpay_payment_id: "pay_mock_" + Math.random().toString(36).substring(2, 10),
+          razorpay_signature: "mock_signature",
+        });
+        return;
+      }
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on("payment.failed", function (response: any) {
+        alert(`Payment failed! ${response.error.description}`);
+      });
+      rzp.open();
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong during checkout.");
+    } finally {
       setIsCheckoutLoading(false);
-      setIsSuccess(true);
-      clearCart();
-    }, 1500);
+    }
+  };
+
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountAmount: number } | null>(null);
+  const [couponError, setCouponError] = useState("");
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return;
+    setIsValidatingCoupon(true);
+    setCouponError("");
+    
+    try {
+      const res = await fetch("/api/checkout/validate-coupon", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: couponCode, subtotal }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to validate coupon");
+      
+      setAppliedCoupon({ code: data.code, discountAmount: data.discountAmount });
+      setCouponCode("");
+    } catch (err: any) {
+      setCouponError(err.message);
+      setAppliedCoupon(null);
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    setCouponError("");
   };
 
   const subtotal = items.reduce((acc, item) => acc + item.price, 0);
   const totalDeposit = items.reduce((acc, item) => acc + item.deposit, 0);
   const deliveryFee = items.length > 0 ? 450 : 0;
-  const grandTotal = subtotal + totalDeposit + deliveryFee;
+  const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+  const grandTotal = subtotal - discountAmount + totalDeposit + deliveryFee;
 
   return (
-    <div className="min-h-screen bg-[#fcf9f8] text-[#1c1b1b] font-sans flex flex-col justify-between">
+    <>
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+      <div className="min-h-screen bg-[#fcf9f8] text-[#1c1b1b] font-sans flex flex-col justify-between">
       
       {/* Header Bar */}
       <header className="w-full bg-white border-b border-[#c1c8c5]/30 sticky top-0 z-30">
@@ -112,8 +271,99 @@ export default function CheckoutPage() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             
-            {/* Left Column: Bag Items list */}
-            <div className="lg:col-span-7 space-y-6">
+            {/* Left Column: Forms & Bag Items */}
+            <div className="lg:col-span-7 space-y-10">
+
+              {/* Delivery Address */}
+              <section>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-serif text-xl md:text-2xl font-bold text-[#001410]">1. Delivery Address</h2>
+                  <button 
+                    onClick={() => setIsEditingAddress(!isEditingAddress)} 
+                    className="text-sm font-bold text-[#775a19] hover:underline"
+                  >
+                    {isEditingAddress ? "Cancel" : "Change"}
+                  </button>
+                </div>
+                
+                {isEditingAddress ? (
+                  <div className="bg-white p-6 rounded-sm border border-black/10 flex flex-col gap-4 shadow-sm animate-fade-in">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Full Name</label>
+                        <input 
+                          type="text" 
+                          value={address.name}
+                          onChange={(e) => setAddress({...address, name: e.target.value})}
+                          className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" 
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Phone Number</label>
+                        <input 
+                          type="text" 
+                          value={address.phone}
+                          onChange={(e) => setAddress({...address, phone: e.target.value})}
+                          className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" 
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Flat, House no., Building</label>
+                        <input 
+                          type="text" 
+                          value={address.flat}
+                          onChange={(e) => setAddress({...address, flat: e.target.value})}
+                          className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" 
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Area, Street, Sector, Village</label>
+                        <input 
+                          type="text" 
+                          value={address.street}
+                          onChange={(e) => setAddress({...address, street: e.target.value})}
+                          className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" 
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Town/City & Pincode</label>
+                        <input 
+                          type="text" 
+                          value={address.city}
+                          onChange={(e) => setAddress({...address, city: e.target.value})}
+                          className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" 
+                        />
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => setIsEditingAddress(false)}
+                      className="mt-2 bg-[#001410] text-white py-3 px-6 rounded-sm font-sans font-bold text-xs tracking-widest uppercase hover:bg-[#00261f] transition-all self-start"
+                    >
+                      Save Address
+                    </button>
+                  </div>
+                ) : (
+                  <div className="bg-[#f5f3f0] p-6 rounded-sm border border-black/5 flex gap-4 items-start">
+                    <svg className="w-5 h-5 text-[#001410] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                    </svg>
+                    <div>
+                      <span className="block font-bold text-[#001410] mb-1">{address.name}</span>
+                      <span className="block text-sm text-[#414846] leading-relaxed">
+                        {address.flat},<br />
+                        {address.street},<br />
+                        {address.city}
+                      </span>
+                      <span className="block text-sm text-[#414846] mt-2">Phone: {address.phone}</span>
+                    </div>
+                  </div>
+                )}
+              </section>
+
+              {/* Bag Items list */}
+              <section className="space-y-6">
+                <h2 className="font-serif text-xl md:text-2xl font-bold text-[#001410] mb-4 mt-8">2. Items in Bag</h2>
               {items.map((item) => (
                 <div
                   key={item.id}
@@ -151,9 +401,11 @@ export default function CheckoutPage() {
                         <h3 className="font-serif text-[15px] sm:text-lg md:text-xl font-bold text-[#001410] pr-6 sm:pr-8 leading-tight">
                           {item.title}
                         </h3>
-                        <p className="font-sans text-[10px] sm:text-xs md:text-sm text-zinc-400 font-semibold uppercase tracking-wider mt-1">
-                          {item.designer} {item.size && `• ${item.size}`}
-                        </p>
+                        {item.size && (
+                          <p className="font-sans text-[10px] sm:text-xs md:text-sm text-zinc-400 font-semibold uppercase tracking-wider mt-1">
+                            Size: {item.size}
+                          </p>
+                        )}
 
                         {/* Rental Period */}
                         <div className="flex items-center gap-2 mt-4 text-[#414846] text-xs md:text-sm font-sans">
@@ -193,6 +445,7 @@ export default function CheckoutPage() {
 
                 </div>
               ))}
+              </section>
             </div>
 
             {/* Right Column: Order Summary Card */}
@@ -213,20 +466,72 @@ export default function CheckoutPage() {
 
                   {/* Security Deposit Info */}
                   <div className="flex justify-between items-center">
-                    <span className="flex items-center gap-1.5">
+                    <span className="relative group flex items-center gap-1.5 cursor-pointer">
                       <span>Security Deposit</span>
-                      <svg className="w-3.5 h-3.5 text-zinc-400 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                      <svg className="w-3.5 h-3.5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 111.063.852l-.708 2.836a.75.75 0 001.063.852l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
                       </svg>
+                      {/* Tooltip */}
+                      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-max px-3 py-1.5 bg-[#001410] text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg uppercase tracking-wider">
+                        Refundable in 7 days
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#001410]"></div>
+                      </div>
                     </span>
                     <span className="font-semibold text-[#001410]">₹{totalDeposit.toLocaleString()}</span>
                   </div>
 
+                  {/* Promo Code Input */}
+                  <div className="py-4 border-y border-zinc-300/50 mt-4 mb-4">
+                    <span className="block text-sm font-bold text-[#001410] mb-3">Apply Promo Code</span>
+                    {appliedCoupon ? (
+                      <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 p-3 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className="font-bold text-emerald-800 text-sm tracking-wide">{appliedCoupon.code}</span>
+                        </div>
+                        <button onClick={removeCoupon} className="text-emerald-700 hover:text-emerald-900 text-xs font-bold uppercase tracking-widest cursor-pointer">Remove</button>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="flex gap-2">
+                          <input 
+                            type="text" 
+                            value={couponCode}
+                            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                            placeholder="e.g. WELCOME500" 
+                            className="flex-1 px-4 py-3 bg-white border border-zinc-300 rounded-lg text-sm font-bold text-[#001410] focus:outline-none focus:border-[#775a19] uppercase tracking-widest placeholder:normal-case placeholder:tracking-normal placeholder:font-normal"
+                          />
+                          <button 
+                            onClick={handleApplyCoupon}
+                            disabled={isValidatingCoupon || !couponCode}
+                            className="px-6 py-3 bg-[#001410] text-white rounded-lg font-bold text-sm hover:bg-[#775a19] transition-colors disabled:opacity-50 cursor-pointer shrink-0"
+                          >
+                            {isValidatingCoupon ? "..." : "Apply"}
+                          </button>
+                        </div>
+                        {couponError && <p className="text-red-500 text-xs font-bold mt-2">{couponError}</p>}
+                      </div>
+                    )}
+                  </div>
+
                   {/* Delivery Fee */}
-                  <div className="flex justify-between border-b border-zinc-300/50 pb-4">
+                  <div className="flex justify-between pb-2">
                     <span>Delivery Fee</span>
                     <span className="font-semibold text-[#001410]">₹{deliveryFee.toLocaleString()}</span>
                   </div>
+
+                  {/* Discount (if any) */}
+                  {appliedCoupon && (
+                    <div className="flex justify-between border-b border-zinc-300/50 pb-4 text-emerald-600 font-bold">
+                      <span>Discount ({appliedCoupon.code})</span>
+                      <span>-₹{appliedCoupon.discountAmount.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {!appliedCoupon && (
+                    <div className="border-b border-zinc-300/50 pb-2"></div>
+                  )}
 
                   {/* Grand Total */}
                   <div className="pt-4 flex flex-col justify-between items-stretch">
@@ -313,5 +618,6 @@ export default function CheckoutPage() {
       </main>
 
     </div>
+    </>
   );
 }

@@ -26,7 +26,7 @@ const INITIAL_ADDRESSES: Address[] = [
     city: "Bengaluru",
     state: "Karnataka",
     zip: "560038",
-    phone: "+91 98765 43210",
+    phone: "+91 9168899557",
     isDefault: true
   },
   {
@@ -38,7 +38,7 @@ const INITIAL_ADDRESSES: Address[] = [
     city: "Bengaluru",
     state: "Karnataka",
     zip: "560103",
-    phone: "+91 98765 43210",
+    phone: "+91 9168899557",
     isDefault: false
   }
 ];

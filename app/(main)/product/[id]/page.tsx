@@ -4,25 +4,25 @@ import React, { useState, useEffect, use } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
+import { useWishlist } from '@/context/WishlistContext';
 import { useRouter } from 'next/navigation';
+import { DayPicker, DateRange } from "react-day-picker";
+import "react-day-picker/dist/style.css";
+import { addDays, isBefore, startOfDay, eachDayOfInterval, format } from "date-fns";
 
-// Mock Product Data
-const MOCK_PRODUCT = {
-  id: 1,
-  brand: "SABYASACHI HERITAGE",
-  name: "Emerald Banarasi Heritage Lehenga",
-  rentalPrice: "14,500",
-  retailPrice: "4,20,000",
-  securityDeposit: "5,000",
-  totalPayable: "19,500",
-  mainImage: "/images/home/why-rent-vastra-home.jpg",
-  gallery: [
-    "/images/home/why-rent-vastra-home.jpg",
-    "/images/home/trending-home-2.jpg",
-    "/images/home/trending-home-3.jpg",
-    "/images/home/bag_midnight_lehenga.png"
-  ]
-};
+// Type for our dynamic product
+export interface DynamicProduct {
+  id: string;
+  brand: string;
+  name: string;
+  baseRentalPrice: number;
+  retailPrice: number;
+  baseSecurityDeposit: number;
+  mainImage: string;
+  gallery: string[];
+  availableSizes: string[];
+  reviews?: any[];
+}
 
 // Mock "Complete the Look" Accessories
 const ACCESSORIES = [
@@ -51,11 +51,77 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const { addToCart } = useCart();
   const router = useRouter();
   const [selectedSize, setSelectedSize] = useState<string>('S');
-  const [activeImage, setActiveImage] = useState<string>(MOCK_PRODUCT.mainImage);
-  const [wishlisted, setWishlisted] = useState(false);
+  const [activeImage, setActiveImage] = useState<string>("/images/placeholder.jpg");
+  const { wishlistItems, toggleWishlist: contextToggleWishlist } = useWishlist();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
   const [showFitModal, setShowFitModal] = useState(false);
+  const [showCustomFittingModal, setShowCustomFittingModal] = useState(false);
+  const [showDatePickerModal, setShowDatePickerModal] = useState(false);
+  const [deliveryDate, setDeliveryDate] = useState<Date | undefined>();
+  const [bookedDates, setBookedDates] = useState<Date[]>([]);
+  const calculatedDays = 4; // Fixed rental period
+  const [product, setProduct] = useState<DynamicProduct | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const startDate = deliveryDate ? format(deliveryDate, 'yyyy-MM-dd') : "";
+  const endDate = deliveryDate ? format(addDays(deliveryDate, 3), 'yyyy-MM-dd') : "";
+
+  const currentRentalPrice = product ? Math.round((product.baseRentalPrice / 4) * calculatedDays) : 0;
+  const currentDeposit = product ? product.baseSecurityDeposit : 0;
+  const currentTotal = currentRentalPrice + currentDeposit;
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const res = await fetch(`/api/products/${unwrappedParams.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          // Derive deposits and totals based on business logic
+          const rental = data.rentalPrice4Day || 0;
+          const deposit = data.securityDeposit || Math.round(rental * 0.3); // Use admin-set deposit or fallback to 30%
+          const retail = data.retailValue || (rental * 10);
+          const sizesArray = data.sizes ? data.sizes.split(',').map((s: string) => s.trim()).filter(Boolean) : ['S'];
+          
+          setProduct({
+            id: data.id,
+            brand: data.vendor?.boutiqueName || "Boutique",
+            name: data.name,
+            baseRentalPrice: rental,
+            retailPrice: retail,
+            baseSecurityDeposit: deposit,
+            mainImage: data.images?.[0]?.url || "/images/placeholder.jpg",
+            gallery: data.images?.map((img: any) => img.url) || ["/images/placeholder.jpg"],
+            availableSizes: sizesArray,
+            reviews: data.reviews || []
+          });
+          setActiveImage(data.images?.[0]?.url || "/images/placeholder.jpg");
+          if (sizesArray.length > 0) setSelectedSize(sizesArray[0]);
+        } else {
+          showToast("Product not found");
+        }
+
+        // Fetch booked dates
+        const datesRes = await fetch(`/api/products/${unwrappedParams.id}/booked-dates`);
+        if (datesRes.ok) {
+          const datesData = await datesRes.json();
+          const blocked: Date[] = [];
+          datesData.bookedDates.forEach((order: any) => {
+            const start = new Date(order.startDate);
+            const end = new Date(order.endDate);
+            blocked.push(...eachDayOfInterval({ start, end }));
+          });
+          setBookedDates(blocked);
+        }
+
+      } catch (err) {
+        console.error("Failed to fetch product", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProduct();
+  }, [unwrappedParams.id]);
 
   const showToast = (message: string) => {
     setToastMessage(message);
@@ -64,60 +130,111 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     }, 3000);
   };
 
-  const createCartItem = () => ({
-    id: MOCK_PRODUCT.id,
-    title: MOCK_PRODUCT.name,
-    designer: "House of Vastra", // Mock designer
-    image: MOCK_PRODUCT.mainImage,
-    size: selectedSize,
-    duration: "4 Days: 14 Oct - 18 Oct", // mock dates
-    deposit: parseInt(MOCK_PRODUCT.securityDeposit.replace(/,/g, '')),
-    price: parseInt(MOCK_PRODUCT.rentalPrice.replace(/,/g, '')),
-  });
-
-  const handleAddToBag = () => {
-    addToCart(createCartItem());
-    showToast(`${MOCK_PRODUCT.name} added to your bag!`);
-  };
-
-  const handleRentNow = () => {
-    router.push('/checkout/' + unwrappedParams.id);
-  };
-
-  useEffect(() => {
-    const saved = localStorage.getItem("wishlist");
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      const isWishlisted = parsed.some((i: any) => i.title === MOCK_PRODUCT.name);
-      setWishlisted(isWishlisted);
+  const createCartItem = () => {
+    if (!product) return null;
+    
+    // Format duration string based on selected dates or fallback
+    let durationStr = "4 Days (Dates pending)";
+    if (startDate && endDate) {
+      const s = new Date(startDate);
+      const e = new Date(endDate);
+      const formatter = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' });
+      durationStr = `${calculatedDays} Days: ${formatter.format(s)} - ${formatter.format(e)}`;
     }
-  }, []);
+
+    return {
+      id: Date.now().toString(),
+      productId: product.id,
+      title: product.name,
+      designer: product.brand,
+      image: product.mainImage,
+      size: selectedSize,
+      duration: durationStr,
+      deposit: currentDeposit,
+      price: currentRentalPrice,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+    };
+  };
+
+  const handleAddToBag = async () => {
+    const item = createCartItem();
+    if (item) {
+      try {
+        const res = await fetch(`/api/products/${unwrappedParams.id}/availability?start=${item.startDate}&end=${item.endDate}`);
+        const data = await res.json();
+        if (!data.available) {
+          showToast("This item is not available for the selected dates.");
+          return;
+        }
+        addToCart(item);
+        showToast(`${product?.name} added to your bag!`);
+      } catch (err) {
+        showToast("Error checking availability. Please try again.");
+      }
+    }
+  };
+
+  const handleRentNow = async () => {
+    if (!startDate || !endDate) {
+      showToast("Please select your rental dates first");
+      return;
+    }
+    
+    try {
+      const res = await fetch(`/api/products/${unwrappedParams.id}/availability?start=${startDate}&end=${endDate}`);
+      const data = await res.json();
+      if (!data.available) {
+        showToast("This item is not available for the selected dates.");
+        return;
+      }
+      
+      const query = new URLSearchParams();
+      query.set('start', startDate);
+      query.set('end', endDate);
+      if (selectedSize) query.set('size', selectedSize);
+      router.push(`/checkout/${unwrappedParams.id}?${query.toString()}`);
+    } catch (err) {
+      showToast("Error checking availability. Please try again.");
+    }
+  };
+
+  const wishlisted = product ? wishlistItems.some(i => i.id === product.id) : false;
 
   const toggleWishlist = () => {
-    const saved = localStorage.getItem("wishlist");
-    let parsed = saved ? JSON.parse(saved) : [];
-    
-    if (wishlisted) {
-      // Remove
-      parsed = parsed.filter((i: any) => i.title !== MOCK_PRODUCT.name);
-      setWishlisted(false);
+    if (!product) return;
+    contextToggleWishlist({
+      id: product.id,
+      brand: product.brand,
+      name: product.name,
+      rentalPrice: product.baseRentalPrice.toString(),
+      retailPrice: product.retailPrice.toString(),
+      image: product.mainImage
+    });
+    if (!wishlisted) {
+      showToast(`${product.name} added to your wishlist!`);
     } else {
-      // Add
-      parsed.push({
-        designer: "House of Vastra", // Mock designer
-        title: MOCK_PRODUCT.name,
-        price: "₹" + MOCK_PRODUCT.rentalPrice,
-        duration: "/ 4 days",
-        image: MOCK_PRODUCT.mainImage,
-        link: `/product/${MOCK_PRODUCT.id}`,
-        alt: MOCK_PRODUCT.name,
-      });
-      setWishlisted(true);
-      showToast(`${MOCK_PRODUCT.name} added to your wishlist!`);
+      showToast(`${product.name} removed from your wishlist!`);
     }
-    localStorage.setItem("wishlist", JSON.stringify(parsed));
-    window.dispatchEvent(new Event("wishlistUpdated"));
   };
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-[#fcf9f8] flex items-center justify-center">
+        <h2 className="font-serif text-2xl text-[#001410]">Loading Product...</h2>
+      </main>
+    );
+  }
+
+  if (!product) {
+    return (
+      <main className="min-h-screen bg-[#fcf9f8] flex flex-col items-center justify-center p-8">
+        <h2 className="font-serif text-3xl text-[#001410] mb-4">Piece Not Found</h2>
+        <p className="text-zinc-500 mb-8">This piece may have been removed or is currently unavailable.</p>
+        <Link href="/collections" className="bg-[#001410] text-white px-8 py-4 font-bold text-xs uppercase tracking-wider">Back to Collections</Link>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#fcf9f8] font-sans pb-32 md:pb-24">
@@ -130,7 +247,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           <div className="w-full md:w-[55%] lg:w-[60%] flex flex-col md:flex-row gap-4 p-4 md:p-8">
             {/* Desktop Thumbnails */}
             <div className="hidden md:flex flex-col gap-4 w-[100px] shrink-0">
-              {MOCK_PRODUCT.gallery.map((img, idx) => (
+              {product.gallery.map((img, idx) => (
                 <button 
                   key={idx}
                   onClick={() => setActiveImage(img)}
@@ -143,14 +260,14 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             
             {/* Mobile Carousel & Desktop Main Image */}
             <div className="md:hidden flex overflow-x-auto snap-x snap-mandatory no-scrollbar w-full relative">
-              {MOCK_PRODUCT.gallery.map((img, idx) => (
+              {product.gallery.map((img, idx) => (
                 <div key={idx} className="relative aspect-[4/5] w-full shrink-0 snap-start bg-zinc-100 overflow-hidden">
-                   <Image src={img} alt={`${MOCK_PRODUCT.name} ${idx}`} fill priority={idx === 0} sizes="100vw" className="object-cover object-top" />
+                   <Image src={img} alt={`${product.name} ${idx}`} fill priority={idx === 0} sizes="100vw" className="object-cover object-top" />
                 </div>
               ))}
             </div>
             <div className="hidden md:block relative aspect-[3/4] w-full bg-zinc-100 flex-1 overflow-hidden">
-               <Image src={activeImage} alt={MOCK_PRODUCT.name} fill priority sizes="60vw" className="object-cover object-top" />
+               <Image src={activeImage} alt={product.name} fill priority sizes="60vw" className="object-cover object-top" />
             </div>
           </div>
 
@@ -159,19 +276,18 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             
             {/* Brand & Title */}
             <div className="mb-6">
-              <span className="text-[10px] md:text-xs font-bold tracking-[0.15em] text-[#A8813C] uppercase mb-2 block">{MOCK_PRODUCT.brand}</span>
-              <h1 className="font-serif text-3xl md:text-4xl text-[#001410] leading-tight">{MOCK_PRODUCT.name}</h1>
+              <h1 className="font-serif text-3xl md:text-4xl text-[#001410] leading-tight">{product.name}</h1>
             </div>
 
             {/* Pricing & Badge */}
             <div className="flex items-center gap-4 mb-3">
-              <div className="font-serif text-2xl font-medium text-[#001410]">₹{MOCK_PRODUCT.rentalPrice} <span className="font-sans text-xs text-zinc-500 font-normal">/ 4 days</span></div>
+              <div className="font-serif text-2xl font-medium text-[#001410]">₹{currentRentalPrice.toLocaleString()}</div>
               <div className="flex items-center gap-1.5 bg-[#f5efe6] px-2.5 py-1 rounded text-[#775a19] text-[10px] font-bold uppercase tracking-wider">
                 <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
                 Authenticity Guaranteed
               </div>
             </div>
-            <div className="text-xs text-zinc-500 mb-10 pb-10 border-b border-zinc-200">Retail Value: ₹{MOCK_PRODUCT.retailPrice}</div>
+            <div className="text-xs text-zinc-500 mb-10 pb-10 border-b border-zinc-200">Retail Value: ₹{product.retailPrice.toLocaleString()}</div>
 
             {/* Rental Period */}
             <div className="mb-8">
@@ -179,31 +295,24 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 <span className="text-[10px] md:text-xs font-bold tracking-wider text-[#001410] uppercase">Select Rental Period</span>
                 <button onClick={() => setShowDeliveryModal(true)} className="text-[10px] md:text-xs text-zinc-500 underline cursor-pointer hover:text-[#001410] outline-none">Delivery Timeline</button>
               </div>
-              {/* From & To Date Inputs (Responsive) */}
-              <div className="grid grid-cols-2 gap-3 md:gap-4">
-                <div className="relative">
-                  <span className="absolute -top-2 left-2 bg-white px-1 text-[10px] text-zinc-500 font-bold uppercase tracking-wider z-10">From</span>
-                  <input 
-                    type="text" 
-                    placeholder="Dec 14, 2024" 
-                    onFocus={(e) => (e.target.type = "date")}
-                    onBlur={(e) => (e.target.value === "" ? (e.target.type = "text") : null)}
-                    className="w-full border border-zinc-300 rounded px-3 md:px-4 py-3 text-sm focus:border-[#001410] focus:ring-0 outline-none" 
-                  />
-                  <svg className="hidden md:block w-4 h-4 absolute right-3 md:right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
+              <button 
+                onClick={() => setShowDatePickerModal(true)}
+                className="w-full flex items-center justify-between bg-white border border-zinc-300 p-4 rounded-xl hover:border-[#001410] transition-colors"
+              >
+                <div className="flex flex-col items-start">
+                  <span className="text-[#001410] font-bold text-sm">
+                    {deliveryDate ? format(deliveryDate, 'do MMM yyyy') : "Select Delivery Date"}
+                  </span>
+                  {deliveryDate && (
+                    <span className="text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5">
+                      Return by: {format(addDays(deliveryDate, 3), 'do MMM')}
+                    </span>
+                  )}
                 </div>
-                <div className="relative">
-                  <span className="absolute -top-2 left-2 bg-white px-1 text-[10px] text-zinc-500 font-bold uppercase tracking-wider z-10">To</span>
-                  <input 
-                    type="text" 
-                    placeholder="Dec 18, 2024" 
-                    onFocus={(e) => (e.target.type = "date")}
-                    onBlur={(e) => (e.target.value === "" ? (e.target.type = "text") : null)}
-                    className="w-full border border-zinc-300 rounded px-3 md:px-4 py-3 text-sm focus:border-[#001410] focus:ring-0 outline-none" 
-                  />
-                  <svg className="hidden md:block w-4 h-4 absolute right-3 md:right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
-                </div>
-              </div>
+                <svg className="w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                </svg>
+              </button>
             </div>
 
             {/* Size Selector */}
@@ -212,12 +321,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 <span className="text-[10px] md:text-xs font-bold tracking-wider text-[#001410] uppercase">Select Size</span>
                 <button onClick={() => setShowFitModal(true)} className="text-[10px] md:text-xs font-bold text-[#775a19] underline cursor-pointer hover:text-[#001410] transition-colors outline-none">Find My Fit</button>
               </div>
-              <div className="flex gap-2">
-                {['S', 'M', 'L', 'XL'].map(size => (
+              <div className="flex flex-wrap gap-2">
+                {product.availableSizes.map(size => (
                   <button 
                     key={size}
                     onClick={() => setSelectedSize(size)}
-                    className={`w-12 h-12 border transition-colors ${
+                    className={`min-w-[3rem] px-3 h-12 border transition-colors ${
                       selectedSize === size 
                         ? 'border-[#001410] bg-[#001410] font-bold text-white' 
                         : 'border-zinc-300 bg-white font-medium text-zinc-600 hover:border-[#001410] hover:text-[#001410]'
@@ -227,21 +336,30 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                   </button>
                 ))}
               </div>
+              <button 
+                onClick={() => setShowCustomFittingModal(true)} 
+                className="mt-3 flex items-center gap-1.5 text-[10px] md:text-xs font-bold text-[#775a19] uppercase tracking-wider hover:text-[#001410] transition-colors outline-none bg-[#FAF2E8] px-3 py-1.5 rounded w-fit"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.25 9.75L16.5 12l-2.25 2.25m-4.5 0L7.5 12l2.25-2.25M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z" />
+                </svg>
+                Custom Fitting Available
+              </button>
             </div>
 
             {/* Cost Breakdown */}
             <div className="bg-[#f5f5f5] p-5 rounded-lg mb-8">
               <div className="flex justify-between text-xs text-zinc-600 mb-2">
-                <span>Rental Fee</span>
-                <span>₹{MOCK_PRODUCT.rentalPrice}</span>
+                <span>Rental Fee ({calculatedDays} Days)</span>
+                <span>₹{currentRentalPrice.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-xs text-zinc-600 mb-4 pb-4 border-b border-zinc-200">
                 <span className="flex items-center gap-1">Security Deposit <svg className="w-3 h-3 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></span>
-                <span>₹{MOCK_PRODUCT.securityDeposit} <span className="text-[10px] text-zinc-400">(Refundable)</span></span>
+                <span>₹{currentDeposit.toLocaleString()} <span className="text-[10px] text-zinc-400">(Refundable)</span></span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm font-bold text-[#001410]">Total Payable</span>
-                <span className="font-serif text-xl font-medium text-[#001410]">₹{MOCK_PRODUCT.totalPayable}</span>
+                <span className="font-serif text-xl font-medium text-[#001410]">₹{currentTotal.toLocaleString()}</span>
               </div>
             </div>
 
@@ -285,6 +403,38 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         </div>
 
       </div>
+
+      {/* Reviews Section */}
+      {product?.reviews && product.reviews.length > 0 && (
+        <div className="max-w-[1400px] mx-auto px-6 md:px-8 py-16 md:py-24 border-t border-zinc-200">
+          <h2 className="font-serif text-2xl md:text-3xl text-center text-[#001410] mb-10 md:mb-16">
+            Customer Reviews
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            {product.reviews.map((review: any) => (
+              <div key={review.id} className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm flex flex-col">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-[#FAF2E8] text-[#A8813C] flex items-center justify-center font-bold text-sm">
+                    {review.customer?.name ? review.customer.name.charAt(0).toUpperCase() : "A"}
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm text-[#001410]">{review.customer?.name || "Anonymous"}</p>
+                    <p className="text-[10px] text-zinc-500 uppercase tracking-wider">{new Date(review.createdAt).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}</p>
+                  </div>
+                </div>
+                <div className="flex mb-3">
+                  {[...Array(5)].map((_, i) => (
+                    <svg key={i} className={`w-4 h-4 ${i < review.rating ? 'text-[#775a19]' : 'text-zinc-200'}`} fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+                <p className="text-sm text-zinc-600 italic line-clamp-4">"{review.comment}"</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Mobile Sticky Bottom Action Bar */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-200 p-3 z-50 flex items-center gap-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
@@ -399,6 +549,83 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                  </Link>
                </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOM FITTING MODAL */}
+      {showCustomFittingModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-[#001410]/40 backdrop-blur-sm" onClick={() => setShowCustomFittingModal(false)}></div>
+          <div className="bg-white w-full max-w-md rounded-2xl p-6 md:p-8 relative z-10 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <button onClick={() => setShowCustomFittingModal(false)} className="absolute top-4 right-4 text-zinc-400 hover:text-[#001410]">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <h3 className="font-serif text-2xl text-[#001410] mb-6 border-b border-zinc-100 pb-4">Custom Fitting Service</h3>
+            
+            <div className="flex flex-col gap-6">
+              <div className="flex gap-4">
+                <div className="w-8 h-8 rounded-full bg-[#FAF2E8] text-[#A8813C] flex items-center justify-center font-bold shrink-0">1</div>
+                <div>
+                  <h4 className="font-bold text-sm text-[#001410] mb-1">Free Home Visit By Our Fitting Expert</h4>
+                  <p className="text-xs text-zinc-500">Our team will give you a call & fix an appointment with our fitting expert.</p>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="w-8 h-8 rounded-full bg-[#FAF2E8] text-[#A8813C] flex items-center justify-center font-bold shrink-0">2</div>
+                <div>
+                  <h4 className="font-bold text-sm text-[#001410] mb-1">Let Us Take Your Measurements</h4>
+                  <p className="text-xs text-zinc-500">Our fitting expert will visit your place & record your measurements so that the next time you order, we have you covered.</p>
+                </div>
+              </div>
+            </div>
+
+            <button onClick={() => setShowCustomFittingModal(false)} className="w-full mt-8 bg-[#001410] text-white py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#00261f] transition-all">
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* DATE PICKER MODAL */}
+      {showDatePickerModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-[#001410]/40 backdrop-blur-sm" onClick={() => setShowDatePickerModal(false)}></div>
+          <div className="bg-white w-full max-w-sm rounded-2xl p-6 relative z-10 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <button onClick={() => setShowDatePickerModal(false)} className="absolute top-4 right-4 text-zinc-400 hover:text-[#001410]">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <h3 className="font-serif text-xl text-[#001410] mb-4 text-center">Select Delivery Date</h3>
+            
+            <div className="flex justify-center mb-6">
+              <DayPicker
+                mode="single"
+                selected={deliveryDate}
+                onSelect={(date) => {
+                  setDeliveryDate(date);
+                  setShowDatePickerModal(false);
+                }}
+                disabled={[
+                  { before: startOfDay(addDays(new Date(), 2)) },
+                  ...bookedDates
+                ]}
+                className="font-sans"
+                classNames={{
+                  selected: "bg-[#001410] text-white hover:bg-[#00261f]",
+                }}
+              />
+            </div>
+
+            {deliveryDate && (
+              <div className="p-4 bg-[#FAF2E8] border border-[#E8D8BA] rounded-xl text-center">
+                <p className="text-sm text-[#001410]">
+                  <span className="font-bold">Delivery:</span> {format(deliveryDate, 'do MMM')}
+                </p>
+                <p className="text-sm text-[#001410] mt-1">
+                  <span className="font-bold">Return:</span> {format(addDays(deliveryDate, 3), 'do MMM')} (4-Day)
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}

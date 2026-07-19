@@ -28,7 +28,10 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     description: "",
     retailValue: "",
     vendorExpectedRent: "",
+    vendorExpectedDeposit: "",
     sizes: "",
+    approvalStatus: "",
+    rejectionReason: null as string | null,
   });
 
   useEffect(() => {
@@ -54,7 +57,10 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           description: product.description,
           retailValue: product.retailValue.toString(),
           vendorExpectedRent: product.vendorExpectedRent.toString(),
+          vendorExpectedDeposit: product.vendorExpectedDeposit.toString(),
           sizes: product.sizes,
+          approvalStatus: product.approvalStatus,
+          rejectionReason: product.rejectionReason,
         });
         
         setExistingImages(product.images || []);
@@ -163,6 +169,27 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         </button>
       </div>
 
+      {formData.approvalStatus === "REJECTED" && (
+        <div className="mb-8 p-6 bg-rose-50 border-2 border-rose-200 rounded-2xl">
+          <div className="flex gap-4">
+            <div className="w-10 h-10 bg-rose-100 rounded-full flex items-center justify-center shrink-0">
+              <svg className="w-5 h-5 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="font-serif text-lg font-bold text-rose-900 mb-1">Outfit Rejected</h3>
+              <p className="text-sm text-rose-700 font-medium mb-3">
+                <strong>Admin Feedback:</strong> {formData.rejectionReason}
+              </p>
+              <p className="text-xs text-rose-600/80">
+                Please fix the issues mentioned above. Saving changes to this outfit will automatically re-submit it for approval.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6 md:p-8">
         {error && (
           <div className="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-600 text-sm font-bold rounded-lg">
@@ -190,7 +217,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={4} className="w-full border border-zinc-300 px-4 py-3 text-sm focus:outline-none focus:border-[#001410]" required />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#001410] mb-2 block">Retail Value (₹)</label>
               <input type="number" value={formData.retailValue} onChange={e => setFormData({...formData, retailValue: e.target.value})} className="w-full border border-zinc-300 px-4 py-3 text-sm focus:outline-none focus:border-[#001410]" required />
@@ -198,6 +225,10 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             <div>
               <label className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#001410] mb-2 block">Your Expected Rent (₹)</label>
               <input type="number" value={formData.vendorExpectedRent} onChange={e => setFormData({...formData, vendorExpectedRent: e.target.value})} className="w-full border border-zinc-300 px-4 py-3 text-sm focus:outline-none focus:border-[#001410]" required />
+            </div>
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#001410] mb-2 block">Expected Deposit (₹)</label>
+              <input type="number" value={formData.vendorExpectedDeposit} onChange={e => setFormData({...formData, vendorExpectedDeposit: e.target.value})} className="w-full border border-zinc-300 px-4 py-3 text-sm focus:outline-none focus:border-[#001410]" required />
             </div>
           </div>
 

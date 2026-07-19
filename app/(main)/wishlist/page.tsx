@@ -17,7 +17,7 @@ export default function WishlistPage() {
     }, 3000);
   };
 
-  const handleRemove = (e: React.MouseEvent, id: number) => {
+  const handleRemove = (e: React.MouseEvent, id: string | number) => {
     e.preventDefault();
     removeFromWishlist(id);
   };
@@ -26,6 +26,7 @@ export default function WishlistPage() {
     e.preventDefault();
     addToCart({
       id: item.id,
+      productId: item.id,
       title: item.name,
       designer: item.brand,
       image: item.image,
@@ -102,9 +103,6 @@ export default function WishlistPage() {
               
               {/* Product Info */}
               <div className="flex flex-col flex-1 pb-2">
-                <span className="text-[9px] md:text-[10px] font-bold tracking-[0.15em] text-[#A8813C] uppercase mb-1">
-                  {item.brand}
-                </span>
                 <h3 className="font-serif text-sm md:text-base text-[#001410] leading-snug mb-3">
                   {item.name}
                 </h3>

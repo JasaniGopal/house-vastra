@@ -20,6 +20,24 @@ export default async function VendorDashboard() {
     redirect("/partner-login");
   }
 
+  // Fetch earnings
+  const earningsData = await prisma.order.aggregate({
+    where: {
+      product: { vendorId: vendor.id },
+      status: { in: ["COMPLETED", "RETURNED"] }
+    },
+    _sum: { vendorEarnings: true }
+  });
+  const totalEarnings = earningsData._sum.vendorEarnings || 0;
+
+  // Fetch active rentals
+  const activeRentals = await prisma.order.count({
+    where: {
+      product: { vendorId: vendor.id },
+      status: { in: ["PREPARING", "DISPATCHED", "IN_USE"] }
+    }
+  });
+
   // Fetch actual metrics
   const totalInventory = await prisma.product.count({
     where: { vendorId: vendor.id }
@@ -53,29 +71,39 @@ export default async function VendorDashboard() {
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8 md:mb-12">
-        {/* Metric 1 */}
-        <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm relative overflow-hidden group opacity-50 grayscale cursor-not-allowed">
-          <div className="absolute top-0 right-0 p-4 opacity-10">
+        {/* Metric 1 (Total Earnings - LIVE) */}
+        <Link href="/vendor/earnings" className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm relative overflow-hidden group hover:border-[#775a19] transition-all cursor-pointer block">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
              <svg className="w-16 h-16 text-[#775a19]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-1H9v-2h4v-2h-3c-1.1 0-2-.9-2-2V8c0-1.1.9-2 2-2h1V5h2v1h2v2h-4v2h3c1.1 0 2 .9 2 2v2c0 1.1-.9 2-2 2h-1v1h-2z"/></svg>
           </div>
-          <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2 relative z-10">Total Earnings</p>
-          <p className="font-serif text-3xl font-bold text-[#001410] relative z-10">₹0</p>
-          <div className="mt-4 flex items-center gap-2 relative z-10">
-            <span className="text-zinc-400 text-xs">Payments coming soon</span>
+          <div className="flex justify-between items-start relative z-10">
+            <div>
+              <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2 group-hover:text-[#775a19] transition-colors">Total Earnings</p>
+              <p className="font-serif text-3xl font-bold text-[#001410]">₹{totalEarnings.toLocaleString("en-IN")}</p>
+            </div>
+            <svg className="w-5 h-5 text-zinc-300 group-hover:text-[#775a19] group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
           </div>
-        </div>
+          <div className="mt-4 flex items-center gap-2 relative z-10">
+            <span className="text-zinc-400 text-xs">View payouts</span>
+          </div>
+        </Link>
 
-        {/* Metric 2 */}
-        <div className="bg-[#001410] p-6 rounded-2xl border border-[#00261f] shadow-lg relative overflow-hidden group text-white opacity-80 grayscale cursor-not-allowed">
-          <div className="absolute top-0 right-0 p-4 opacity-10">
+        {/* Metric 2 (Active Rentals - LIVE) */}
+        <Link href="/vendor/orders" className="bg-[#001410] p-6 rounded-2xl border border-[#00261f] shadow-lg relative overflow-hidden group text-white hover:border-[#775a19] transition-all cursor-pointer block">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
             <svg className="w-16 h-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
           </div>
-          <p className="text-zinc-400 text-xs font-bold uppercase tracking-wider mb-2 relative z-10">Active Rentals</p>
-          <p className="font-serif text-3xl font-bold text-white relative z-10">0</p>
-          <div className="mt-4 flex items-center gap-2 relative z-10">
-            <span className="text-white text-xs font-bold">Orders coming soon</span>
+          <div className="flex justify-between items-start relative z-10">
+            <div>
+              <p className="text-zinc-400 text-xs font-bold uppercase tracking-wider mb-2 group-hover:text-[#775a19] transition-colors">Active Rentals</p>
+              <p className="font-serif text-3xl font-bold text-white">{activeRentals}</p>
+            </div>
+            <svg className="w-5 h-5 text-zinc-500 group-hover:text-[#775a19] group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
           </div>
-        </div>
+          <div className="mt-4 flex items-center gap-2 relative z-10">
+            <span className="text-zinc-400 text-xs">Currently with customers</span>
+          </div>
+        </Link>
 
         {/* Metric 3 (Pending Approvals - LIVE) */}
         <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm relative overflow-hidden group">
@@ -94,16 +122,21 @@ export default async function VendorDashboard() {
         </div>
 
         {/* Metric 4 (Total Inventory - LIVE) */}
-        <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm relative overflow-hidden group">
+        <Link href="/vendor/products" className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm relative overflow-hidden group hover:border-[#775a19] transition-all cursor-pointer block">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
             <svg className="w-16 h-16 text-[#775a19]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" /></svg>
           </div>
-          <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2 relative z-10">Total Inventory</p>
-          <p className="font-serif text-3xl font-bold text-[#001410] relative z-10">{totalInventory}</p>
-          <div className="mt-4 flex items-center gap-2 relative z-10">
-            <span className="text-zinc-400 text-xs">Total outfits uploaded</span>
+          <div className="flex justify-between items-start relative z-10">
+            <div>
+              <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2 group-hover:text-[#775a19] transition-colors">Total Inventory</p>
+              <p className="font-serif text-3xl font-bold text-[#001410]">{totalInventory}</p>
+            </div>
+            <svg className="w-5 h-5 text-zinc-300 group-hover:text-[#775a19] group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
           </div>
-        </div>
+          <div className="mt-4 flex items-center gap-2 relative z-10">
+            <span className="text-zinc-400 text-xs">Manage all outfits</span>
+          </div>
+        </Link>
       </div>
 
       {/* Recent Uploads Section */}

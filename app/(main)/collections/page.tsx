@@ -6,76 +6,20 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useWishlist } from '@/context/WishlistContext';
 
-// Mock Product Data
-const MOCK_PRODUCTS = [
-  {
-    id: 1,
-    brand: "SABYASACHI HERITAGE",
-    name: "Emerald Banarasi Heritage Lehenga",
-    rentalPrice: "14,500",
-    retailPrice: "4,20,000",
-    image: "/images/home/why-rent-vastra-home.jpg"
-  },
-  {
-    id: 2,
-    brand: "MANISH MALHOTRA",
-    name: "Nocturnal Sequin Cocktail Saree",
-    rentalPrice: "8,500",
-    retailPrice: "1,85,000",
-    image: "/images/home/trending-home-2.jpg"
-  },
-  {
-    id: 3,
-    brand: "ANITA DONGRE",
-    name: "Ivory Silk Hand-Embroidered Sherwani",
-    rentalPrice: "12,000",
-    retailPrice: "2,40,000",
-    image: "/images/home/product_patola_sherwani.jpg"
-  },
-  {
-    id: 4,
-    brand: "RAW MANGO",
-    name: "Rani Gota Patti Silk Saree",
-    rentalPrice: "5,500",
-    retailPrice: "85,000",
-    image: "/images/home/trending-home-3.jpg"
-  },
-  {
-    id: 5,
-    brand: "MANISH MALHOTRA",
-    name: "Midnight Velvet Zardosi Sherwani",
-    rentalPrice: "24,000",
-    retailPrice: "4,50,000",
-    image: "/images/home/bag_gold_sherwani.png"
-  },
-  {
-    id: 6,
-    brand: "RAW MANGO",
-    name: "Ruby Kanjeevaram Classic Saree",
-    rentalPrice: "9,500",
-    retailPrice: "1,10,000",
-    image: "/images/home/occassion_weddings.png"
-  },
-  {
-    id: 7,
-    brand: "RITU KUMAR",
-    name: "Botanical Hand-Painted Anarkali",
-    rentalPrice: "14,800",
-    retailPrice: "1,80,000",
-    image: "/images/home/bag_midnight_lehenga.png"
-  },
-  {
-    id: 8,
-    brand: "TARUN TAHILIANI",
-    name: "Rose Crystal Couture Lehenga",
-    rentalPrice: "32,000",
-    retailPrice: "5,50,000",
-    image: "/images/home/occassion_cocktail.png"
-  }
-];
+// Dynamic Product Interface
+export interface DisplayProduct {
+  id: string;
+  brand: string;
+  name: string;
+  rentalPrice: string;
+  retailPrice: string;
+  image: string;
+  category: string;
+  occasions: string[];
+}
 
 // Reusable Product Card Component
-const ProductCard = ({ product, priority = false }: { product: typeof MOCK_PRODUCTS[0], priority?: boolean }) => {
+const ProductCard = ({ product, priority = false }: { product: DisplayProduct, priority?: boolean }) => {
   const { wishlistItems, toggleWishlist } = useWishlist();
   const isInWishlist = wishlistItems.some(item => item.id === product.id);
 
@@ -110,7 +54,6 @@ const ProductCard = ({ product, priority = false }: { product: typeof MOCK_PRODU
 
       {/* Product Details */}
       <div className="flex flex-col flex-1">
-        <span className="text-[9px] md:text-[10px] font-bold tracking-[0.15em] text-[#A8813C] uppercase mb-1">{product.brand}</span>
         <h3 className="font-serif text-base md:text-lg text-[#001410] leading-snug mb-3 pr-4">{product.name}</h3>
         
         <div className="mt-auto flex items-end justify-between">
@@ -118,9 +61,7 @@ const ProductCard = ({ product, priority = false }: { product: typeof MOCK_PRODU
             <div className="font-serif text-lg md:text-xl font-medium text-[#001410]">₹{product.rentalPrice}</div>
             <div className="text-[10px] md:text-xs text-zinc-500 mt-0.5">Retail: ₹{product.retailPrice}</div>
           </div>
-          {/* Action text changes based on breakpoint to match design */}
           <div className="text-[10px] md:text-xs font-bold text-[#A8813C] uppercase tracking-wider md:hidden border-b border-[#A8813C] pb-0.5">Rent Now</div>
-          <div className="text-[10px] md:text-[11px] font-medium text-zinc-500 hidden md:block">Rental / 4 Days</div>
         </div>
       </div>
     </Link>
@@ -139,7 +80,85 @@ function CollectionsContent() {
     occasionParam ? [occasionParam] : []
   );
   const [selectedSize, setSelectedSize] = useState<string>('S');
+  const [selectedSort, setSelectedSort] = useState<string>('newest');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+  const [products, setProducts] = useState<DisplayProduct[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [occasions, setOccasions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const query = new URLSearchParams();
+        if (selectedCategories.length > 0) {
+          query.set('category', selectedCategories.join(','));
+        }
+        if (selectedOccasions.length > 0) {
+          query.set('occasion', selectedOccasions.join(','));
+        }
+        query.set('sort', selectedSort);
+        
+        const qParam = searchParams.get('q');
+        if (qParam) {
+          query.set('q', qParam);
+        }
+
+        const res = await fetch(`/api/products?${query.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          const mapped = data.map((p: any) => ({
+            id: p.id,
+            brand: p.vendor?.boutiqueName || "Boutique",
+            name: p.name,
+            rentalPrice: p.rentalPrice4Day?.toLocaleString() || "0",
+            retailPrice: p.retailValue?.toLocaleString() || "0",
+            image: p.images?.[0]?.url || "/images/placeholder.jpg",
+            category: p.category?.name || "Uncategorized",
+            occasions: p.occasions?.map((occ: any) => occ.name) || [],
+          }));
+          setProducts(mapped);
+        }
+      } catch (err) {
+        console.error("Failed to fetch products", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [selectedCategories, selectedOccasions, selectedSort, searchParams]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch("/api/categories");
+        if (res.ok) {
+          const data = await res.json();
+          setCategories(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch categories", err);
+      }
+    };
+
+    const fetchOccasions = async () => {
+      try {
+        const res = await fetch("/api/occasions");
+        if (res.ok) {
+          const data = await res.json();
+          setOccasions(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch occasions", err);
+      }
+    };
+
+    fetchCategories();
+    fetchOccasions();
+  }, []);
 
   // Update occasion filter if URL changes directly
   useEffect(() => {
@@ -173,17 +192,11 @@ function CollectionsContent() {
     setSelectedSize('');
   };
 
-  // Mock filtering logic for demonstration
-  const filteredProducts = MOCK_PRODUCTS.filter(product => {
-    if (selectedCategories.length > 0 && !selectedCategories.some(cat => product.name.includes(cat) || product.brand.includes(cat.split(' ')[0].toUpperCase()))) {
-      // Just a mock way to make the list smaller when multiple filters are applied
-      return Math.random() > 0.5; // Simulate filtering
-    }
-    return true;
-  });
+  // Since we are doing backend filtering now, products state is already filtered.
+  // We can just use 'products' directly for rendering, except maybe Size which isn't backend-filtered yet.
+  const filteredProducts = products; // or add size filtering if needed
 
-  // Mock an actual empty state if too many filters are clicked (simulate empty)
-  const isEmptyState = selectedCategories.length >= 3 && selectedOccasions.length >= 2;
+  const isEmptyState = !loading && filteredProducts.length === 0;
 
   return (
     <main className="min-h-screen bg-[#fcf9f8] font-sans pb-24">
@@ -223,10 +236,10 @@ function CollectionsContent() {
             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{isEmptyState ? 0 : filteredProducts.length} Pieces Found</span>
             <div className="relative flex items-center gap-2 cursor-pointer">
               <span className="text-[10px] font-bold text-[#001410] uppercase tracking-wider pointer-events-none">Sort By:</span>
-              <select defaultValue="New Arrivals" className="bg-transparent border-none text-[10px] font-bold text-[#001410] uppercase tracking-wider focus:ring-0 appearance-none pr-4 py-2 cursor-pointer w-full z-10">
-                <option value="New Arrivals">New Arrivals</option>
-                <option value="Price: Low to High">Price: Low to High</option>
-                <option value="Price: High to Low">Price: High to Low</option>
+              <select value={selectedSort} onChange={(e) => setSelectedSort(e.target.value)} className="bg-transparent border-none text-[10px] font-bold text-[#001410] uppercase tracking-wider focus:ring-0 appearance-none pr-4 py-2 cursor-pointer w-full z-10">
+                <option value="newest">New Arrivals</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
               </select>
               <svg className="w-3 h-3 text-[#001410] absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none z-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
@@ -242,10 +255,10 @@ function CollectionsContent() {
           <div className="flex flex-col gap-3">
             <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Sort By</span>
             <div className="relative">
-               <select defaultValue="New Arrivals" className="w-full bg-zinc-100/50 border-none rounded-lg px-4 py-3 text-xs font-medium text-[#001410] focus:ring-0 appearance-none cursor-pointer">
-                 <option value="New Arrivals">New Arrivals</option>
-                 <option value="Price: Low to High">Price: Low to High</option>
-                 <option value="Price: High to Low">Price: High to Low</option>
+               <select value={selectedSort} onChange={(e) => setSelectedSort(e.target.value)} className="w-full bg-zinc-100/50 border-none rounded-lg px-4 py-3 text-xs font-medium text-[#001410] focus:ring-0 appearance-none cursor-pointer">
+                 <option value="newest">New Arrivals</option>
+                 <option value="price_asc">Price: Low to High</option>
+                 <option value="price_desc">Price: High to Low</option>
                </select>
                <svg className="w-3 h-3 text-zinc-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
             </div>
@@ -255,21 +268,19 @@ function CollectionsContent() {
           <div className="flex flex-col gap-4">
             <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Category</span>
             <div className="flex flex-col gap-3">
-              {[
-                'Lehengas', 'Sarees', 'Sherwanis', 'Anarkalis', 'Kurtas & Sets', 
-                'Dresses & Gowns', 'Suits & Blazers', 'Tops & Shirts', 'Trousers & Skirts',
-                'Jewelry', 'Footwear', 'Bags & Clutches', 'Headwear'
-              ].map(cat => (
-                <label key={cat} className="flex items-center gap-3 cursor-pointer group">
+              {categories.length > 0 ? categories.map(cat => (
+                <label key={cat.id} className="flex items-center gap-3 cursor-pointer group">
                   <input 
                     type="checkbox" 
-                    checked={selectedCategories.includes(cat)}
-                    onChange={() => toggleCategory(cat)}
+                    checked={selectedCategories.includes(cat.name)}
+                    onChange={() => toggleCategory(cat.name)}
                     className="w-4 h-4 rounded border-zinc-300 text-[#001410] focus:ring-[#775a19]"
                   />
-                  <span className="text-xs text-zinc-600 group-hover:text-[#001410] transition-colors">{cat}</span>
+                  <span className="text-xs text-zinc-600 group-hover:text-[#001410] transition-colors">{cat.name}</span>
                 </label>
-              ))}
+              )) : (
+                <div className="text-xs text-zinc-400">Loading categories...</div>
+              )}
             </div>
           </div>
 
@@ -277,17 +288,19 @@ function CollectionsContent() {
           <div className="flex flex-col gap-4">
             <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Occasion</span>
             <div className="flex flex-col gap-3">
-              {['Weddings', 'Cocktail', 'Haldi', 'Reception'].map(occ => (
-                <label key={occ} className="flex items-center gap-3 cursor-pointer group">
+              {occasions.length > 0 ? occasions.map(occ => (
+                <label key={occ.id} className="flex items-center gap-3 cursor-pointer group">
                   <input 
                     type="checkbox" 
-                    checked={selectedOccasions.includes(occ)}
-                    onChange={() => toggleOccasion(occ)}
+                    checked={selectedOccasions.includes(occ.name)}
+                    onChange={() => toggleOccasion(occ.name)}
                     className="w-4 h-4 rounded border-zinc-300 text-[#001410] focus:ring-[#775a19]"
                   />
-                  <span className="text-xs text-zinc-600 group-hover:text-[#001410] transition-colors">{occ}</span>
+                  <span className="text-xs text-zinc-600 group-hover:text-[#001410] transition-colors">{occ.name}</span>
                 </label>
-              ))}
+              )) : (
+                <div className="text-xs text-zinc-400">Loading occasions...</div>
+              )}
             </div>
           </div>
 
@@ -336,7 +349,11 @@ function CollectionsContent() {
 
         {/* --- Product Grid & Empty State --- */}
         <div className="flex-1 flex flex-col">
-          {isEmptyState ? (
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 md:py-32 text-center h-full">
+              <h2 className="font-serif text-2xl md:text-3xl text-[#001410] mb-3">Loading Collections...</h2>
+            </div>
+          ) : isEmptyState ? (
             <div className="flex flex-col items-center justify-center py-20 md:py-32 text-center h-full">
               <div className="w-16 h-16 md:w-20 md:h-20 bg-zinc-100 rounded-full flex items-center justify-center mb-6">
                 <svg className="w-8 h-8 md:w-10 md:h-10 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
@@ -395,10 +412,10 @@ function CollectionsContent() {
             <div className="flex flex-col gap-3">
               <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Sort By</span>
               <div className="relative">
-                 <select defaultValue="New Arrivals" className="w-full bg-zinc-100/50 border-none rounded-lg px-4 py-3 text-xs font-medium text-[#001410] focus:ring-0 appearance-none">
-                   <option value="New Arrivals">New Arrivals</option>
-                   <option value="Price: Low to High">Price: Low to High</option>
-                   <option value="Price: High to Low">Price: High to Low</option>
+                 <select value={selectedSort} onChange={(e) => setSelectedSort(e.target.value)} className="w-full bg-zinc-100/50 border-none rounded-lg px-4 py-3 text-xs font-medium text-[#001410] focus:ring-0 appearance-none">
+                   <option value="newest">New Arrivals</option>
+                   <option value="price_asc">Price: Low to High</option>
+                   <option value="price_desc">Price: High to Low</option>
                  </select>
                  <svg className="w-3 h-3 text-zinc-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
               </div>
@@ -408,21 +425,19 @@ function CollectionsContent() {
             <div className="flex flex-col gap-4">
               <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Category</span>
               <div className="grid grid-cols-2 gap-3">
-                {[
-                  'Lehengas', 'Sarees', 'Sherwanis', 'Anarkalis', 'Kurtas & Sets', 
-                  'Dresses & Gowns', 'Suits & Blazers', 'Tops & Shirts', 'Trousers & Skirts',
-                  'Jewelry', 'Footwear', 'Bags & Clutches', 'Headwear'
-                ].map(cat => (
-                  <label key={`mob-${cat}`} className="flex items-center gap-3 cursor-pointer">
+                {categories.length > 0 ? categories.map(cat => (
+                  <label key={`mob-${cat.id}`} className="flex items-center gap-3 cursor-pointer">
                     <input 
                       type="checkbox" 
-                      checked={selectedCategories.includes(cat)}
-                      onChange={() => toggleCategory(cat)}
+                      checked={selectedCategories.includes(cat.name)}
+                      onChange={() => toggleCategory(cat.name)}
                       className="w-4 h-4 rounded border-zinc-300 text-[#001410] focus:ring-[#775a19]"
                     />
-                    <span className="text-xs text-zinc-600">{cat}</span>
+                    <span className="text-xs text-zinc-600">{cat.name}</span>
                   </label>
-                ))}
+                )) : (
+                  <div className="text-xs text-zinc-400">Loading categories...</div>
+                )}
               </div>
             </div>
 

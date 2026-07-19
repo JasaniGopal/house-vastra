@@ -1,9 +1,10 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 
 export interface WishlistItem {
-  id: number;
+  id: string | number;
   brand: string;
   name: string;
   rentalPrice: string;
@@ -14,7 +15,7 @@ export interface WishlistItem {
 interface WishlistContextType {
   wishlistItems: WishlistItem[];
   addToWishlist: (item: WishlistItem) => void;
-  removeFromWishlist: (id: number) => void;
+  removeFromWishlist: (id: string | number) => void;
   toggleWishlist: (item: WishlistItem) => void;
   clearWishlist: () => void;
 }
@@ -22,33 +23,95 @@ interface WishlistContextType {
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
 
 export function WishlistProvider({ children }: { children: ReactNode }) {
-  // Start with empty wishlist for a clean state
+  const { data: session, status } = useSession();
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  const addToWishlist = (item: WishlistItem) => {
-    setWishlistItems(prev => {
-      const exists = prev.find(i => i.id === item.id);
-      if (exists) return prev; 
-      return [...prev, item];
-    });
-  };
-
-  const removeFromWishlist = (id: number) => {
-    setWishlistItems(prev => prev.filter(item => item.id !== id));
-  };
-
-  const toggleWishlist = (item: WishlistItem) => {
-    setWishlistItems(prev => {
-      const exists = prev.find(i => i.id === item.id);
-      if (exists) {
-        return prev.filter(i => i.id !== item.id);
+  // Load initially
+  useEffect(() => {
+    const loadWishlist = async () => {
+      if (status === "authenticated") {
+        try {
+          const res = await fetch("/api/wishlist");
+          if (res.ok) {
+            const data = await res.json();
+            const formatted = data.map((d: any) => ({
+              id: d.productId,
+              brand: d.product?.vendor?.boutiqueName || "Boutique",
+              name: d.product.name,
+              rentalPrice: (d.product.rentalPrice4Day || 0).toString(),
+              retailPrice: (d.product.retailValue || 0).toString(),
+              image: d.product.images?.[0]?.url || "/images/placeholder.jpg"
+            }));
+            setWishlistItems(formatted);
+          }
+        } catch (e) {
+          console.error("Failed to load DB wishlist", e);
+        }
+      } else if (status === "unauthenticated") {
+        const stored = localStorage.getItem('wishlist');
+        if (stored) {
+          try {
+            setWishlistItems(JSON.parse(stored));
+          } catch (e) {}
+        }
       }
+      if (status !== "loading") setIsLoaded(true);
+    };
+    loadWishlist();
+  }, [status]);
+
+  // Sync to localstorage if unauthenticated
+  useEffect(() => {
+    if (isLoaded && status === "unauthenticated") {
+      localStorage.setItem('wishlist', JSON.stringify(wishlistItems));
+    }
+    if (isLoaded) {
+      window.dispatchEvent(new Event("wishlistUpdated"));
+    }
+  }, [wishlistItems, isLoaded, status]);
+
+  const toggleWishlist = async (item: WishlistItem) => {
+    // Optimistic UI update
+    setWishlistItems(prev => {
+      const exists = prev.find(i => i.id === item.id);
+      if (exists) return prev.filter(i => i.id !== item.id);
       return [...prev, item];
     });
+
+    if (status === "authenticated") {
+      try {
+        await fetch("/api/wishlist", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ productId: item.id })
+        });
+      } catch (e) {
+        console.error("Failed to sync wishlist toggle", e);
+      }
+    }
+  };
+
+  const addToWishlist = async (item: WishlistItem) => {
+    const exists = wishlistItems.find(i => i.id === item.id);
+    if (!exists) {
+      await toggleWishlist(item);
+    }
+  };
+
+  const removeFromWishlist = async (id: string | number) => {
+    const exists = wishlistItems.find(i => i.id === id);
+    if (exists) {
+      await toggleWishlist(exists);
+    }
   };
 
   const clearWishlist = () => {
     setWishlistItems([]);
+    if (status === "authenticated") {
+      // API currently doesn't have a bulk delete, but this handles local state
+      // Can be added later if needed
+    }
   };
 
   return (

@@ -4,8 +4,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import ProductStatusToggle from "@/components/Vendor/ProductStatusToggle";
+import ProductCategoryFilter from "./ProductCategoryFilter";
 
-export default async function VendorProductsPage() {
+export default async function VendorProductsPage({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
+  const params = await searchParams;
+  const categoryFilter = params.category;
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user || (session.user.role !== "VENDOR" && session.user.role !== "ADMIN")) {
@@ -20,8 +24,16 @@ export default async function VendorProductsPage() {
     redirect("/partner-login");
   }
 
+  const categories = await prisma.category.findMany({
+    orderBy: { name: 'asc' },
+    select: { id: true, name: true }
+  });
+
   const products = await prisma.product.findMany({
-    where: { vendorId: vendor.id },
+    where: { 
+      vendorId: vendor.id,
+      ...(categoryFilter ? { categoryId: categoryFilter } : {})
+    },
     orderBy: { createdAt: "desc" },
     include: { category: true, images: true }
   });
@@ -34,9 +46,12 @@ export default async function VendorProductsPage() {
           <h1 className="font-serif text-3xl md:text-4xl font-medium text-[#001410] tracking-tight">My Products</h1>
           <p className="text-[#414846] mt-2 text-sm md:text-base">Manage your boutique's uploaded inventory.</p>
         </div>
-        <Link href="/vendor/products/new" className="bg-[#001410] text-white py-3 px-6 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#00261f] hover:shadow-lg transition-all w-fit shrink-0">
-          + Add New Outfit
-        </Link>
+        <div className="flex items-center gap-4">
+          <ProductCategoryFilter categories={categories} />
+          <Link href="/vendor/products/new" className="bg-[#001410] text-white py-3 px-6 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#00261f] hover:shadow-lg transition-all w-fit shrink-0">
+            + Add New Outfit
+          </Link>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
@@ -66,40 +81,58 @@ export default async function VendorProductsPage() {
               </thead>
               <tbody className="divide-y divide-zinc-100 text-[#414846]">
                 {products.map((product) => (
-                  <tr key={product.id} className="hover:bg-[#fcf9f8] transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-4">
-                        {product.images && product.images.length > 0 ? (
-                          <img src={product.images[0].url} alt={product.name} className="w-12 h-12 rounded-md object-cover shrink-0 border border-zinc-200" />
-                        ) : (
-                          <div className="w-12 h-12 bg-zinc-100 rounded-md shrink-0 border border-zinc-200"></div>
-                        )}
-                        <div>
-                          <p className="font-bold text-[#001410] line-clamp-1">{product.name}</p>
-                          <p className="text-xs text-zinc-500 truncate w-48">{product.description}</p>
+                  <React.Fragment key={product.id}>
+                    <tr className="hover:bg-[#fcf9f8] transition-colors group">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-4">
+                          {product.images && product.images.length > 0 ? (
+                            <img src={product.images[0].url} alt={product.name} className="w-12 h-12 rounded-md object-cover shrink-0 border border-zinc-200" />
+                          ) : (
+                            <div className="w-12 h-12 bg-zinc-100 rounded-md shrink-0 border border-zinc-200"></div>
+                          )}
+                          <div>
+                            <p className="font-bold text-[#001410] line-clamp-1">{product.name}</p>
+                            <p className="text-xs text-zinc-500 truncate w-48">{product.description}</p>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">{product.category.name}</td>
-                    <td className="px-6 py-4 font-medium text-zinc-500">₹{product.retailValue.toString()}</td>
-                    <td className="px-6 py-4 font-bold text-[#001410]">₹{product.vendorExpectedRent?.toString()}</td>
-                    <td className="px-6 py-4">
-                      {product.approvalStatus === "APPROVED" && (
-                        <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Live</span>
-                      )}
-                      {product.approvalStatus === "PENDING" && (
-                        <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Pending Review</span>
-                      )}
-                      {product.approvalStatus === "REJECTED" && (
-                        <span className="bg-rose-100 text-rose-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Rejected</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <Link href={`/vendor/products/${product.id}/edit`} className="text-xs font-bold text-[#775a19] hover:text-[#001410] uppercase tracking-wider hover:underline">
-                        Edit
-                      </Link>
-                    </td>
-                  </tr>
+                      </td>
+                      <td className="px-6 py-4">{product.category.name}</td>
+                      <td className="px-6 py-4 font-medium text-zinc-500">₹{product.retailValue.toString()}</td>
+                      <td className="px-6 py-4 font-bold text-[#001410]">₹{product.vendorExpectedRent?.toString()}</td>
+                      <td className="px-6 py-4">
+                        {product.approvalStatus === "APPROVED" && (
+                          <div>
+                            <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Live</span>
+                            <ProductStatusToggle productId={product.id} initialAvailability={product.isAvailable} />
+                          </div>
+                        )}
+                        {product.approvalStatus === "PENDING" && (
+                          <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Pending Review</span>
+                        )}
+                        {product.approvalStatus === "REJECTED" && (
+                          <span className="bg-rose-100 text-rose-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Rejected</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right flex flex-col gap-2 items-end">
+                        <Link href={`/vendor/products/${product.id}/edit`} className="text-xs font-bold text-[#775a19] hover:text-[#001410] uppercase tracking-wider hover:underline">
+                          Edit
+                        </Link>
+                        <Link href={`/vendor/products/${product.id}/calendar`} className="text-xs font-bold text-zinc-500 hover:text-[#001410] uppercase tracking-wider hover:underline">
+                          Calendar
+                        </Link>
+                      </td>
+                    </tr>
+                    {product.approvalStatus === "REJECTED" && product.rejectionReason && (
+                      <tr className="bg-rose-50/50">
+                        <td colSpan={6} className="px-6 py-3 border-l-4 border-rose-500">
+                          <p className="text-xs font-medium text-rose-800 flex items-center gap-2">
+                            <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                            <strong>Admin Feedback:</strong> {product.rejectionReason}
+                          </p>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>

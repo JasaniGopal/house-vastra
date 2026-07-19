@@ -37,6 +37,7 @@ model User {
   password      String?
   role          Role      @default(CUSTOMER)
   phone         String?
+  isBanned      Boolean   @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
@@ -44,6 +45,10 @@ model User {
   orders        Order[]
   accounts      Account[]
   sessions      Session[]
+  wishlistItems WishlistItem[]
+  cartItems     CartItem[]
+  reviews       Review[]
+  measurements  MeasurementProfile?
 }
 
 model Vendor {
@@ -61,9 +66,19 @@ model Vendor {
   updatedAt       DateTime  @updatedAt
   
   products        Product[]
+  payouts         Payout[]
+  supportTickets  SupportTicket[]
 }
 
 model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  products    Product[]
+}
+
+model Occasion {
   id          String    @id @default(uuid())
   name        String    @unique
   slug        String    @unique
@@ -81,21 +96,40 @@ model Product {
   description     String         @db.Text
   retailValue        Float
   vendorExpectedRent Float
+  vendorExpectedDeposit Float @default(0)
 
   rentalPricePerDay  Float?
   rentalPrice2Day    Float?
   rentalPrice4Day    Float?
   rentalPrice8Day    Float?
+  securityDeposit    Float?
 
   sizes              String         // Comma separated e.g. "S,M,L"
   images             ProductImage[]
+  occasions          Occasion[]
   
   approvalStatus     ApprovalStatus @default(PENDING)
+  rejectionReason    String?        @db.Text
   isAvailable        Boolean        @default(false)
+  isTrending         Boolean        @default(false)
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   
-  orders          Order[]
+  orders             Order[]
+  blockedDates       BlockedDate[]
+  wishlistedBy       WishlistItem[]
+  inCarts            CartItem[]
+  reviews            Review[]
+}
+
+model BlockedDate {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  startDate DateTime
+  endDate   DateTime
+  reason    String?
+  createdAt DateTime @default(now())
 }
 
 model ProductImage {
@@ -119,8 +153,33 @@ model Order {
   status          OrderStatus @default(PENDING)
   shippingAddress String      @db.Text
   trackingId      String?
+  courierPartner  String?
+  platformFee     Float       @default(0)
+  vendorEarnings  Float       @default(0)
+  depositStatus   String      @default("HELD") // HELD, REFUNDED, WITHHELD
+  couponCode      String?
+  discountAmount  Float       @default(0)
+  payoutId        String?
+  payout          Payout?     @relation(fields: [payoutId], references: [id])
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+  dispute         Dispute?
+  reviews         Review[]    @relation("OrderReviews")
+}
+
+model Payout {
+  id          String   @id @default(uuid())
+  vendorId    String
+  vendor      Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  amount      Float
+  status      String   @default("PENDING") // PENDING, PROCESSING, PAID
+  referenceId String?
+  periodStart DateTime?
+  periodEnd   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  orders      Order[]
 }
 
 model Account {
@@ -156,4 +215,90 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model WishlistItem {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size      String?
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime @default(now())
+}
+
+model Coupon {
+  id            String   @id @default(uuid())
+  code          String   @unique
+  discountType  String   // "PERCENTAGE" or "FLAT"
+  discountValue Float
+  isActive      Boolean  @default(true)
+  usageLimit    Int?     // null means unlimited
+  usageCount    Int      @default(0)
+  oncePerUser   Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Dispute {
+  id          String   @id @default(uuid())
+  orderId     String   @unique
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  reason      String   @db.Text
+  adminNotes  String?  @db.Text
+  status      String   @default("OPEN") // OPEN, RESOLVED_REFUND, RESOLVED_WITHHOLD
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  customerId  String
+  customer    User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderId     String?
+  order       Order?   @relation("OrderReviews", fields: [orderId], references: [id], onDelete: SetNull)
+  rating      Int      // 1-5
+  comment     String?  @db.Text
+  isApproved  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SupportTicket {
+  id          String   @id @default(uuid())
+  vendorId    String
+  vendor      Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  subject     String
+  message     String   @db.Text
+  status      String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model MeasurementProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  height      String?
+  bust        String?
+  waist       String?
+  hips        String?
+  customNotes String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

@@ -3,23 +3,69 @@
 import React, { useState, use } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import Script from "next/script";
 
-const getProductById = (id: string) => {
-  return {
-    id: parseInt(id) || 1,
-    title: "Emerald Banarasi Heritage Lehenga",
-    designer: "Sabyasachi",
-    image: "/images/home/why-rent-vastra-home.jpg",
-    duration: "4 Days: 14 Oct - 18 Oct",
-    deposit: 5000,
-    price: 14500,
-  };
-};
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
+import { useSession } from 'next-auth/react';
 
-export default function DirectCheckoutPage({ params }: { params: Promise<{ id: string }> }) {
-  const unwrappedParams = use(params);
-  const item = getProductById(unwrappedParams.id);
-  const items = [item];
+function CheckoutContent({ unwrappedParams }: { unwrappedParams: any }) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { data: session } = useSession();
+  
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const res = await fetch(`/api/products/${unwrappedParams.id}`);
+        if (res.ok) {
+          const product = await res.json();
+          const start = searchParams.get('start');
+          const end = searchParams.get('end');
+          const size = searchParams.get('size') || "Custom";
+          
+          let calculatedDays = 4;
+          let durationStr = "4 Days (Dates pending)";
+          if (start && end) {
+            const s = new Date(start);
+            const e = new Date(end);
+            const diffTime = e.getTime() - s.getTime();
+            if (diffTime > 0) {
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              calculatedDays = Math.max(diffDays, 4);
+              const formatter = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' });
+              durationStr = `${calculatedDays} Days: ${formatter.format(s)} - ${formatter.format(e)}`;
+            }
+          }
+
+          const baseRental = product.rentalPrice4Day || 0;
+          const currentRentalPrice = Math.round((baseRental / 4) * calculatedDays);
+          const currentDeposit = product.securityDeposit || Math.round(baseRental * 0.3);
+
+          setItems([{
+            id: product.id,
+            title: product.name,
+            designer: product.vendor?.boutiqueName || "Boutique",
+            image: product.images?.[0]?.url || "/images/placeholder.jpg",
+            size: size,
+            duration: durationStr,
+            deposit: currentDeposit,
+            price: currentRentalPrice,
+            startDate: start || undefined,
+            endDate: end || undefined
+          }]);
+        }
+      } catch (err) {
+        console.error("Failed to load product", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProduct();
+  }, [unwrappedParams.id, searchParams]);
   
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -34,18 +80,145 @@ export default function DirectCheckoutPage({ params }: { params: Promise<{ id: s
     phone: "+91 98XXX XXXXX"
   });
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
+    if (items.length === 0) return;
+    
+    // Validation for missing dates
+    if (items.some(item => !item.startDate || !item.endDate)) {
+      alert("Please select rental dates before checking out.");
+      return;
+    }
+
     setIsCheckoutLoading(true);
-    setTimeout(() => {
+
+    try {
+      // 0. Validate availability
+      const valRes = await fetch("/api/checkout/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items }),
+      });
+      const valData = await valRes.json();
+      
+      if (!valData.available) {
+        alert("Sorry, this item is no longer available for the selected dates.");
+        setIsCheckoutLoading(false);
+        return;
+      }
+
+      // 1. Create order on server
+      const res = await fetch("/api/checkout/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: grandTotal }),
+      });
+      
+      const order = await res.json();
+      if (!order.id) {
+        throw new Error("Failed to create Razorpay order");
+      }
+
+      // 2. Initialize Razorpay popup
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_mock_key",
+        amount: order.amount,
+        currency: order.currency,
+        name: "Rent Vastra",
+        description: "Luxury Rental Order",
+        order_id: order.id,
+        handler: async function (response: any) {
+          // 3. Verify payment on server
+          const verifyRes = await fetch("/api/checkout/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              items: items,
+              address: address,
+              userId: session?.user?.id || null, // Pass actual session userId
+              couponCode: appliedCoupon?.code || null
+            }),
+          });
+          const verifyData = await verifyRes.json();
+          if (verifyData.success) {
+            setIsSuccess(true);
+          } else {
+            alert("Payment verification failed. Please contact support.");
+          }
+        },
+        prefill: {
+          name: address.name,
+          contact: address.phone,
+        },
+        theme: {
+          color: "#001410",
+        },
+      };
+
+      const rzpKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_mock_key";
+      if (rzpKey === "rzp_test_mock_key") {
+        options.handler({
+          razorpay_order_id: order.id,
+          razorpay_payment_id: "pay_mock_" + Math.random().toString(36).substring(2, 10),
+          razorpay_signature: "mock_signature",
+        });
+        return;
+      }
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on("payment.failed", function (response: any) {
+        alert(`Payment failed! ${response.error.description}`);
+      });
+      rzp.open();
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong during checkout.");
+    } finally {
       setIsCheckoutLoading(false);
-      setIsSuccess(true);
-    }, 2000);
+    }
+  };
+
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountAmount: number } | null>(null);
+  const [couponError, setCouponError] = useState("");
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return;
+    setIsValidatingCoupon(true);
+    setCouponError("");
+    
+    try {
+      const res = await fetch("/api/checkout/validate-coupon", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: couponCode, subtotal }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to validate coupon");
+      
+      setAppliedCoupon({ code: data.code, discountAmount: data.discountAmount });
+      setCouponCode("");
+    } catch (err: any) {
+      setCouponError(err.message);
+      setAppliedCoupon(null);
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    setCouponError("");
   };
 
   const subtotal = items.reduce((acc, item) => acc + item.price, 0);
   const totalDeposit = items.reduce((acc, item) => acc + item.deposit, 0);
-  // Delivery fee not in screenshot summary, so omitted to match design exactly
-  const grandTotal = subtotal + totalDeposit;
+  const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+  const grandTotal = subtotal - discountAmount + totalDeposit;
 
   if (isSuccess) {
     return (
@@ -72,7 +245,9 @@ export default function DirectCheckoutPage({ params }: { params: Promise<{ id: s
   }
 
   return (
-    <div className="min-h-screen bg-[#fcf9f8] text-[#1c1b1b] font-sans">
+    <>
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+      <div className="min-h-screen bg-[#fcf9f8] text-[#1c1b1b] font-sans">
       {/* Header Bar */}
       <header className="w-full bg-white border-b border-[#c1c8c5]/30 sticky top-0 z-30">
         <div className="mx-auto max-w-[1280px] px-4 md:px-16 py-5 flex items-center justify-between">
@@ -94,14 +269,18 @@ export default function DirectCheckoutPage({ params }: { params: Promise<{ id: s
 
       {/* Main Grid */}
       <main className="mx-auto max-w-[1280px] px-4 md:px-16 py-8 md:py-12">
-        {items.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center py-24">
+            <h2 className="font-serif text-2xl text-[#001410]">Loading checkout...</h2>
+          </div>
+        ) : items.length === 0 ? (
           <div className="max-w-[420px] mx-auto w-full text-center py-24">
             <svg className="w-16 h-16 mx-auto text-zinc-300 mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
             </svg>
-            <h2 className="font-serif text-2xl font-bold text-[#001410] mb-2">Your Bag is Empty</h2>
+            <h2 className="font-serif text-2xl font-bold text-[#001410] mb-2">Item Not Found</h2>
             <p className="font-sans text-sm text-[#5c6462] leading-relaxed mb-8">
-              Explore our collection of heritage designer ethnic wear and book your dream outfit.
+              We couldn't load the details for this item.
             </p>
             <Link
               href="/"
@@ -203,84 +382,80 @@ export default function DirectCheckoutPage({ params }: { params: Promise<{ id: s
                 )}
               </section>
 
-              {/* Payment Method */}
+              {/* Payment Details */}
               <section>
-                <h2 className="font-serif text-xl md:text-2xl font-bold text-[#001410] mb-4">2. Payment Method</h2>
+                <h2 className="font-serif text-xl md:text-2xl font-bold text-[#001410] mb-4">2. Payment Details</h2>
                 
-                <div className="border border-black/10 rounded-sm overflow-hidden bg-white shadow-sm">
-                  
-                  {/* Card Option */}
-                  <div className={`border-b border-black/5 transition-colors ${selectedPayment === 'card' ? 'bg-white' : 'hover:bg-zinc-50'}`}>
-                    <label className="flex items-center gap-4 p-5 cursor-pointer">
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPayment === 'card' ? 'border-[#001410]' : 'border-zinc-300'}`}>
-                        {selectedPayment === 'card' && <div className="w-2.5 h-2.5 rounded-full bg-[#001410]" />}
-                      </div>
-                      <input type="radio" className="hidden" checked={selectedPayment === 'card'} onChange={() => setSelectedPayment('card')} />
-                      <span className="font-sans font-bold text-sm text-[#001410] uppercase tracking-wider flex-1">Credit / Debit Card</span>
-                      <svg className="w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
-                      </svg>
-                    </label>
-                    
-                    {/* Expanded Card Form */}
-                    <div className={`overflow-hidden transition-all duration-300 px-5 ${selectedPayment === 'card' ? 'max-h-[500px] pb-6 opacity-100' : 'max-h-0 opacity-0'}`}>
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Card Number</label>
-                          <input type="text" placeholder="XXXX XXXX XXXX XXXX" className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors font-mono placeholder:font-sans" />
+                <div className="bg-white border border-black/10 rounded-sm p-6 shadow-sm">
+                  {/* Promo Code Input */}
+                  <div className="mb-6">
+                    <span className="block text-sm font-bold text-[#001410] mb-3">Apply Promo Code</span>
+                    {appliedCoupon ? (
+                      <div className="flex items-center justify-between bg-[#775a19]/10 border border-[#775a19]/20 p-3 rounded-sm">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-5 h-5 text-[#775a19]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className="font-bold text-[#775a19] text-sm tracking-wide">{appliedCoupon.code}</span>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Expiry Date</label>
-                            <input type="text" placeholder="MM / YY" className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" />
-                          </div>
-                          <div>
-                            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">CVV</label>
-                            <input type="text" placeholder="***" className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors font-mono placeholder:font-sans" />
-                          </div>
-                        </div>
+                        <button onClick={removeCoupon} className="text-[#775a19] hover:text-[#001410] text-xs font-bold uppercase tracking-widest cursor-pointer">Remove</button>
                       </div>
+                    ) : (
+                      <div>
+                        <div className="flex gap-2">
+                          <input 
+                            type="text" 
+                            value={couponCode}
+                            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                            placeholder="e.g. WELCOME500" 
+                            className="flex-1 px-4 py-3 bg-[#faf9f8] border border-black/10 rounded-sm text-sm font-bold text-[#001410] focus:outline-none focus:border-[#775a19] uppercase tracking-widest placeholder:normal-case placeholder:tracking-normal placeholder:font-normal"
+                          />
+                          <button 
+                            onClick={handleApplyCoupon}
+                            disabled={isValidatingCoupon || !couponCode}
+                            className="px-6 py-3 bg-[#001410] text-white rounded-sm font-bold text-sm hover:bg-[#775a19] transition-colors disabled:opacity-50 cursor-pointer shrink-0"
+                          >
+                            {isValidatingCoupon ? "..." : "Apply"}
+                          </button>
+                        </div>
+                        {couponError && <p className="text-red-500 text-xs font-bold mt-2">{couponError}</p>}
+                      </div>
+                    )}
+                  </div>
+
+                  {appliedCoupon && (
+                    <div className="flex justify-between items-center text-emerald-600 font-bold text-sm mb-4">
+                      <span>Discount ({appliedCoupon.code})</span>
+                      <span>-₹{appliedCoupon.discountAmount.toLocaleString('en-IN')}</span>
                     </div>
-                  </div>
+                  )}
 
-                  {/* UPI Option */}
-                  <div className={`border-b border-black/5 transition-colors ${selectedPayment === 'upi' ? 'bg-white' : 'hover:bg-zinc-50'}`}>
-                    <label className="flex items-center gap-4 p-5 cursor-pointer">
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPayment === 'upi' ? 'border-[#001410]' : 'border-zinc-300'}`}>
-                        {selectedPayment === 'upi' && <div className="w-2.5 h-2.5 rounded-full bg-[#001410]" />}
-                      </div>
-                      <input type="radio" className="hidden" checked={selectedPayment === 'upi'} onChange={() => setSelectedPayment('upi')} />
-                      <div className="flex-1">
-                        <span className="font-sans font-bold text-sm text-[#001410] uppercase tracking-wider block">UPI (Google Pay, PhonePe)</span>
-                        {/* Mock UPI badges */}
-                        <div className="flex gap-2 mt-2">
-                           <span className="px-2 py-0.5 bg-zinc-100 text-[10px] font-bold text-zinc-500 rounded-sm">GPay</span>
-                           <span className="px-2 py-0.5 bg-zinc-100 text-[10px] font-bold text-zinc-500 rounded-sm">BHIM</span>
-                           <span className="px-2 py-0.5 bg-zinc-100 text-[10px] font-bold text-zinc-500 rounded-sm">Paytm</span>
-                        </div>
-                      </div>
-                      <svg className="w-5 h-5 text-zinc-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
-                      </svg>
-                    </label>
+                  {/* Grand Total */}
+                  <div className="pt-6 mt-2 border-t border-black/10">
+                    <div className="flex justify-between items-end mb-2">
+                      <span className="font-serif text-xl font-bold text-[#001410]">Total Payable</span>
+                      <span className="font-serif text-2xl font-bold text-[#001410]">
+                        ₹{grandTotal.toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                    <span className="block text-[9px] text-zinc-500 mb-8">*Security deposit is fully refundable post-rental inspection.</span>
+                    
+                    <button
+                      onClick={handleCheckout}
+                      disabled={isCheckoutLoading}
+                      className="w-full bg-[#001410] text-white py-4 font-sans font-bold text-sm tracking-widest uppercase hover:bg-[#00261f] active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-xl"
+                    >
+                      {isCheckoutLoading ? "Processing..." : `Pay ₹${grandTotal.toLocaleString('en-IN')}`}
+                    </button>
+                    
+                    <p className="text-center text-[9px] text-zinc-400 mt-4 leading-relaxed px-4">
+                      By placing this order, you agree to our <span className="underline decoration-zinc-300 underline-offset-2 cursor-pointer hover:text-zinc-600">Rental Agreement</span> and confirm that you have read our <span className="underline decoration-zinc-300 underline-offset-2 cursor-pointer hover:text-zinc-600">Cancellations Policy</span>.
+                    </p>
                   </div>
-
-                  {/* Net Banking Option */}
-                  <div className={`transition-colors ${selectedPayment === 'netbanking' ? 'bg-white' : 'hover:bg-zinc-50'}`}>
-                    <label className="flex items-center gap-4 p-5 cursor-pointer">
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPayment === 'netbanking' ? 'border-[#001410]' : 'border-zinc-300'}`}>
-                        {selectedPayment === 'netbanking' && <div className="w-2.5 h-2.5 rounded-full bg-[#001410]" />}
-                      </div>
-                      <input type="radio" className="hidden" checked={selectedPayment === 'netbanking'} onChange={() => setSelectedPayment('netbanking')} />
-                      <span className="font-sans font-bold text-sm text-[#001410] uppercase tracking-wider flex-1">Net Banking</span>
-                      <svg className="w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
-                      </svg>
-                    </label>
-                  </div>
-
                 </div>
               </section>
+
+
 
               {/* Trust Badges bottom left */}
               <div className="flex gap-6 mt-4">
@@ -357,11 +532,16 @@ export default function DirectCheckoutPage({ params }: { params: Promise<{ id: s
                           <span className="text-[#001410] font-medium">₹{item.price.toLocaleString('en-IN')}</span>
                         </div>
                         <div className="flex justify-between items-center text-zinc-600">
-                          <span className="flex items-center gap-1.5">
+                          <span className="relative group flex items-center gap-1.5 cursor-pointer">
                             Security Deposit
                             <svg className="w-3.5 h-3.5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 111.063.852l-.708 2.836a.75.75 0 001.063.852l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
                             </svg>
+                            {/* Tooltip */}
+                            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-max px-3 py-1.5 bg-[#001410] text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg uppercase tracking-wider">
+                              Refundable in 7 days
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#001410]"></div>
+                            </div>
                           </span>
                           <span className="text-[#775a19] font-medium">₹{item.deposit.toLocaleString('en-IN')}</span>
                         </div>
@@ -369,28 +549,7 @@ export default function DirectCheckoutPage({ params }: { params: Promise<{ id: s
                     </div>
                   ))}
 
-                  {/* Grand Total */}
-                  <div className="pt-6 mt-2 border-t border-black/10">
-                    <div className="flex justify-between items-end mb-2">
-                      <span className="font-serif text-xl font-bold text-[#001410]">Total Payable</span>
-                      <span className="font-serif text-2xl font-bold text-[#001410]">
-                        ₹{grandTotal.toLocaleString('en-IN')}
-                      </span>
-                    </div>
-                    <span className="block text-[9px] text-zinc-500 mb-8">*Security deposit is fully refundable post-rental inspection.</span>
-                    
-                    <button
-                      onClick={handleCheckout}
-                      disabled={isCheckoutLoading}
-                      className="w-full bg-[#001410] text-white py-4 font-sans font-bold text-sm tracking-widest uppercase hover:bg-[#00261f] active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-xl"
-                    >
-                      {isCheckoutLoading ? "Processing..." : `Pay ₹${grandTotal.toLocaleString('en-IN')}`}
-                    </button>
-                    
-                    <p className="text-center text-[9px] text-zinc-400 mt-4 leading-relaxed px-4">
-                      By placing this order, you agree to our <span className="underline decoration-zinc-300 underline-offset-2 cursor-pointer hover:text-zinc-600">Rental Agreement</span> and confirm that you have read our <span className="underline decoration-zinc-300 underline-offset-2 cursor-pointer hover:text-zinc-600">Cancellations Policy</span>.
-                    </p>
-                  </div>
+
 
                 </div>
               </div>
@@ -401,5 +560,20 @@ export default function DirectCheckoutPage({ params }: { params: Promise<{ id: s
 
       </main>
     </div>
+    <Script src="https://checkout.razorpay.com/v1/checkout.js" />
+    </>
+  );
+}
+
+export default function DirectCheckoutPage({ params }: { params: Promise<{ id: string }> }) {
+  const unwrappedParams = use(params);
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#fcf9f8] flex items-center justify-center">
+        <h2 className="font-serif text-2xl text-[#001410]">Loading checkout...</h2>
+      </div>
+    }>
+      <CheckoutContent unwrappedParams={unwrappedParams} />
+    </Suspense>
   );
 }
