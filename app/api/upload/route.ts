@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
+import { v2 as cloudinary } from 'cloudinary';
+
+// Cloudinary config is automatically picked up from process.env.CLOUDINARY_URL
+cloudinary.config({
+  secure: true
+});
 
 export async function POST(req: Request) {
   try {
@@ -24,33 +28,30 @@ export async function POST(req: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // 4. Create the uploads directory if it doesn't exist
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "outfits");
-    try {
-      await mkdir(uploadDir, { recursive: true });
-    } catch (err: any) {
-      if (err.code !== "EEXIST") throw err;
-    }
+    // 4. Upload to Cloudinary using a stream
+    const uploadResult = await new Promise<any>((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'rent-vastra-outfits',
+          resource_type: 'auto',
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      
+      // End the stream with the buffer
+      uploadStream.end(buffer);
+    });
 
-    // 5. Generate a unique, safe filename
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    // Extract extension (e.g., .jpg, .png)
-    const ext = path.extname(file.name) || ".jpg";
-    const filename = `outfit-${uniqueSuffix}${ext}`;
-    
-    // 6. Save the file to the disk
-    const filepath = path.join(uploadDir, filename);
-    await writeFile(filepath, buffer);
-
-    // 7. Return the public URL path
-    const fileUrl = `/uploads/outfits/${filename}`;
-    
-    return NextResponse.json({ url: fileUrl });
+    // 5. Return the secure URL from Cloudinary
+    return NextResponse.json({ url: uploadResult.secure_url });
 
   } catch (error: any) {
     console.error("Upload Error:", error);
     return NextResponse.json(
-      { error: "Failed to process the upload on the server." },
+      { error: "Failed to process the upload to Cloudinary." },
       { status: 500 }
     );
   }
