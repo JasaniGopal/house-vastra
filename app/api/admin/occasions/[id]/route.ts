@@ -17,7 +17,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
       where: { id },
       include: {
         _count: {
-          select: { products: true }
+          select: { productOccasions: true }
         }
       }
     });
@@ -26,7 +26,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
       return NextResponse.json({ error: "Occasion not found" }, { status: 404 });
     }
 
-    if (occasion._count.products > 0) {
+    if (occasion._count.productOccasions > 0) {
       return NextResponse.json(
         { error: "Cannot delete an occasion that has products associated with it." },
         { status: 400 }

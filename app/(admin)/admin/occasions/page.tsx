@@ -131,13 +131,13 @@ export default function OccasionManagementPage() {
                     <td className="px-6 py-4 font-bold text-[#001410]">{occ.name}</td>
                     <td className="px-6 py-4 font-mono text-xs text-zinc-500">{occ.slug}</td>
                     <td className="px-6 py-4 text-zinc-500 truncate max-w-[200px]">{occ.description || "—"}</td>
-                    <td className="px-6 py-4 font-bold">{occ._count?.products || 0}</td>
+                    <td className="px-6 py-4 font-bold">{occ._count?.productOccasions || 0}</td>
                     <td className="px-6 py-4 text-right">
                       <button 
-                        onClick={() => handleDeleteOccasion(occ.id, occ._count?.products || 0)}
-                        className={`text-xs font-bold uppercase tracking-wider hover:underline ${occ._count?.products > 0 ? "text-zinc-300 cursor-not-allowed" : "text-rose-600 hover:text-rose-800"}`}
-                        disabled={occ._count?.products > 0}
-                        title={occ._count?.products > 0 ? "Cannot delete occasion with active products" : "Delete occasion"}
+                        onClick={() => handleDeleteOccasion(occ.id, occ._count?.productOccasions || 0)}
+                        className={`text-xs font-bold uppercase tracking-wider hover:underline ${occ._count?.productOccasions > 0 ? "text-zinc-300 cursor-not-allowed" : "text-rose-600 hover:text-rose-800"}`}
+                        disabled={occ._count?.productOccasions > 0}
+                        title={occ._count?.productOccasions > 0 ? "Cannot delete occasion with active products" : "Delete occasion"}
                       >
                         Delete
                       </button>

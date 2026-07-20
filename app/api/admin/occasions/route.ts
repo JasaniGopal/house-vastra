@@ -14,7 +14,7 @@ export async function GET() {
       orderBy: { name: "asc" },
       include: {
         _count: {
-          select: { products: true }
+          select: { productOccasions: true }
         }
       }
     });
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
       },
       include: {
         _count: {
-          select: { products: true }
+          select: { productOccasions: true }
         }
       }
     });
