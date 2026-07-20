@@ -25,9 +25,11 @@ export async function GET(req: Request) {
 
     if (occasion) {
       const occasions = occasion.split(',').map(o => o.trim());
-      whereClause.occasions = {
+      whereClause.productOccasions = {
         some: {
-          name: { in: occasions }
+          occasion: {
+            name: { in: occasions }
+          }
         }
       };
     }
@@ -56,7 +58,7 @@ export async function GET(req: Request) {
       include: {
         images: true,
         category: true,
-        occasions: true,
+        productOccasions: { include: { occasion: true } },
         vendor: {
           select: {
             boutiqueName: true,

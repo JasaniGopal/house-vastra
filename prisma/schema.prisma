@@ -79,11 +79,21 @@ model Category {
 }
 
 model Occasion {
-  id          String    @id @default(uuid())
-  name        String    @unique
-  slug        String    @unique
-  description String?
-  products    Product[]
+  id               String            @id @default(uuid())
+  name             String            @unique
+  slug             String            @unique
+  description      String?
+  productOccasions ProductOccasion[]
+}
+
+model ProductOccasion {
+  id         String   @id @default(uuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  occasionId String
+  occasion   Occasion @relation(fields: [occasionId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, occasionId])
 }
 
 model Product {
@@ -106,7 +116,7 @@ model Product {
 
   sizes              String         // Comma separated e.g. "S,M,L"
   images             ProductImage[]
-  occasions          Occasion[]
+  productOccasions   ProductOccasion[]
   
   approvalStatus     ApprovalStatus @default(PENDING)
   rejectionReason    String?        @db.Text
@@ -210,6 +220,7 @@ model Session {
 }
 
 model VerificationToken {
+  id         String   @id @default(uuid())
   identifier String
   token      String   @unique
   expires    DateTime
