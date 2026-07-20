@@ -48,7 +48,9 @@ export async function POST(req: Request) {
     // Prepare occasions payload if provided
     const occasionPayload = occasionIds && Array.isArray(occasionIds) && occasionIds.length > 0
       ? {
-          connect: occasionIds.map((id: string) => ({ id }))
+          create: occasionIds.map((id: string) => ({
+            occasion: { connect: { id } }
+          }))
         }
       : undefined;
 
@@ -66,12 +68,12 @@ export async function POST(req: Request) {
         approvalStatus: "PENDING",
         isAvailable: false,
         images: imagePayload,
-        occasions: occasionPayload,
+        productOccasions: occasionPayload,
       },
       include: {
         images: true,
         category: true,
-        occasions: true,
+        productOccasions: { include: { occasion: true } },
       },
     });
 
