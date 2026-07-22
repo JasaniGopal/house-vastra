@@ -97,7 +97,7 @@ export default function CheckoutPage() {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_mock_key",
         amount: order.amount,
         currency: order.currency,
-        name: "Rent Vastra",
+        name: "LOR",
         description: "Luxury Rental Order",
         order_id: order.id,
         handler: async function (response: any) {
@@ -243,7 +243,7 @@ export default function CheckoutPage() {
             </div>
             <h2 className="font-serif text-2xl md:text-3xl font-bold text-[#001410] mb-3">Booking Confirmed!</h2>
             <p className="font-sans text-sm md:text-base text-[#5c6462] leading-relaxed mb-8">
-              Thank you for renting with Rent Vastra. Your luxury garments have been reserved and are being prepared under clinical standards.
+              Thank you for renting with LOR. Your luxury garments have been reserved and are being prepared under clinical standards.
             </p>
             <Link
               href="/"

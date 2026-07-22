@@ -8,7 +8,7 @@ export default function VendorGuidelinesPage() {
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="font-serif text-3xl md:text-4xl font-medium text-[#001410] tracking-tight">Platform Guidelines</h1>
-          <p className="text-[#414846] mt-2 text-sm md:text-base">Everything you need to know about renting on House of Vastra.</p>
+          <p className="text-[#414846] mt-2 text-sm md:text-base">Everything you need to know about renting on LOR.</p>
         </div>
       </div>
 
@@ -29,7 +29,7 @@ export default function VendorGuidelinesPage() {
             <ul>
               <li><strong>When do I get paid?</strong> Your earnings are added to your "Pending Balance" the moment an outfit is safely returned and inspected by our warehouse team.</li>
               <li><strong>Payout Schedule:</strong> We process payouts automatically on the <strong>1st and 15th of every month</strong> directly to your registered bank account.</li>
-              <li><strong>Platform Fee:</strong> House of Vastra charges a flat platform fee on the rental price to cover shipping, dry cleaning (optional), and platform maintenance. The exact "Your Expected Rent" you enter during upload is exactly what you get.</li>
+              <li><strong>Platform Fee:</strong> LOR charges a flat platform fee on the rental price to cover shipping, dry cleaning (optional), and platform maintenance. The exact "Your Expected Rent" you enter during upload is exactly what you get.</li>
             </ul>
           </div>
         </div>
@@ -47,7 +47,7 @@ export default function VendorGuidelinesPage() {
           <div className="prose prose-sm prose-zinc max-w-none ml-13">
             <p>Customers expect premium quality. Here is what is expected of your inventory.</p>
             <ul>
-              <li><strong>Before Pickup:</strong> Ensure the outfit is clean, ironed/steamed, and packed securely in the provided House of Vastra garment bags.</li>
+              <li><strong>Before Pickup:</strong> Ensure the outfit is clean, ironed/steamed, and packed securely in the provided LOR garment bags.</li>
               <li><strong>Returns:</strong> Customers will return the outfit unwashed. <strong>Do not worry!</strong> Our warehouse team will inspect it, process minor stains, and return it to you ready for the next rental or your closet.</li>
               <li><strong>Rejections:</strong> If you upload an item with blurry photos, or if the item is severely damaged upon our initial inspection, we may reject it from the platform to maintain quality standards.</li>
             </ul>

@@ -14,7 +14,7 @@ export default function ReferPage() {
 
   const handleShare = async () => {
     const shareData = {
-      title: 'Rent Vastra',
+      title: 'LOR',
       text: 'Use my code ANANYA500 to get ₹500 off your first luxury rental!',
       url: 'https://rentvastra.com?ref=ANANYA500'
     };
@@ -47,7 +47,7 @@ export default function ReferPage() {
             Back to Profile
           </Link>
           <h1 className="font-serif text-3xl md:text-4xl font-medium text-[#001410] tracking-tight">Refer a Friend</h1>
-          <p className="text-[#414846] mt-2 text-sm md:text-base">Share the elegance of Rent Vastra and earn exclusive rewards.</p>
+          <p className="text-[#414846] mt-2 text-sm md:text-base">Share the elegance of LOR and earn exclusive rewards.</p>
         </div>
 
         <div className="flex flex-col gap-8">

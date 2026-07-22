@@ -97,7 +97,7 @@ export default function Header() {
               href="/"
               className="font-serif text-2xl font-bold tracking-tight text-[#001410] hover:text-[#00261f] transition-colors"
             >
-              Rent Vastra
+              LOR
             </Link>
 
             {/* Center: Navigation Links (Desktop Only) */}

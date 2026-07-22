@@ -123,7 +123,7 @@ function CheckoutContent({ unwrappedParams }: { unwrappedParams: any }) {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_mock_key",
         amount: order.amount,
         currency: order.currency,
-        name: "Rent Vastra",
+        name: "LOR",
         description: "Luxury Rental Order",
         order_id: order.id,
         handler: async function (response: any) {
@@ -231,7 +231,7 @@ function CheckoutContent({ unwrappedParams }: { unwrappedParams: any }) {
           </div>
           <h2 className="font-serif text-3xl font-bold text-[#001410] mb-3">Order Confirmed</h2>
           <p className="font-sans text-[#5c6462] leading-relaxed mb-8">
-            Thank you for choosing Rent Vastra. Your luxury garments have been reserved and will be delivered to you shortly.
+            Thank you for choosing LOR. Your luxury garments have been reserved and will be delivered to you shortly.
           </p>
           <Link
             href="/"
@@ -255,7 +255,7 @@ function CheckoutContent({ unwrappedParams }: { unwrappedParams: any }) {
             href="/"
             className="font-serif text-2xl font-bold tracking-tight text-[#001410] hover:text-[#00261f] transition-colors"
           >
-            Rent Vastra
+            LOR
           </Link>
 
           <Link

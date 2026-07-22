@@ -6,11 +6,11 @@ export default function AboutUsPage() {
   return (
     <div className="bg-[#fcf9f8] min-h-screen pt-24 pb-24 font-sans">
       <div className="max-w-[800px] mx-auto px-6 md:px-8">
-        <h1 className="font-serif text-4xl md:text-5xl font-medium text-[#001410] mb-8 tracking-tight">About Rent Vastra</h1>
+        <h1 className="font-serif text-4xl md:text-5xl font-medium text-[#001410] mb-8 tracking-tight">About LOR</h1>
         
         <div className="space-y-6 text-[#414846] leading-relaxed">
           <p className="text-lg">
-            Rent Vastra was born out of a simple idea: luxury ethnic wear shouldn't be locked away in a closet after just one wearing. We believe that exceptional design and master craftsmanship should be experienced, shared, and celebrated.
+            LOR was born out of a simple idea: luxury ethnic wear shouldn't be locked away in a closet after just one wearing. We believe that exceptional design and master craftsmanship should be experienced, shared, and celebrated.
           </p>
           
           <h2 className="font-serif text-2xl text-[#001410] pt-6 pb-2">Our Mission</h2>

@@ -1,6 +1,6 @@
-# House of Vastra - Architecture & Backend Guide
+# LOR - Architecture & Backend Guide
 
-Welcome to the backend documentation for **House of Vastra**, a premium luxury rental platform connecting high-end boutiques with customers. 
+Welcome to the backend documentation for **LOR**, a premium luxury rental platform connecting high-end boutiques with customers. 
 
 This file explains exactly how the platform works, the tools we are using, and where to find the code. It serves as a comprehensive developer guide and feature log.
 
@@ -42,7 +42,7 @@ We are using a modern, fast, and secure set of technologies:
 - **Security:** Strict guards block unauthorized access.
 
 ### 👑 The Admin Portal (`/admin`)
-- **Pending Approvals Queue:** The Admin reviews every single dress uploaded by vendors. The Admin decides the final rental price that the customer will pay (adding House of Vastra's profit margin) and hits "Approve", setting the status to `APPROVED` and pushing it live.
+- **Pending Approvals Queue:** The Admin reviews every single dress uploaded by vendors. The Admin decides the final rental price that the customer will pay (adding LOR's profit margin) and hits "Approve", setting the status to `APPROVED` and pushing it live.
 - **Live Inventory & Directory:** Admins can instantly take a specific dress offline, or completely "Suspend" an entire boutique.
 - **Financial Analytics & Payouts:** The Admin can view the total platform revenue, platform profit margin, and pending balances owed to vendors. 
 - **The Payout Button:** When it's time to pay a vendor, the Admin clicks "Mark as Paid" to zero out the pending balance and generate a permanent `Payout` receipt.

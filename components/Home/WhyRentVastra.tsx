@@ -71,7 +71,7 @@ export default function WhyRentVastra() {
           {/* Left Column: Title & Value Props */}
           <div className="lg:col-span-7 flex flex-col justify-center">
             <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-semibold text-[#001410] tracking-tight mb-8">
-              Why Rent Vastra?
+              Why LOR?
             </h2>
             
             <div className="space-y-6">
@@ -97,7 +97,7 @@ export default function WhyRentVastra() {
           <div className="lg:col-span-5 relative w-full aspect-[4/3] md:aspect-[6/5] lg:aspect-square overflow-hidden rounded-2xl shadow-sm">
             <Image
               src="/images/home/why-rent-vastra-home.jpg"
-              alt="Rent Vastra Lehenga and Packaging"
+              alt="LOR Lehenga and Packaging"
               fill
               className="object-cover object-center"
               sizes="(max-w-768px) 100vw, 40vw"

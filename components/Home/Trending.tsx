@@ -42,7 +42,7 @@ export default function Trending() {
     e.stopPropagation();
     contextToggleWishlist({
       id: product.id,
-      brand: "House of Vastra", // Default since it's not mapped from API initially in Trending
+      brand: "LOR", // Default since it's not mapped from API initially in Trending
       name: product.title,
       rentalPrice: product.price.replace("₹", "").replace(",", ""),
       retailPrice: "0",

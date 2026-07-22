@@ -9,7 +9,7 @@ export default function AdminUsers() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>
           <h1 className="font-serif text-3xl md:text-4xl font-medium text-[#001410] tracking-tight">Users & Customers</h1>
-          <p className="text-zinc-500 mt-2 text-sm md:text-base">Manage all registered customer accounts on Rent Vastra.</p>
+          <p className="text-zinc-500 mt-2 text-sm md:text-base">Manage all registered customer accounts on LOR.</p>
         </div>
         <button className="bg-[#001410] text-white py-3 px-6 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#00261f] shadow-md transition-all">
           Export User Data

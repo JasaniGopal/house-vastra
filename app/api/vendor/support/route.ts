@@ -38,7 +38,7 @@ export async function POST(req: Request) {
 
     // 2. Send Email to Admin
     await sendEmail({
-      to: "admin@houseofvastra.com",
+      to: "admin@lookonrent.com",
       subject: `New Vendor Support Ticket: ${subject}`,
       html: `
         <h3>New Support Request from ${vendor.boutiqueName}</h3>

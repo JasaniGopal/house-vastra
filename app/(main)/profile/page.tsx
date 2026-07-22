@@ -242,7 +242,7 @@ export default function ProfilePage() {
           </div>
 
           <p className="font-sans text-[10px] text-zinc-400 text-center md:text-left mt-8 pb-4 uppercase tracking-widest">
-            Rent Vastra v2.4.0 &bull; Handcrafted Curated Elegance
+            LOR v2.4.0 &bull; Handcrafted Curated Elegance
           </p>
           
         </div>

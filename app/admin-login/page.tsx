@@ -44,7 +44,7 @@ export default function AdminLogin() {
           href="/"
           className="font-serif text-3xl font-bold tracking-tight text-white hover:text-[#A8813C] transition-colors"
         >
-          RENT VASTRA
+          LOR
         </Link>
       </div>
 

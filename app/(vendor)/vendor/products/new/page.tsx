@@ -138,7 +138,7 @@ export default function AddProductPage() {
           Back to Inventory
         </Link>
         <h1 className="font-serif text-3xl md:text-4xl font-medium text-[#001410] tracking-tight">Add New Outfit</h1>
-        <p className="text-[#414846] mt-2 text-sm">Upload a new designer piece to the Rent Vastra collection.</p>
+        <p className="text-[#414846] mt-2 text-sm">Upload a new designer piece to the LOR collection.</p>
       </div>
 
       <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6 md:p-8">

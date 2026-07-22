@@ -10,7 +10,7 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="flex flex-col gap-3">
             <Link href="/" className="font-serif text-2xl font-bold tracking-tight text-[#001410] hover:text-[#775a19] transition-colors">
-              Rent Vastra
+              LOR
             </Link>
             <p className="text-sm font-sans text-[#414846] leading-relaxed max-w-[240px]">
               Curated designer ethnic wear for your defining moments. Rent luxury, sustainably.
@@ -192,7 +192,7 @@ export default function Footer() {
         {/* Bottom copyright banner */}
         <div className="mt-6 pt-6 border-t border-[#c1c8c5]/20">
           <p className="text-sm text-[#414846] font-sans">
-            &copy; 2024 Rent Vastra. All rights reserved.
+            &copy; 2024 LOR. All rights reserved.
           </p>
         </div>
       </div>

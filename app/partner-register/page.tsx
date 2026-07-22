@@ -54,7 +54,7 @@ export default function PartnerRegisterPage() {
           href="/"
           className="font-serif text-2xl font-bold tracking-tight text-white hover:text-[#E8D8BA] transition-colors"
         >
-          Rent Vastra <span className="text-[#E8D8BA] text-xs uppercase tracking-wider font-sans ml-1">Partner</span>
+          LOR <span className="text-[#E8D8BA] text-xs uppercase tracking-wider font-sans ml-1">Partner</span>
         </Link>
       </div>
 
@@ -78,7 +78,7 @@ export default function PartnerRegisterPage() {
         {status === "success" ? (
           <div className="p-6 bg-white/5 border border-white/10 rounded-xl text-center shadow-sm">
             <h2 className="font-serif text-xl font-semibold text-white mb-2">Application Received!</h2>
-            <p className="font-sans text-sm text-zinc-400 mb-6">Welcome to Rent Vastra. Let's start listing your collection.</p>
+            <p className="font-sans text-sm text-zinc-400 mb-6">Welcome to LOR. Let's start listing your collection.</p>
             <Link
               href="/partner-login"
               className="inline-block w-full bg-[#E8D8BA] text-[#001410] py-3.5 rounded-md font-sans font-semibold text-sm hover:bg-white transition-all"
@@ -192,7 +192,7 @@ export default function PartnerRegisterPage() {
       {/* Footer Area */}
       <div className="py-6 text-center">
         <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest">
-          Rent Vastra Business Partners
+          LOR Business Partners
         </p>
       </div>
 

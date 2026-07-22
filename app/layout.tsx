@@ -19,7 +19,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Rent Vastra | Premium Designer Ethnic Wear Rental",
+  title: "LOR | Premium Designer Ethnic Wear Rental",
   description: "Rent premium ethnic wear, lehengas, sherwanis, and sarees from local boutique designers. Curation meets convenience with centralized logistics and return hygiene protocols.",
 };
 

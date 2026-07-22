@@ -23,7 +23,7 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "House of Vastra <noreply@houseofvastra.com>", // Make sure to verify your domain with Resend
+        from: "LOR <noreply@lookonrent.com>", // Make sure to verify your domain with Resend
         to: [to],
         subject: subject,
         html: html,

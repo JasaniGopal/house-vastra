@@ -53,7 +53,7 @@ export default function RegisterPage() {
           href="/"
           className="font-serif text-2xl font-bold tracking-tight text-[#001410] hover:text-[#775a19] transition-colors"
         >
-          Rent Vastra
+          LOR
         </Link>
       </div>
 
@@ -77,7 +77,7 @@ export default function RegisterPage() {
         {status === "success" ? (
           <div className="p-6 bg-white border border-zinc-200 rounded-xl text-center shadow-sm">
             <h2 className="font-serif text-xl font-semibold text-[#001410] mb-2">Registration Successful!</h2>
-            <p className="font-sans text-sm text-[#5c6462] mb-6">Welcome to Rent Vastra. Your style journey begins now.</p>
+            <p className="font-sans text-sm text-[#5c6462] mb-6">Welcome to LOR. Your style journey begins now.</p>
             <Link
               href="/login"
               className="inline-block w-full bg-[#001410] text-white py-3.5 rounded-md font-sans font-semibold text-sm hover:bg-[#00261f] transition-all"

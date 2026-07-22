@@ -47,7 +47,7 @@ export default function LoginPage() {
           href="/"
           className="font-serif text-2xl font-bold tracking-tight text-[#001410] hover:text-[#775a19] transition-colors"
         >
-          Rent Vastra
+          LOR
         </Link>
       </div>
 

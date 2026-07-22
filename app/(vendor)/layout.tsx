@@ -51,7 +51,7 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
       
       {/* Mobile Header */}
       <header className="md:hidden flex items-center justify-between p-4 bg-white border-b border-zinc-200 sticky top-0 z-50">
-        <div className="font-serif text-xl font-bold text-[#001410] tracking-tight">Rent Vastra <span className="text-[#775a19] text-xs uppercase tracking-wider font-sans ml-1">Vendor</span></div>
+        <div className="font-serif text-xl font-bold text-[#001410] tracking-tight">LOR <span className="text-[#775a19] text-xs uppercase tracking-wider font-sans ml-1">Vendor</span></div>
         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 text-[#001410]">
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             {isSidebarOpen ? (
@@ -75,7 +75,7 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
       <aside className={`fixed md:sticky top-0 left-0 h-screen w-64 bg-white border-r border-zinc-200 flex flex-col transition-transform duration-300 z-50 md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="hidden md:flex p-6 items-center border-b border-zinc-100">
           <Link href="/" className="font-serif text-2xl font-bold text-[#001410] tracking-tight">
-            Rent Vastra <span className="block text-[#775a19] text-[10px] uppercase tracking-[0.2em] font-sans mt-0.5">Vendor Portal</span>
+            LOR <span className="block text-[#775a19] text-[10px] uppercase tracking-[0.2em] font-sans mt-0.5">Vendor Portal</span>
           </Link>
         </div>
 

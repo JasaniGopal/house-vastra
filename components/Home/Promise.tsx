@@ -8,7 +8,7 @@ export default function Promise() {
         {/* Section Header */}
         <div className="flex flex-col items-center text-center mb-12 md:mb-16">
           <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-semibold text-[#001410] tracking-tight">
-            The Rent Vastra Promise
+            The LOR Promise
           </h2>
           <p className="font-sans text-sm md:text-base text-[#5c6462] mt-4 max-w-[600px] leading-relaxed">
             Pristine quality and lightning-fast service for your most important moments.

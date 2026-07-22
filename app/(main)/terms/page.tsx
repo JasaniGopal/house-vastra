@@ -13,12 +13,12 @@ export default function TermsPage() {
 
           <h2 className="font-serif text-xl text-[#001410] pt-4">1. Introduction</h2>
           <p>
-            Welcome to Rent Vastra. These Terms of Service govern your use of our website and rental services. By accessing or using our platform, you agree to be bound by these terms.
+            Welcome to LOR. These Terms of Service govern your use of our website and rental services. By accessing or using our platform, you agree to be bound by these terms.
           </p>
 
           <h2 className="font-serif text-xl text-[#001410] pt-4">2. Rental Agreement</h2>
           <p>
-            When you rent a product from Rent Vastra, you are agreeing to rent it for a specific duration (4 or 8 days). The product remains the property of the respective boutique partner at all times.
+            When you rent a product from LOR, you are agreeing to rent it for a specific duration (4 or 8 days). The product remains the property of the respective boutique partner at all times.
           </p>
 
           <h2 className="font-serif text-xl text-[#001410] pt-4">3. Damage and Loss</h2>
