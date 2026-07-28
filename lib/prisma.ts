@@ -1,16 +1,25 @@
 import { PrismaClient } from "@prisma/client";
+import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 
 declare global {
   var prisma: PrismaClient | undefined;
 }
 
+const databaseUrl = process.env.DATABASE_URL || "mariadb://root:password@localhost:3306/dummy";
+const connectionString = databaseUrl.replace(/^mysql:\/\//, "mariadb://");
+const poolConnectionString = connectionString.includes('?') 
+  ? `${connectionString}&connectionLimit=1` 
+  : `${connectionString}?connectionLimit=1`;
+
 let prisma: PrismaClient;
 
 if (process.env.NODE_ENV === "production") {
-  prisma = new PrismaClient();
+  const adapter = new PrismaMariaDb(poolConnectionString);
+  prisma = new PrismaClient({ adapter });
 } else {
   if (!global.prisma) {
-    global.prisma = new PrismaClient();
+    const adapter = new PrismaMariaDb(poolConnectionString);
+    global.prisma = new PrismaClient({ adapter });
   }
   prisma = global.prisma;
 }
