@@ -32,11 +32,11 @@ export default function FaqsPage() {
     <div className="bg-[#fcf9f8] min-h-screen pt-24 pb-24 font-sans">
       <div className="max-w-[800px] mx-auto px-6 md:px-8">
         <h1 className="font-serif text-4xl md:text-5xl font-medium text-[#001410] mb-8 tracking-tight">Frequently Asked Questions</h1>
-        
+
         <div className="space-y-4">
           {faqs.map((faq, index) => (
             <div key={index} className="bg-white border border-[#c1c8c5]/40 rounded-xl overflow-hidden">
-              <button 
+              <button
                 className="w-full px-6 py-5 text-left flex justify-between items-center focus:outline-none"
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
               >
@@ -56,7 +56,7 @@ export default function FaqsPage() {
 
         <div className="mt-12 p-6 bg-[#FAF2E8] border border-[#E8D8BA] rounded-xl text-center">
           <p className="text-[#001410] font-medium mb-2">Still have questions?</p>
-          <p className="text-sm text-zinc-600">Email us at support@rentvastra.com or call +91 9168899557.</p>
+          <p className="text-sm text-zinc-600">Email us at support@lookonrent.com or call +91 9168899557.</p>
         </div>
       </div>
     </div>
