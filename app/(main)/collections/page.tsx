@@ -239,14 +239,14 @@ function CollectionsContent() {
             </button>
           </div>
           
-          <div className="flex items-center justify-between mt-2 mb-4">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{isEmptyState ? 0 : filteredProducts.length} Pieces Found</span>
-            <div className="relative flex items-center gap-2 cursor-pointer">
-              <span className="text-[10px] font-bold text-[#001410] uppercase tracking-wider pointer-events-none">Sort By:</span>
-              <select value={selectedSort} onChange={(e) => setSelectedSort(e.target.value)} className="bg-transparent border-none text-[10px] font-bold text-[#001410] uppercase tracking-wider focus:ring-0 appearance-none pr-4 py-2 cursor-pointer w-full z-10">
+          <div className="flex flex-wrap items-center justify-between gap-2 mt-2 mb-4">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider shrink-0">{isEmptyState ? 0 : filteredProducts.length} Pieces Found</span>
+            <div className="relative flex items-center gap-1 cursor-pointer shrink-0">
+              <span className="text-[10px] font-bold text-[#001410] uppercase tracking-wider pointer-events-none whitespace-nowrap">Sort:</span>
+              <select value={selectedSort} onChange={(e) => setSelectedSort(e.target.value)} className="bg-transparent border-none text-[10px] font-bold text-[#001410] uppercase tracking-wider focus:ring-0 appearance-none pr-4 py-2 cursor-pointer z-10 w-auto text-right">
                 <option value="newest">New Arrivals</option>
-                <option value="price_asc">Price: Low to High</option>
-                <option value="price_desc">Price: High to Low</option>
+                <option value="price_asc">Price Low-High</option>
+                <option value="price_desc">Price High-Low</option>
               </select>
               <svg className="w-3 h-3 text-[#001410] absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none z-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />

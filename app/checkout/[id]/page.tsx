@@ -408,12 +408,12 @@ function CheckoutContent({ unwrappedParams }: { unwrappedParams: any }) {
                             value={couponCode}
                             onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                             placeholder="e.g. WELCOME500" 
-                            className="flex-1 px-4 py-3 bg-[#faf9f8] border border-black/10 rounded-sm text-sm font-bold text-[#001410] focus:outline-none focus:border-[#775a19] uppercase tracking-widest placeholder:normal-case placeholder:tracking-normal placeholder:font-normal"
+                            className="flex-1 min-w-0 px-3 md:px-4 py-3 bg-[#faf9f8] border border-black/10 rounded-sm text-sm font-bold text-[#001410] focus:outline-none focus:border-[#775a19] uppercase tracking-widest placeholder:normal-case placeholder:tracking-normal placeholder:font-normal"
                           />
                           <button 
                             onClick={handleApplyCoupon}
                             disabled={isValidatingCoupon || !couponCode}
-                            className="px-6 py-3 bg-[#001410] text-white rounded-sm font-bold text-sm hover:bg-[#775a19] transition-colors disabled:opacity-50 cursor-pointer shrink-0"
+                            className="px-4 md:px-6 py-3 bg-[#001410] text-white rounded-sm font-bold text-sm hover:bg-[#775a19] transition-colors disabled:opacity-50 cursor-pointer shrink-0"
                           >
                             {isValidatingCoupon ? "..." : "Apply"}
                           </button>
