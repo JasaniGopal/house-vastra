@@ -24,27 +24,6 @@ export interface DynamicProduct {
   reviews?: any[];
 }
 
-// Mock "Complete the Look" Accessories
-const ACCESSORIES = [
-  {
-    id: 101,
-    name: "Polki Choker Set",
-    price: "2,400",
-    image: "/images/home/bag_gold_sherwani.png"
-  },
-  {
-    id: 102,
-    name: "Embroidered Potli Bag",
-    price: "1,100",
-    image: "/images/home/occassion_haldi.png"
-  },
-  {
-    id: 103,
-    name: "Hand Zari Juttis",
-    price: "1,200",
-    image: "/images/home/occassion_weddings.png"
-  }
-];
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);
@@ -62,6 +41,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [bookedDates, setBookedDates] = useState<Date[]>([]);
   const calculatedDays = 4; // Fixed rental period
   const [product, setProduct] = useState<DynamicProduct | null>(null);
+  const [relatedAccessories, setRelatedAccessories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const startDate = deliveryDate ? format(deliveryDate, 'yyyy-MM-dd') : "";
@@ -97,6 +77,26 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           });
           setActiveImage(data.images?.[0]?.url || "/images/placeholder.jpg");
           if (sizesArray.length > 0) setSelectedSize(sizesArray[0]);
+
+          // Fetch Complete the Look Accessories
+          if (data.productOccasions && data.productOccasions.length > 0) {
+            const occasions = data.productOccasions.map((po: any) => po.occasion.name).join(',');
+            fetch(`/api/products?category=Accessories,Jewelry&occasion=${occasions}`)
+              .then(res => res.json())
+              .then(accData => {
+                 const filtered = accData.filter((p: any) => p.id !== data.id).slice(0, 4);
+                 setRelatedAccessories(filtered);
+              })
+              .catch(console.error);
+          } else {
+            fetch(`/api/products?category=Accessories,Jewelry`)
+              .then(res => res.json())
+              .then(accData => {
+                 const filtered = accData.filter((p: any) => p.id !== data.id).slice(0, 4);
+                 setRelatedAccessories(filtered);
+              })
+              .catch(console.error);
+          }
         } else {
           showToast("Product not found");
         }
@@ -113,6 +113,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           });
           setBookedDates(blocked);
         }
+
+
 
       } catch (err) {
         console.error("Failed to fetch product", err);
@@ -384,23 +386,25 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         </div>
 
         {/* Complete the Look Section */}
-        <div className="px-6 md:px-8 py-16 md:py-24 border-t border-zinc-200 mt-8 md:mt-12">
-          <h2 className="font-serif text-2xl md:text-3xl text-center text-[#001410] mb-10 md:mb-16">
-            Stylist's Selection: <span className="italic text-[#50756c]">Complete the Look</span>
-          </h2>
-          
-          <div className="flex overflow-x-auto md:grid md:grid-cols-3 gap-4 md:gap-8 pb-8 no-scrollbar snap-x">
-            {ACCESSORIES.map(acc => (
-              <div key={acc.id} className="min-w-[70vw] sm:min-w-[50vw] md:min-w-0 flex flex-col group snap-start cursor-pointer">
-                <div className="relative aspect-[4/5] w-full bg-zinc-100 overflow-hidden mb-4">
-                  <Image src={acc.image} alt={acc.name} fill className="object-cover object-top group-hover:scale-105 transition-transform duration-700" sizes="(max-width: 768px) 70vw, 33vw" />
-                </div>
-                <h4 className="text-[11px] md:text-xs font-bold text-[#001410] uppercase tracking-wider text-center">{acc.name}</h4>
-                <p className="text-[11px] text-zinc-500 text-center mt-1">Rent for ₹{acc.price}</p>
-              </div>
-            ))}
+        {relatedAccessories.length > 0 && (
+          <div className="px-6 md:px-8 py-16 md:py-24 border-t border-zinc-200 mt-8 md:mt-12">
+            <h2 className="font-serif text-2xl md:text-3xl text-center text-[#001410] mb-10 md:mb-16">
+              Stylist's Selection: <span className="italic text-[#50756c]">Complete the Look</span>
+            </h2>
+            
+            <div className="flex overflow-x-auto md:grid md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 pb-8 no-scrollbar snap-x">
+              {relatedAccessories.map(acc => (
+                <Link href={`/product/${acc.id}`} key={acc.id} className="min-w-[70vw] sm:min-w-[50vw] md:min-w-0 flex flex-col group snap-start cursor-pointer">
+                  <div className="relative aspect-[4/5] w-full bg-zinc-100 overflow-hidden mb-4">
+                    <Image src={acc.images?.[0]?.url || "/images/placeholder.jpg"} alt={acc.name} fill className="object-cover object-top group-hover:scale-105 transition-transform duration-700" sizes="(max-width: 768px) 70vw, 33vw" />
+                  </div>
+                  <h4 className="text-[11px] md:text-xs font-bold text-[#001410] uppercase tracking-wider text-center">{acc.name}</h4>
+                  <p className="text-[11px] text-zinc-500 text-center mt-1">Rent for ₹{acc.rentalPrice4Day?.toLocaleString() || "0"}</p>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
       </div>
 

@@ -9,6 +9,8 @@ export async function GET(req: Request) {
     const trending = searchParams.get("trending") === "true";
     const search = searchParams.get("q");
     const sort = searchParams.get("sort"); // "newest", "price_asc", "price_desc"
+    const maxPrice = searchParams.get("maxPrice");
+    const size = searchParams.get("size");
 
     let whereClause: any = {
       isAvailable: true,
@@ -25,10 +27,22 @@ export async function GET(req: Request) {
 
     if (occasion) {
       const occasions = occasion.split(',').map(o => o.trim());
+      
+      // Use case-insensitive matching for each occasion, and support partial match for "Weddings" -> "wedding"
+      // or "wedding" -> "Weddings"
+      const occasionOrConditions = occasions.flatMap(o => {
+        // Strip trailing 's' if present to handle singular/plural mismatch simply
+        const base = o.toLowerCase().endsWith('s') ? o.slice(0, -1) : o;
+        return [
+          { name: { equals: o } },
+          { name: { contains: base } }
+        ];
+      });
+
       whereClause.productOccasions = {
         some: {
           occasion: {
-            name: { in: occasions }
+            OR: occasionOrConditions
           }
         }
       };
@@ -44,6 +58,23 @@ export async function GET(req: Request) {
         { description: { contains: search } },
         { brand: { contains: search } }
       ];
+    }
+
+    if (maxPrice) {
+      whereClause.rentalPrice4Day = { lte: parseFloat(maxPrice) };
+    }
+
+    if (size) {
+      const sizeList = size.split(',').map(s => s.trim());
+      const sizeOrConditions = sizeList.flatMap(s => [
+        { sizes: { equals: s } },
+        { sizes: { startsWith: `${s},` } },
+        { sizes: { endsWith: `,${s}` } },
+        { sizes: { contains: `,${s},` } }
+      ]);
+      
+      if (!whereClause.AND) whereClause.AND = [];
+      whereClause.AND.push({ OR: sizeOrConditions });
     }
 
     let orderByClause: any = { createdAt: "desc" };

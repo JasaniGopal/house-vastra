@@ -74,13 +74,14 @@ function CollectionsContent() {
   const categoryParam = searchParams.get('category');
 
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
-    categoryParam ? [categoryParam] : ['Lehengas']
+    categoryParam ? [categoryParam] : []
   );
   const [selectedOccasions, setSelectedOccasions] = useState<string[]>(
     occasionParam ? [occasionParam] : []
   );
-  const [selectedSize, setSelectedSize] = useState<string>('S');
+  const [selectedSize, setSelectedSize] = useState<string>('');
   const [selectedSort, setSelectedSort] = useState<string>('newest');
+  const [maxPrice, setMaxPrice] = useState<number>(50000);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   const [products, setProducts] = useState<DisplayProduct[]>([]);
@@ -100,6 +101,12 @@ function CollectionsContent() {
           query.set('occasion', selectedOccasions.join(','));
         }
         query.set('sort', selectedSort);
+        if (maxPrice < 50000) {
+          query.set('maxPrice', maxPrice.toString());
+        }
+        if (selectedSize) {
+          query.set('size', selectedSize);
+        }
         
         const qParam = searchParams.get('q');
         if (qParam) {
@@ -129,7 +136,7 @@ function CollectionsContent() {
     };
 
     fetchProducts();
-  }, [selectedCategories, selectedOccasions, selectedSort, searchParams]);
+  }, [selectedCategories, selectedOccasions, selectedSort, maxPrice, selectedSize, searchParams]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -183,7 +190,7 @@ function CollectionsContent() {
   };
 
   const toggleSize = (size: string) => {
-    setSelectedSize(size);
+    setSelectedSize(prev => prev === size ? '' : size);
   };
 
   const clearFilters = () => {
@@ -265,42 +272,50 @@ function CollectionsContent() {
           </div>
 
           {/* Category Filter */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
             <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Category</span>
-            <div className="flex flex-col gap-3">
-              {categories.length > 0 ? categories.map(cat => (
-                <label key={cat.id} className="flex items-center gap-3 cursor-pointer group">
-                  <input 
-                    type="checkbox" 
-                    checked={selectedCategories.includes(cat.name)}
-                    onChange={() => toggleCategory(cat.name)}
-                    className="w-4 h-4 rounded border-zinc-300 text-[#001410] focus:ring-[#775a19]"
-                  />
-                  <span className="text-xs text-zinc-600 group-hover:text-[#001410] transition-colors">{cat.name}</span>
-                </label>
-              )) : (
-                <div className="text-xs text-zinc-400">Loading categories...</div>
-              )}
+            <div className="relative">
+              <select 
+                value={selectedCategories[0] || ''} 
+                onChange={(e) => {
+                  if (e.target.value) {
+                    setSelectedCategories([e.target.value]);
+                  } else {
+                    setSelectedCategories([]);
+                  }
+                }} 
+                className="w-full bg-zinc-100/50 border-none rounded-lg px-4 py-3 text-xs font-medium text-[#001410] focus:ring-0 appearance-none cursor-pointer"
+              >
+                <option value="">All Categories</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.name}>{cat.name}</option>
+                ))}
+              </select>
+              <svg className="w-3 h-3 text-zinc-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
             </div>
           </div>
 
           {/* Occasion Filter */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
             <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Occasion</span>
-            <div className="flex flex-col gap-3">
-              {occasions.length > 0 ? occasions.map(occ => (
-                <label key={occ.id} className="flex items-center gap-3 cursor-pointer group">
-                  <input 
-                    type="checkbox" 
-                    checked={selectedOccasions.includes(occ.name)}
-                    onChange={() => toggleOccasion(occ.name)}
-                    className="w-4 h-4 rounded border-zinc-300 text-[#001410] focus:ring-[#775a19]"
-                  />
-                  <span className="text-xs text-zinc-600 group-hover:text-[#001410] transition-colors">{occ.name}</span>
-                </label>
-              )) : (
-                <div className="text-xs text-zinc-400">Loading occasions...</div>
-              )}
+            <div className="relative">
+              <select 
+                value={selectedOccasions[0] || ''} 
+                onChange={(e) => {
+                  if (e.target.value) {
+                    setSelectedOccasions([e.target.value]);
+                  } else {
+                    setSelectedOccasions([]);
+                  }
+                }} 
+                className="w-full bg-zinc-100/50 border-none rounded-lg px-4 py-3 text-xs font-medium text-[#001410] focus:ring-0 appearance-none cursor-pointer capitalize"
+              >
+                <option value="">All Occasions</option>
+                {occasions.map(occ => (
+                  <option key={occ.id} value={occ.name}>{occ.name}</option>
+                ))}
+              </select>
+              <svg className="w-3 h-3 text-zinc-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
             </div>
           </div>
 
@@ -326,21 +341,20 @@ function CollectionsContent() {
 
           {/* Daily Price Range Filter */}
           <div className="flex flex-col gap-4">
-            <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Daily Price Range</span>
-            <div className="mt-4 relative">
-               {/* Visual Range Slider Mock */}
-               <div className="h-1 w-full bg-zinc-200 rounded-full relative">
-                  <div className="absolute left-[10%] right-[30%] h-full bg-[#001410] rounded-full"></div>
-                  <div className="absolute left-[10%] top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-[#001410] shadow flex items-center justify-center">
-                     <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                  </div>
-                  <div className="absolute right-[30%] top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-[#001410] shadow flex items-center justify-center">
-                     <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                  </div>
-               </div>
-               <div className="flex justify-between items-center mt-4 text-[10px] font-bold text-zinc-500">
-                 <span>₹2,000</span>
-                 <span>₹50,000+</span>
+            <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Max Daily Price</span>
+            <div className="mt-2 relative">
+               <input 
+                 type="range" 
+                 min="1000" 
+                 max="50000" 
+                 step="1000"
+                 value={maxPrice}
+                 onChange={(e) => setMaxPrice(Number(e.target.value))}
+                 className="w-full accent-[#001410] cursor-pointer"
+               />
+               <div className="flex justify-between items-center mt-2 text-[10px] font-bold text-zinc-500">
+                 <span>₹1,000</span>
+                 <span className="text-[#001410]">Up to ₹{maxPrice.toLocaleString()}</span>
                </div>
             </div>
           </div>
@@ -422,40 +436,70 @@ function CollectionsContent() {
             </div>
 
             {/* Category Filter */}
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3">
               <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Category</span>
-              <div className="grid grid-cols-2 gap-3">
-                {categories.length > 0 ? categories.map(cat => (
-                  <label key={`mob-${cat.id}`} className="flex items-center gap-3 cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={selectedCategories.includes(cat.name)}
-                      onChange={() => toggleCategory(cat.name)}
-                      className="w-4 h-4 rounded border-zinc-300 text-[#001410] focus:ring-[#775a19]"
-                    />
-                    <span className="text-xs text-zinc-600">{cat.name}</span>
-                  </label>
-                )) : (
-                  <div className="text-xs text-zinc-400">Loading categories...</div>
-                )}
+              <div className="relative">
+                <select 
+                  value={selectedCategories[0] || ''} 
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      setSelectedCategories([e.target.value]);
+                    } else {
+                      setSelectedCategories([]);
+                    }
+                  }} 
+                  className="w-full bg-zinc-100/50 border-none rounded-lg px-4 py-3 text-xs font-medium text-[#001410] focus:ring-0 appearance-none cursor-pointer"
+                >
+                  <option value="">All Categories</option>
+                  {categories.map(cat => (
+                    <option key={`mob-cat-${cat.id}`} value={cat.name}>{cat.name}</option>
+                  ))}
+                </select>
+                <svg className="w-3 h-3 text-zinc-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
               </div>
             </div>
 
             {/* Occasion Filter */}
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3">
               <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Occasion</span>
-              <div className="grid grid-cols-2 gap-3">
-                {['Weddings', 'Cocktail', 'Haldi', 'Reception'].map(occ => (
-                  <label key={`mob-${occ}`} className="flex items-center gap-3 cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={selectedOccasions.includes(occ)}
-                      onChange={() => toggleOccasion(occ)}
-                      className="w-4 h-4 rounded border-zinc-300 text-[#001410] focus:ring-[#775a19]"
-                    />
-                    <span className="text-xs text-zinc-600">{occ}</span>
-                  </label>
-                ))}
+              <div className="relative">
+                <select 
+                  value={selectedOccasions[0] || ''} 
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      setSelectedOccasions([e.target.value]);
+                    } else {
+                      setSelectedOccasions([]);
+                    }
+                  }} 
+                  className="w-full bg-zinc-100/50 border-none rounded-lg px-4 py-3 text-xs font-medium text-[#001410] focus:ring-0 appearance-none cursor-pointer capitalize"
+                >
+                  <option value="">All Occasions</option>
+                  {occasions.map(occ => (
+                    <option key={`mob-occ-${occ.id}`} value={occ.name}>{occ.name}</option>
+                  ))}
+                </select>
+                <svg className="w-3 h-3 text-zinc-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+              </div>
+            </div>
+
+            {/* Daily Price Range Filter */}
+            <div className="flex flex-col gap-4">
+              <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Max Daily Price</span>
+              <div className="mt-2 relative">
+                 <input 
+                   type="range" 
+                   min="1000" 
+                   max="50000" 
+                   step="1000"
+                   value={maxPrice}
+                   onChange={(e) => setMaxPrice(Number(e.target.value))}
+                   className="w-full accent-[#001410] cursor-pointer"
+                 />
+                 <div className="flex justify-between items-center mt-2 text-[10px] font-bold text-zinc-500">
+                   <span>₹1,000</span>
+                   <span className="text-[#001410]">Up to ₹{maxPrice.toLocaleString()}</span>
+                 </div>
               </div>
             </div>
 

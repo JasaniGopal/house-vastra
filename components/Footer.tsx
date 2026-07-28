@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Footer() {
   return (
@@ -9,8 +10,8 @@ export default function Footer() {
           
           {/* Brand Column */}
           <div className="flex flex-col gap-3">
-            <Link href="/" className="font-serif text-2xl font-bold tracking-tight text-[#001410] hover:text-[#775a19] transition-colors">
-              LOR
+            <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
+              <Image src="/images/logo.jpeg" alt="LOR Logo" width={120} height={42} className="object-contain" />
             </Link>
             <p className="text-sm font-sans text-[#414846] leading-relaxed max-w-[240px]">
               Curated designer ethnic wear for your defining moments. Rent luxury, sustainably.

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useSession, signOut } from "next-auth/react";
@@ -61,48 +62,49 @@ export default function Header() {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
             ? "bg-white/90 backdrop-blur-md border-b border-[#c1c8c5]/30 py-4 shadow-sm"
             : "bg-[#fcf9f8] py-5"
-        }`}
+          }`}
       >
         <div className="mx-auto max-w-[1280px] px-4 md:px-16">
           <div className="flex items-center justify-between">
-            
-            {/* Left Side: Burger Menu (Mobile Only) */}
-            <button
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="flex p-2 text-[#001410] hover:text-[#775a19] lg:hidden cursor-pointer"
-              aria-label="Open navigation drawer"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="1.5"
-                stroke="currentColor"
-                className="h-6 w-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-                />
-              </svg>
-            </button>
 
-            {/* Brand Logo (Serif font) */}
-            <Link
-              href="/"
-              className="font-serif text-2xl font-bold tracking-tight text-[#001410] hover:text-[#00261f] transition-colors"
-            >
-              LOR
-            </Link>
+            {/* Left Side: Burger Menu (Mobile) + Logo */}
+            <div className="flex items-center gap-1 md:gap-0">
+              <button
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="flex p-2 -ml-2 text-[#001410] hover:text-[#775a19] lg:hidden cursor-pointer"
+                aria-label="Open navigation drawer"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                  />
+                </svg>
+              </button>
+
+              {/* Brand Logo (Serif font) */}
+              <Link
+                href="/"
+                className="flex items-center"
+              >
+                <Image src="/images/logo.jpeg" alt="LOR Logo" width={120} height={42} className="object-contain w-[80px] h-auto md:w-[120px]" priority />
+              </Link>
+            </div>
 
             {/* Center: Navigation Links (Desktop Only) */}
             <nav className="hidden lg:flex items-center gap-8 h-full">
-              
+
               {/* Ethnic Dropdown */}
               <div className="relative group h-full flex items-center py-2 cursor-pointer">
                 <Link
@@ -285,17 +287,15 @@ export default function Header() {
       {/* Mobile Drawer Overlay / Backdrop */}
       <div
         onClick={() => setIsMobileMenuOpen(false)}
-        className={`fixed inset-0 bg-black/40 z-50 transition-opacity duration-300 ${
-          isMobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
+        className={`fixed inset-0 bg-black/40 z-50 transition-opacity duration-300 ${isMobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
         aria-hidden="true"
       />
 
       {/* Mobile Drawer Menu Container */}
       <div
-        className={`fixed top-0 left-0 bottom-0 w-[80%] max-w-[320px] bg-white z-50 shadow-2xl flex flex-col p-6 transition-transform duration-300 ease-in-out ${
-          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed top-0 left-0 bottom-0 w-[80%] max-w-[320px] bg-white z-50 shadow-2xl flex flex-col p-6 transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         {/* Close Button */}
         <button
@@ -484,12 +484,12 @@ export default function Header() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
               </svg>
               <form onSubmit={handleSearch} className="flex-1">
-                <input 
-                  type="text" 
-                  autoFocus 
+                <input
+                  type="text"
+                  autoFocus
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search for Lehengas, Designers, or Colors..." 
+                  placeholder="Search for Lehengas, Designers, or Colors..."
                   className="w-full bg-transparent border-none text-xl md:text-3xl lg:text-4xl font-serif text-[#001410] placeholder:text-zinc-300 focus:outline-none focus:ring-0"
                 />
               </form>
@@ -500,7 +500,7 @@ export default function Header() {
               </button>
             </div>
           </div>
-          
+
           <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-10 md:py-16 w-full flex-1 overflow-y-auto">
             <h3 className="font-sans text-xs font-bold uppercase tracking-widest text-zinc-400 mb-6">Trending Searches</h3>
             <div className="flex flex-wrap gap-3">
