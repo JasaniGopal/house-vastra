@@ -22,7 +22,18 @@ export async function GET(
       }
     });
 
-    return NextResponse.json({ bookedDates: orders });
+    // Fetch dates blocked manually by the vendor
+    const blockedDates = await prisma.blockedDate.findMany({
+      where: { productId },
+      select: {
+        startDate: true,
+        endDate: true
+      }
+    });
+
+    const allUnavailableDates = [...orders, ...blockedDates];
+
+    return NextResponse.json({ bookedDates: allUnavailableDates });
   } catch (error) {
     console.error('Failed to fetch booked dates:', error);
     return NextResponse.json(
