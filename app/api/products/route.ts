@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import Fuse from "fuse.js";
 
 export async function GET(req: Request) {
   try {
@@ -7,7 +8,7 @@ export async function GET(req: Request) {
     const category = searchParams.get("category"); // Can be comma separated
     const occasion = searchParams.get("occasion"); // Can be comma separated
     const trending = searchParams.get("trending") === "true";
-    const search = searchParams.get("q");
+    let search = searchParams.get("q")?.toLowerCase();
     const sort = searchParams.get("sort"); // "newest", "price_asc", "price_desc"
     const maxPrice = searchParams.get("maxPrice");
     const size = searchParams.get("size");
@@ -52,12 +53,29 @@ export async function GET(req: Request) {
       whereClause.isTrending = true;
     }
 
+    // Synonym dictionary for common Indian wear typos
     if (search) {
-      whereClause.OR = [
-        { name: { contains: search } },
-        { description: { contains: search } },
-        { brand: { contains: search } }
-      ];
+      const synonymMap: Record<string, string> = {
+        "sari": "saree",
+        "sare": "saree",
+        "sareee": "saree",
+        "serwani": "sherwani",
+        "shervani": "sherwani",
+        "sherwanii": "sherwani",
+        "shrewani": "sherwani",
+        "lengha": "lehenga",
+        "lahanga": "lehenga",
+        "lehanga": "lehenga",
+        "kurti": "kurta",
+        "kurtaa": "kurta"
+      };
+      
+      // Replace known typos in the search string
+      Object.keys(synonymMap).forEach(typo => {
+        if (search && search.includes(typo)) {
+          search = search.replace(new RegExp(typo, 'g'), synonymMap[typo]);
+        }
+      });
     }
 
     if (maxPrice) {
@@ -99,7 +117,29 @@ export async function GET(req: Request) {
       },
       orderBy: orderByClause,
     });
-    return NextResponse.json(products);
+
+    let finalProducts = products;
+
+    // Apply Fuse.js fuzzy search in memory if search query exists
+    if (search) {
+      const fuse = new Fuse(products, {
+        keys: [
+          "name",
+          "description",
+          "vendor.boutiqueName",
+          "category.name",
+          "productOccasions.occasion.name"
+        ],
+        threshold: 0.4, // 0.0 is perfect match, 1.0 is anything. 0.4 allows some typos.
+        distance: 100,
+        ignoreLocation: true,
+      });
+
+      const results = fuse.search(search);
+      finalProducts = results.map(result => result.item);
+    }
+
+    return NextResponse.json(finalProducts);
   } catch (error: any) {
     console.error("Products fetch error:", error);
     return NextResponse.json(

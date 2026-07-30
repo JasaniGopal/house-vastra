@@ -17,6 +17,8 @@ export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isLoadingSearch, setIsLoadingSearch] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
   const router = useRouter();
@@ -49,7 +51,7 @@ export default function Header() {
 
   // Lock body scroll when mobile drawer is open
   useEffect(() => {
-    if (isMobileMenuOpen) {
+    if (isMobileMenuOpen || isSearchOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
@@ -57,7 +59,43 @@ export default function Header() {
     return () => {
       document.body.style.overflow = "unset";
     };
-  }, [isMobileMenuOpen]);
+  }, [isMobileMenuOpen, isSearchOpen]);
+
+  // Predictive Search Hook
+  useEffect(() => {
+    const fetchSearch = async () => {
+      if (!searchQuery.trim()) {
+        setSearchResults([]);
+        return;
+      }
+      setIsLoadingSearch(true);
+      try {
+        const res = await fetch(`/api/products?q=${encodeURIComponent(searchQuery.trim())}`);
+        if (res.ok) {
+          const data = await res.json();
+          // Take top 4 results for the predictive dropdown
+          const mapped = data.slice(0, 4).map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            brand: p.vendor?.boutiqueName || "Boutique",
+            rentalPrice: p.rentalPrice4Day?.toLocaleString() || "0",
+            image: p.images?.[0]?.url || "/images/placeholder.jpg",
+          }));
+          setSearchResults(mapped);
+        }
+      } catch (err) {
+        console.error("Search error", err);
+      } finally {
+        setIsLoadingSearch(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(() => {
+      fetchSearch();
+    }, 400);
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery]);
 
   return (
     <>
@@ -502,21 +540,74 @@ export default function Header() {
           </div>
 
           <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-10 md:py-16 w-full flex-1 overflow-y-auto">
-            <h3 className="font-sans text-xs font-bold uppercase tracking-widest text-zinc-400 mb-6">Trending Searches</h3>
-            <div className="flex flex-wrap gap-3">
-              <Link href="/collections?category=Lehengas" onClick={() => setIsSearchOpen(false)} className="px-5 py-2.5 bg-white border border-[#E8D8BA] text-[#001410] text-sm rounded-full hover:bg-[#FAF2E8] transition-colors">
-                Bridal Lehengas
-              </Link>
-              <Link href="/collections?category=Sherwanis" onClick={() => setIsSearchOpen(false)} className="px-5 py-2.5 bg-white border border-[#E8D8BA] text-[#001410] text-sm rounded-full hover:bg-[#FAF2E8] transition-colors">
-                Ivory Sherwanis
-              </Link>
-              <Link href="/collections?category=Sarees" onClick={() => setIsSearchOpen(false)} className="px-5 py-2.5 bg-white border border-[#E8D8BA] text-[#001410] text-sm rounded-full hover:bg-[#FAF2E8] transition-colors">
-                Sabyasachi Heritage
-              </Link>
-              <Link href="/collections?occasion=Wedding" onClick={() => setIsSearchOpen(false)} className="px-5 py-2.5 bg-white border border-[#E8D8BA] text-[#001410] text-sm rounded-full hover:bg-[#FAF2E8] transition-colors">
-                Wedding Guest
-              </Link>
-            </div>
+            {searchQuery.trim() === "" ? (
+              <>
+                <h3 className="font-sans text-xs font-bold uppercase tracking-widest text-zinc-400 mb-6">Trending Searches</h3>
+                <div className="flex flex-wrap gap-3">
+                  <Link href="/collections?category=Lehengas" onClick={() => setIsSearchOpen(false)} className="px-5 py-2.5 bg-white border border-[#E8D8BA] text-[#001410] text-sm rounded-full hover:bg-[#FAF2E8] transition-colors">
+                    Bridal Lehengas
+                  </Link>
+                  <Link href="/collections?category=Sherwanis" onClick={() => setIsSearchOpen(false)} className="px-5 py-2.5 bg-white border border-[#E8D8BA] text-[#001410] text-sm rounded-full hover:bg-[#FAF2E8] transition-colors">
+                    Ivory Sherwanis
+                  </Link>
+                  <Link href="/collections?category=Sarees" onClick={() => setIsSearchOpen(false)} className="px-5 py-2.5 bg-white border border-[#E8D8BA] text-[#001410] text-sm rounded-full hover:bg-[#FAF2E8] transition-colors">
+                    Sabyasachi Heritage
+                  </Link>
+                  <Link href="/collections?occasion=Wedding" onClick={() => setIsSearchOpen(false)} className="px-5 py-2.5 bg-white border border-[#E8D8BA] text-[#001410] text-sm rounded-full hover:bg-[#FAF2E8] transition-colors">
+                    Wedding Guest
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="font-sans text-xs font-bold uppercase tracking-widest text-zinc-400">
+                    {isLoadingSearch ? "Searching..." : "Top Results"}
+                  </h3>
+                  {searchResults.length > 0 && !isLoadingSearch && (
+                    <Link 
+                      href={`/collections?q=${encodeURIComponent(searchQuery.trim())}`}
+                      onClick={() => setIsSearchOpen(false)}
+                      className="text-xs font-bold uppercase tracking-widest text-[#775a19] hover:underline"
+                    >
+                      View All
+                    </Link>
+                  )}
+                </div>
+
+                {!isLoadingSearch && searchResults.length === 0 && (
+                  <div className="py-12 text-center text-zinc-500 font-sans">
+                    No matching outfits found for &quot;{searchQuery}&quot;. Try adjusting your search.
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                  {searchResults.map((product) => (
+                    <Link 
+                      key={product.id} 
+                      href={`/product/${product.id}`}
+                      onClick={() => setIsSearchOpen(false)}
+                      className="group flex flex-col gap-3"
+                    >
+                      <div className="relative aspect-[3/4] w-full overflow-hidden bg-zinc-100 rounded-sm">
+                        <Image 
+                          src={product.image} 
+                          alt={product.name} 
+                          fill 
+                          sizes="(max-width: 768px) 50vw, 25vw"
+                          className="object-cover object-top group-hover:scale-105 transition-transform duration-700 ease-in-out" 
+                        />
+                      </div>
+                      <div>
+                        <div className="text-[10px] md:text-xs font-bold text-[#A8813C] uppercase tracking-wider mb-1">{product.brand}</div>
+                        <h4 className="font-serif text-sm md:text-base text-[#001410] leading-snug line-clamp-1">{product.name}</h4>
+                        <div className="font-sans text-xs md:text-sm font-medium text-zinc-500 mt-1">₹{product.rentalPrice} / 4 days</div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
