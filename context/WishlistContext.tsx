@@ -35,14 +35,16 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
           const res = await fetch("/api/wishlist");
           if (res.ok) {
             const data = await res.json();
-            const formatted = data.map((d: any) => ({
-              id: d.productId,
-              brand: d.product?.vendor?.boutiqueName || "Boutique",
-              name: d.product.name,
-              rentalPrice: (d.product.rentalPrice4Day || 0).toString(),
-              retailPrice: (d.product.retailValue || 0).toString(),
-              image: d.product.images?.[0]?.url || "/images/placeholder.jpg"
-            }));
+            const formatted = data
+              .filter((d: any) => d.product)
+              .map((d: any) => ({
+                id: d.productId,
+                brand: d.product?.vendor?.boutiqueName || "Boutique",
+                name: d.product?.name,
+                rentalPrice: (d.product?.rentalPrice4Day || 0).toString(),
+                retailPrice: (d.product?.retailValue || 0).toString(),
+                image: d.product?.images?.[0]?.url || "/images/placeholder.jpg"
+              }));
             setWishlistItems(formatted);
           }
         } catch (e) {
