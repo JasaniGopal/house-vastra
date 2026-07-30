@@ -6,7 +6,7 @@ const resend = new Resend(process.env.RESEND_API_KEY || "re_mock_key");
 
 export async function POST(req: Request) {
   try {
-    const { subject, message, passcode } = await req.json();
+    const { subject, message, passcode, imageUrl } = await req.json();
 
     // Simple security check to prevent unauthorized blasts
     if (passcode !== process.env.ADMIN_PASSCODE) {
@@ -39,6 +39,7 @@ export async function POST(req: Request) {
       html: `
         <div style="font-family: sans-serif; padding: 20px; color: #001410; max-width: 600px; margin: 0 auto;">
           <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 20px;">${subject}</h1>
+          ${imageUrl ? `<img src="${imageUrl}" alt="Newsletter Poster" style="width: 100%; max-width: 600px; border-radius: 8px; margin-bottom: 20px; display: block;" />` : ''}
           <div style="font-size: 16px; line-height: 1.5; color: #414846;">
             ${message.replace(/\n/g, '<br />')}
           </div>

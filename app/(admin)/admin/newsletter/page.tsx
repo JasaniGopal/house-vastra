@@ -6,8 +6,40 @@ export default function AdminNewsletterPage() {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [passcode, setPasscode] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [imageUrl, setImageUrl] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "uploading" | "success" | "error">("idle");
   const [feedback, setFeedback] = useState("");
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setStatus("uploading");
+    setFeedback("Uploading image...");
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      
+      if (res.ok && data.url) {
+        setImageUrl(data.url);
+        setStatus("idle");
+        setFeedback("Image uploaded successfully!");
+      } else {
+        setStatus("error");
+        setFeedback(data.error || "Failed to upload image.");
+      }
+    } catch (err) {
+      setStatus("error");
+      setFeedback("Network error during upload.");
+    }
+  };
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +56,7 @@ export default function AdminNewsletterPage() {
       const res = await fetch("/api/admin/broadcast", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subject, message, passcode })
+        body: JSON.stringify({ subject, message, passcode, imageUrl })
       });
       const data = await res.json();
       
@@ -33,6 +65,7 @@ export default function AdminNewsletterPage() {
         setFeedback(data.message || "Newsletter sent successfully!");
         setSubject("");
         setMessage("");
+        setImageUrl("");
       } else {
         setStatus("error");
         setFeedback(data.error || "Failed to send newsletter.");
@@ -74,6 +107,31 @@ export default function AdminNewsletterPage() {
             <p className="text-[11px] text-zinc-400 mt-2 italic">* Line breaks will be preserved in the sent email.</p>
           </div>
 
+          <div className="mb-6">
+            <label className="block text-xs font-bold uppercase tracking-widest text-[#001410] mb-2">Poster / Banner Image (Optional)</label>
+            <div className="flex items-center gap-4">
+              <input 
+                type="file" 
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={status === "uploading" || status === "loading"}
+                className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:border-[#775a19] transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#001410] file:text-white hover:file:bg-[#00261f]"
+              />
+            </div>
+            {imageUrl && (
+              <div className="mt-4">
+                <img src={imageUrl} alt="Newsletter Poster" className="w-full max-w-sm rounded-lg border border-zinc-200 shadow-sm" />
+                <button 
+                  type="button" 
+                  onClick={() => setImageUrl("")}
+                  className="mt-2 text-xs font-bold text-red-500 hover:underline"
+                >
+                  Remove Image
+                </button>
+              </div>
+            )}
+          </div>
+
           <div className="mb-8">
             <label className="block text-xs font-bold uppercase tracking-widest text-[#001410] mb-2">Admin Passcode</label>
             <input 
@@ -93,10 +151,10 @@ export default function AdminNewsletterPage() {
 
           <button 
             type="submit" 
-            disabled={status === "loading"}
+            disabled={status === "loading" || status === "uploading"}
             className="w-full bg-[#001410] text-white py-4 rounded-lg font-bold uppercase tracking-widest hover:bg-[#00261f] transition-colors disabled:opacity-50"
           >
-            {status === "loading" ? "Sending..." : "Blast Newsletter"}
+            {status === "loading" ? "Sending..." : status === "uploading" ? "Uploading Image..." : "Blast Newsletter"}
           </button>
         </form>
       </div>
