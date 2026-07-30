@@ -8,7 +8,9 @@ import Script from "next/script";
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { useSession } from 'next-auth/react';
-
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/dist/style.css";
+import { format, addDays, startOfDay, eachDayOfInterval } from 'date-fns';
 function CheckoutContent({ unwrappedParams }: { unwrappedParams: any }) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -16,6 +18,10 @@ function CheckoutContent({ unwrappedParams }: { unwrappedParams: any }) {
   
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [showDatePickerModal, setShowDatePickerModal] = useState(false);
+  const [deliveryDate, setDeliveryDate] = useState<Date | undefined>();
+  const [bookedDates, setBookedDates] = useState<Date[]>([]);
 
   React.useEffect(() => {
     const fetchProduct = async () => {
@@ -45,19 +51,37 @@ function CheckoutContent({ unwrappedParams }: { unwrappedParams: any }) {
           const currentRentalPrice = Math.round((baseRental / 4) * calculatedDays);
           const currentDeposit = product.securityDeposit || Math.round(baseRental * 0.3);
 
-          setItems([{
-            id: product.id,
-            title: product.name,
-            designer: product.vendor?.boutiqueName || "Boutique",
-            image: product.images?.[0]?.url || "/images/placeholder.jpg",
-            size: size,
-            duration: durationStr,
-            deposit: currentDeposit,
-            price: currentRentalPrice,
-            startDate: start || undefined,
-            endDate: end || undefined
-          }]);
-        }
+            setItems([{
+              id: product.id,
+              title: product.name,
+              designer: product.vendor?.boutiqueName || "Boutique",
+              image: product.images?.[0]?.url || "/images/placeholder.jpg",
+              size: size,
+              duration: durationStr,
+              deposit: currentDeposit,
+              price: currentRentalPrice,
+              startDate: start || undefined,
+              endDate: end || undefined
+            }]);
+
+            if (start) {
+              setDeliveryDate(new Date(start));
+            }
+
+            const datesRes = await fetch(`/api/products/${unwrappedParams.id}/booked-dates`);
+            if (datesRes.ok) {
+              const datesData = await datesRes.json();
+              const blocked: Date[] = [];
+              if (datesData.bookedDates) {
+                datesData.bookedDates.forEach((order: any) => {
+                  const s = new Date(order.startDate);
+                  const e = new Date(order.endDate);
+                  blocked.push(...eachDayOfInterval({ start: s, end: e }));
+                });
+              }
+              setBookedDates(blocked);
+            }
+          }
       } catch (err) {
         console.error("Failed to load product", err);
       } finally {
@@ -521,15 +545,21 @@ function CheckoutContent({ unwrappedParams }: { unwrappedParams: any }) {
                       </div>
                       
                       {/* Dates & Size */}
-                      <div className="flex justify-between items-center text-[#414846] mb-6">
+                      <button 
+                        onClick={() => setShowDatePickerModal(true)}
+                        className="w-full flex justify-between items-center text-[#414846] mb-6 p-4 border border-zinc-200 rounded-lg hover:border-[#001410] transition-colors text-left bg-white"
+                      >
                         <div>
                           <span className="block text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Rental Dates</span>
                           <span className="font-bold text-sm text-[#001410]">{item.duration}</span>
                         </div>
-                        <svg className="w-5 h-5 text-[#775a19]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z" />
-                        </svg>
-                      </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[#775a19] text-xs font-bold underline">Edit</span>
+                          <svg className="w-5 h-5 text-[#775a19]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z" />
+                          </svg>
+                        </div>
+                      </button>
 
                       {/* Fees */}
                       <div className="space-y-3 font-sans text-sm border-t border-black/5 pt-6">
@@ -565,6 +595,57 @@ function CheckoutContent({ unwrappedParams }: { unwrappedParams: any }) {
         )}
 
       </main>
+
+      {/* DATE PICKER MODAL */}
+      {showDatePickerModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-[#001410]/40 backdrop-blur-sm" onClick={() => setShowDatePickerModal(false)}></div>
+          <div className="bg-white w-full max-w-sm rounded-2xl p-6 relative z-10 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <button onClick={() => setShowDatePickerModal(false)} className="absolute top-4 right-4 text-zinc-400 hover:text-[#001410]">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <h3 className="font-serif text-xl text-[#001410] mb-4 text-center">Select Delivery Date</h3>
+            
+            <div className="flex justify-center mb-6">
+              <DayPicker
+                mode="single"
+                selected={deliveryDate}
+                onSelect={(date) => {
+                  if (date) {
+                    setDeliveryDate(date);
+                    setShowDatePickerModal(false);
+                    const startStr = date.toISOString();
+                    const endStr = addDays(date, 3).toISOString(); // 4 day rental
+                    const query = new URLSearchParams(searchParams.toString());
+                    query.set('start', startStr);
+                    query.set('end', endStr);
+                    router.replace(`/checkout/${unwrappedParams.id}?${query.toString()}`);
+                  }
+                }}
+                disabled={[
+                  { before: startOfDay(addDays(new Date(), 2)) },
+                  ...bookedDates
+                ]}
+                className="font-sans"
+                classNames={{
+                  selected: "bg-[#001410] text-white hover:bg-[#00261f]",
+                }}
+              />
+            </div>
+
+            {deliveryDate && (
+              <div className="p-4 bg-[#FAF2E8] border border-[#E8D8BA] rounded-xl text-center">
+                <p className="text-sm text-[#001410]">
+                  <span className="font-bold">Delivery:</span> {format(deliveryDate, 'do MMM')}
+                </p>
+                <p className="text-sm text-[#001410] mt-1">
+                  <span className="font-bold">Return:</span> {format(addDays(deliveryDate, 3), 'do MMM')} (4-Day)
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
     <Script src="https://checkout.razorpay.com/v1/checkout.js" />
     </>
