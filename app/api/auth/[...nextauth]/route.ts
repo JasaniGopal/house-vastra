@@ -25,16 +25,23 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
+        emailOrPhone: { label: "Email or Phone", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        if (!credentials?.emailOrPhone || !credentials?.password) {
           throw new Error("Invalid credentials");
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+        const isEmail = credentials.emailOrPhone.includes("@");
+        
+        const user = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { email: isEmail ? credentials.emailOrPhone : `${credentials.emailOrPhone}@placeholder.local` },
+              ...(isEmail ? [] : [{ phone: credentials.emailOrPhone }])
+            ]
+          }
         });
 
         if (!user || !user.password) {

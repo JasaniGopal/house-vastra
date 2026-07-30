@@ -6,20 +6,34 @@ import { Role } from "@prisma/client";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, email, password, role } = body;
+    const { name, email, phone, password, role } = body;
 
-    if (!name || !email || !password) {
+    if (!name || !email || !phone || !password) {
       return new NextResponse("Missing fields", { status: 400 });
     }
 
-    const existingUser = await prisma.user.findUnique({
+    // Validate email format basic
+    if (!email.includes("@")) {
+      return new NextResponse("Invalid email address.", { status: 400 });
+    }
+
+    // Validate mobile number: must be exactly 10 digits
+    const phoneRegex = /^\d{10}$/;
+    if (!phoneRegex.test(phone)) {
+      return new NextResponse("Invalid mobile number. Please enter a 10-digit number.", { status: 400 });
+    }
+
+    const existingUser = await prisma.user.findFirst({
       where: {
-        email,
+        OR: [
+          { email: email },
+          { phone: phone }
+        ]
       },
     });
 
     if (existingUser) {
-      return new NextResponse("Email already exists", { status: 400 });
+      return new NextResponse("Account with this email or phone already exists", { status: 400 });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -33,6 +47,7 @@ export async function POST(req: Request) {
       data: {
         name,
         email,
+        phone,
         password: hashedPassword,
         role: userRole,
       },

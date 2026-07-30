@@ -7,6 +7,7 @@ import { signIn } from "next-auth/react";
 export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [agree, setAgree] = useState(false);
@@ -17,8 +18,18 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!agree) return;
-    setStatus("loading");
-    setError("");
+    const phoneRegex = /^\d{10}$/;
+    if (!phoneRegex.test(phone)) {
+      setStatus("idle");
+      setError("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+
+    if (!email.includes("@")) {
+      setStatus("idle");
+      setError("Please enter a valid email address.");
+      return;
+    }
 
     try {
       const res = await fetch("/api/auth/register", {
@@ -27,6 +38,7 @@ export default function RegisterPage() {
         body: JSON.stringify({
           name,
           email,
+          phone,
           password,
           role: "CUSTOMER",
         }),
@@ -112,6 +124,25 @@ export default function RegisterPage() {
                 placeholder="ananya@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-white border border-zinc-200 rounded-md px-4 py-3 font-sans text-sm focus:outline-none focus:border-[#775a19] focus:ring-1 focus:ring-[#775a19] placeholder:text-zinc-400 transition-all"
+                required
+              />
+            </div>
+
+            {/* Mobile Number */}
+            <div>
+              <label className="text-xs md:text-sm font-semibold text-[#001410] mb-1.5 block">
+                Mobile Number
+              </label>
+              <input
+                type="tel"
+                placeholder="9876543210"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                maxLength={10}
+                minLength={10}
+                pattern="\d{10}"
+                title="Please enter exactly 10 digits"
                 className="w-full bg-white border border-zinc-200 rounded-md px-4 py-3 font-sans text-sm focus:outline-none focus:border-[#775a19] focus:ring-1 focus:ring-[#775a19] placeholder:text-zinc-400 transition-all"
                 required
               />

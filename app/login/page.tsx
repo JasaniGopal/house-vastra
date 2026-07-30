@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [emailOrPhone, setEmailOrPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -20,8 +20,18 @@ export default function LoginPage() {
     setStatus("loading");
     setError("");
 
+    const isEmail = emailOrPhone.includes("@");
+    if (!isEmail) {
+      const phoneRegex = /^\d{10}$/;
+      if (!phoneRegex.test(emailOrPhone)) {
+        setStatus("idle");
+        setError("Please enter a valid email or a 10-digit mobile number.");
+        return;
+      }
+    }
+
     const result = await signIn("credentials", {
-      email,
+      emailOrPhone,
       password,
       redirect: false,
     });
@@ -81,16 +91,16 @@ export default function LoginPage() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email Address */}
+            {/* Email Address or Phone */}
             <div>
               <label className="text-xs md:text-sm font-semibold text-[#001410] mb-1.5 block">
-                Email Address
+                Email or Mobile Number
               </label>
               <input
-                type="email"
-                placeholder="ananya@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="text"
+                placeholder="ananya@example.com or 9876543210"
+                value={emailOrPhone}
+                onChange={(e) => setEmailOrPhone(e.target.value)}
                 className="w-full bg-white border border-zinc-200 rounded-md px-4 py-3 font-sans text-sm focus:outline-none focus:border-[#775a19] focus:ring-1 focus:ring-[#775a19] placeholder:text-zinc-400 transition-all"
                 required
               />
