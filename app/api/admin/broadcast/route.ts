@@ -32,8 +32,8 @@ export async function POST(req: Request) {
 
     // Blast the emails using Resend (Bcc to hide other recipients)
     const { data, error } = await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
-      to: ['newsletter@yourdomain.com'], // Sent to self
+      from: process.env.RESEND_FROM_EMAIL || 'LOR Inner Circle <newsletter@lookonrent.com>',
+      to: ['newsletter@lookonrent.com'], // Sent to self
       bcc: emails, // BCC everyone else
       subject: subject,
       html: `
