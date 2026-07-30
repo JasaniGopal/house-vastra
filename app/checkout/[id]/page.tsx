@@ -12,7 +12,7 @@ import { useSession } from 'next-auth/react';
 function CheckoutContent({ unwrappedParams }: { unwrappedParams: any }) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,6 +82,12 @@ function CheckoutContent({ unwrappedParams }: { unwrappedParams: any }) {
 
   const handleCheckout = async () => {
     if (items.length === 0) return;
+
+    if (status === "unauthenticated") {
+      const query = new URLSearchParams(searchParams.toString());
+      router.push(`/login?callbackUrl=/checkout/${unwrappedParams.id}?${query.toString()}`);
+      return;
+    }
     
     // Validation for missing dates
     if (items.some(item => !item.startDate || !item.endDate)) {

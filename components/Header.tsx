@@ -63,8 +63,8 @@ export default function Header() {
     <>
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-            ? "bg-white/90 backdrop-blur-md border-b border-[#c1c8c5]/30 py-4 shadow-sm"
-            : "bg-[#fcf9f8] py-5"
+          ? "bg-white/90 backdrop-blur-md border-b border-[#c1c8c5]/30 py-4 shadow-sm"
+          : "bg-[#fcf9f8] py-5"
           }`}
       >
         <div className="mx-auto max-w-[1280px] px-4 md:px-16">
@@ -98,7 +98,7 @@ export default function Header() {
                 href="/"
                 className="flex items-center"
               >
-                <Image src="/images/logo.jpeg" alt="LOR Logo" width={120} height={42} className="object-contain w-[80px] h-auto md:w-[120px]" priority />
+                <Image src="/images/logo.svg" alt="LOR Logo" width={120} height={42} className="object-contain w-[80px] h-auto md:w-[120px]" priority />
               </Link>
             </div>
 
