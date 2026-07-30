@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { productId, orderId, rating, comment } = body;
+    const { productId, orderId, rating, comment, images } = body;
 
     if (!productId || !rating) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -24,6 +24,7 @@ export async function POST(req: Request) {
         orderId,
         rating: Number(rating),
         comment,
+        images: images || [], // Store the JSON array of image URLs
         isApproved: false // Requires admin approval for social proof legitimacy
       }
     });

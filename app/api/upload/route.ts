@@ -10,9 +10,9 @@ cloudinary.config({
 
 export async function POST(req: Request) {
   try {
-    // 1. Verify the user is a VENDOR or ADMIN
+    // 1. Verify the user is logged in (Customers, Vendors, and Admins can upload)
     const session = await getServerSession(authOptions);
-    if (!session || !session.user || (session.user.role !== "VENDOR" && session.user.role !== "ADMIN")) {
+    if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -29,10 +29,11 @@ export async function POST(req: Request) {
     const buffer = Buffer.from(bytes);
 
     // 4. Upload to Cloudinary using a stream
+    const folderName = session.user.role === "CUSTOMER" ? 'rent-vastra-reviews' : 'rent-vastra-outfits';
     const uploadResult = await new Promise<any>((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
-          folder: 'rent-vastra-outfits',
+          folder: folderName,
           resource_type: 'auto',
         },
         (error, result) => {

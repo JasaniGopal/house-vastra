@@ -13,6 +13,8 @@ export default function OrderHistoryPage() {
   const [reviewOrder, setReviewOrder] = useState<any | null>(null);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
+  const [images, setImages] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -48,6 +50,36 @@ export default function OrderHistoryPage() {
     return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(dateString));
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    setIsUploading(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append("file", e.target.files[0]);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setImages((prev) => [...prev, data.url]);
+      } else {
+        showToast("Failed to upload image");
+      }
+    } catch (err) {
+      showToast("Error uploading image");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const submitReview = async () => {
     if (!reviewOrder) return;
     setIsSubmitting(true);
@@ -59,7 +91,8 @@ export default function OrderHistoryPage() {
           productId: reviewOrder.productId,
           orderId: reviewOrder.id,
           rating,
-          comment
+          comment,
+          images
         })
       });
       if (res.ok) {
@@ -67,6 +100,7 @@ export default function OrderHistoryPage() {
         setReviewOrder(null);
         setRating(5);
         setComment("");
+        setImages([]);
       } else {
         showToast("Failed to submit review");
       }
@@ -205,9 +239,38 @@ export default function OrderHistoryPage() {
               ></textarea>
             </div>
 
+            <div className="mb-8">
+              <label className="block text-xs font-bold text-[#001410] uppercase tracking-wider mb-2">Photos</label>
+              <div className="flex flex-wrap gap-3">
+                {images.map((img, idx) => (
+                  <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden border border-zinc-200">
+                    <Image src={img} alt="Review upload" fill className="object-cover" />
+                    <button 
+                      onClick={() => removeImage(idx)} 
+                      className="absolute -top-1 -right-1 bg-white rounded-full text-rose-500 hover:text-rose-600"
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+                
+                {images.length < 3 && (
+                  <label className={`w-16 h-16 rounded-lg border-2 border-dashed border-zinc-300 flex flex-col items-center justify-center cursor-pointer hover:border-[#775a19] hover:bg-[#FAF2E8] transition-colors ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <svg className="w-6 h-6 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={isUploading} />
+                  </label>
+                )}
+              </div>
+              <p className="text-[10px] text-zinc-500 mt-2">Add up to 3 photos (optional)</p>
+            </div>
+
             <button 
               onClick={submitReview} 
-              disabled={isSubmitting}
+              disabled={isSubmitting || isUploading}
               className="w-full bg-[#001410] text-white py-4 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#00261f] transition-all disabled:opacity-50"
             >
               {isSubmitting ? "Submitting..." : "Submit Review"}

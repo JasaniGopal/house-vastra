@@ -433,7 +433,16 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                     </svg>
                   ))}
                 </div>
-                <p className="text-sm text-zinc-600 italic line-clamp-4">"{review.comment}"</p>
+                <p className="text-sm text-zinc-600 italic line-clamp-4 mb-4">"{review.comment}"</p>
+                {review.images && Array.isArray(review.images) && review.images.length > 0 && (
+                  <div className="flex gap-2 mt-auto">
+                    {review.images.map((img: string, idx: number) => (
+                      <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden border border-zinc-200">
+                        <Image src={img} alt="Customer review photo" fill className="object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>

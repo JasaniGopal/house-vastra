@@ -285,6 +285,7 @@ model Review {
   order       Order?   @relation("OrderReviews", fields: [orderId], references: [id], onDelete: SetNull)
   rating      Int      // 1-5
   comment     String?  @db.Text
+  images      Json?
   isApproved  Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
