@@ -170,14 +170,18 @@ function CollectionsContent() {
   // Update occasion filter if URL changes directly
   useEffect(() => {
     if (occasionParam) {
-      setSelectedOccasions(prev => prev.includes(occasionParam) ? prev : [...prev, occasionParam]);
+      setSelectedOccasions(occasionParam.split(','));
+    } else {
+      setSelectedOccasions([]);
     }
   }, [occasionParam]);
 
   // Update category filter if URL changes directly
   useEffect(() => {
     if (categoryParam) {
-      setSelectedCategories(prev => prev.includes(categoryParam) ? prev : [...prev, categoryParam]);
+      setSelectedCategories(categoryParam.split(','));
+    } else {
+      setSelectedCategories([]);
     }
   }, [categoryParam]);
 
