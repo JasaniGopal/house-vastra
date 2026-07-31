@@ -156,7 +156,7 @@ export default function Header() {
                 </Link>
                 <div className="absolute top-[120%] left-1/2 -translate-x-1/2 w-48 bg-white shadow-xl rounded-sm opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 py-2 border border-zinc-100 before:absolute before:-top-6 before:left-0 before:w-full before:h-6">
                   <Link href="/collections?category=Lehengas" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Lehengas</Link>
-                  <Link href="/collections?category=Kurtas & Sets" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Kurtas & Sets</Link>
+                  <Link href="/collections?category=Kurta Sets" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Kurtas & Sets</Link>
                   <Link href="/collections?category=Sarees" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Sarees</Link>
                   <Link href="/collections?category=Sherwanis" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Sherwanis</Link>
                 </div>
@@ -174,10 +174,10 @@ export default function Header() {
                   </svg>
                 </Link>
                 <div className="absolute top-[120%] left-1/2 -translate-x-1/2 w-48 bg-white shadow-xl rounded-sm opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 py-2 border border-zinc-100 before:absolute before:-top-6 before:left-0 before:w-full before:h-6">
-                  <Link href="/collections?category=Dresses & Gowns" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Dresses & Gowns</Link>
-                  <Link href="/collections?category=Suits & Blazers" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Suits & Blazers</Link>
-                  <Link href="/collections?category=Tops & Shirts" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Tops & Shirts</Link>
-                  <Link href="/collections?category=Trousers & Skirts" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Trousers & Skirts</Link>
+                  <Link href="/collections?category=Gowns" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Dresses & Gowns</Link>
+                  <Link href="/collections?category=Suits" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Suits & Blazers</Link>
+                  <Link href="/collections?category=Tops%20%26%20Shirts" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Tops & Shirts</Link>
+                  <Link href="/collections?category=Trousers%20%26%20Skirts" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Trousers & Skirts</Link>
                 </div>
               </div>
 
@@ -195,7 +195,7 @@ export default function Header() {
                 <div className="absolute top-[120%] left-1/2 -translate-x-1/2 w-48 bg-white shadow-xl rounded-sm opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 py-2 border border-zinc-100 before:absolute before:-top-6 before:left-0 before:w-full before:h-6">
                   <Link href="/collections?category=Jewelry" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Jewelry</Link>
                   <Link href="/collections?category=Footwear" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Footwear</Link>
-                  <Link href="/collections?category=Bags & Clutches" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Bags & Clutches</Link>
+                  <Link href="/collections?category=Bags%20%26%20Clutches" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Bags & Clutches</Link>
                   <Link href="/collections?category=Headwear" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Headwear</Link>
                 </div>
               </div>
@@ -400,7 +400,7 @@ export default function Header() {
             <div className={`overflow-hidden transition-all duration-300 ${mobileExpanded === 'ethnic' ? 'max-h-48 opacity-100 mb-2' : 'max-h-0 opacity-0'}`}>
               <div className="flex flex-col pl-9 gap-3 mt-1">
                 <Link href="/collections?category=Lehengas" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Lehengas</Link>
-                <Link href="/collections?category=Kurtas & Sets" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Kurtas & Sets</Link>
+                <Link href="/collections?category=Kurta Sets" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Kurtas & Sets</Link>
                 <Link href="/collections?category=Sarees" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Sarees</Link>
                 <Link href="/collections?category=Sherwanis" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Sherwanis</Link>
               </div>
@@ -426,10 +426,10 @@ export default function Header() {
             </button>
             <div className={`overflow-hidden transition-all duration-300 ${mobileExpanded === 'western' ? 'max-h-48 opacity-100 mb-2' : 'max-h-0 opacity-0'}`}>
               <div className="flex flex-col pl-9 gap-3 mt-1">
-                <Link href="/collections?category=Dresses & Gowns" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Dresses & Gowns</Link>
-                <Link href="/collections?category=Suits & Blazers" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Suits & Blazers</Link>
-                <Link href="/collections?category=Tops & Shirts" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Tops & Shirts</Link>
-                <Link href="/collections?category=Trousers & Skirts" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Trousers & Skirts</Link>
+                <Link href="/collections?category=Gowns" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Dresses & Gowns</Link>
+                <Link href="/collections?category=Suits" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Suits & Blazers</Link>
+                <Link href="/collections?category=Tops%20%26%20Shirts" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Tops & Shirts</Link>
+                <Link href="/collections?category=Trousers%20%26%20Skirts" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Trousers & Skirts</Link>
               </div>
             </div>
           </div>
@@ -456,7 +456,7 @@ export default function Header() {
               <div className="flex flex-col pl-9 gap-3 mt-1">
                 <Link href="/collections?category=Jewelry" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Jewelry</Link>
                 <Link href="/collections?category=Footwear" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Footwear</Link>
-                <Link href="/collections?category=Bags & Clutches" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Bags & Clutches</Link>
+                <Link href="/collections?category=Bags%20%26%20Clutches" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Bags & Clutches</Link>
                 <Link href="/collections?category=Headwear" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-zinc-500 hover:text-[#775a19] transition-colors">Headwear</Link>
               </div>
             </div>
