@@ -88,6 +88,12 @@ function CollectionsContent() {
   const [categories, setCategories] = useState<any[]>([]);
   const [occasions, setOccasions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(12);
+
+  // Reset visible count when products change
+  useEffect(() => {
+    setVisibleCount(12);
+  }, [products]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -390,18 +396,21 @@ function CollectionsContent() {
               </button>
             </div>
           ) : (
-            <>
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-10 md:gap-x-6 md:gap-y-12">
-                {filteredProducts.map((product, idx) => (
+                {filteredProducts.slice(0, visibleCount).map((product, idx) => (
                   <ProductCard key={product.id} product={product} priority={idx < 4} />
                 ))}
               </div>
               
               {/* Pagination/Load More */}
-              <div className="mt-16 flex justify-center">
-                 <button className="border border-[#001410] text-[#001410] px-8 py-3 text-xs font-bold uppercase tracking-wider hover:bg-[#001410] hover:text-white transition-colors">
-                    Load More Pieces
-                 </button>
+              <div className="mt-16 flex justify-center text-center">
+                 {visibleCount < filteredProducts.length ? (
+                   <button onClick={() => setVisibleCount(prev => prev + 12)} className="border border-[#001410] text-[#001410] px-8 py-3 text-xs font-bold uppercase tracking-wider hover:bg-[#001410] hover:text-white transition-colors">
+                      Load More Pieces
+                   </button>
+                 ) : (
+                   <p className="text-sm text-zinc-500 italic">You've seen all pieces for this selection.</p>
+                 )}
               </div>
             </>
           )}
