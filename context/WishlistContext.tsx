@@ -51,29 +51,25 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
           console.error("Failed to load DB wishlist", e);
         }
       } else if (status === "unauthenticated") {
-        const stored = localStorage.getItem('wishlist');
-        if (stored) {
-          try {
-            setWishlistItems(JSON.parse(stored));
-          } catch (e) {}
-        }
+        setWishlistItems([]);
       }
       if (status !== "loading") setIsLoaded(true);
     };
     loadWishlist();
   }, [status]);
 
-  // Sync to localstorage if unauthenticated
   useEffect(() => {
-    if (isLoaded && status === "unauthenticated") {
-      localStorage.setItem('wishlist', JSON.stringify(wishlistItems));
-    }
     if (isLoaded) {
       window.dispatchEvent(new Event("wishlistUpdated"));
     }
   }, [wishlistItems, isLoaded, status]);
 
   const toggleWishlist = async (item: WishlistItem) => {
+    if (status === "unauthenticated") {
+      window.location.href = "/login?callbackUrl=" + encodeURIComponent(window.location.pathname);
+      return;
+    }
+
     // Optimistic UI update
     setWishlistItems(prev => {
       const exists = prev.find(i => i.id === item.id);
