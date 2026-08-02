@@ -10,6 +10,7 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [role, setRole] = useState("CUSTOMER");
   const [agree, setAgree] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
 
@@ -40,7 +41,7 @@ export default function RegisterPage() {
           email,
           phone,
           password,
-          role: "CUSTOMER",
+          role: role,
         }),
       });
 
@@ -99,6 +100,37 @@ export default function RegisterPage() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Account Type Selection */}
+            <div className="mb-4">
+              <label className="text-xs md:text-sm font-semibold text-[#001410] mb-2 block">
+                I am registering as a:
+              </label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="role"
+                    value="CUSTOMER"
+                    checked={role === "CUSTOMER"}
+                    onChange={(e) => setRole(e.target.value)}
+                    className="accent-[#001410] w-4 h-4 cursor-pointer"
+                  />
+                  <span className="text-sm font-medium text-[#414846]">Customer</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="role"
+                    value="VENDOR"
+                    checked={role === "VENDOR"}
+                    onChange={(e) => setRole(e.target.value)}
+                    className="accent-[#001410] w-4 h-4 cursor-pointer"
+                  />
+                  <span className="text-sm font-medium text-[#414846]">Vendor (Boutique)</span>
+                </label>
+              </div>
+            </div>
+
             {/* Full Name */}
             <div>
               <label className="text-xs md:text-sm font-semibold text-[#001410] mb-1.5 block">
