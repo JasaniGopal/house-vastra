@@ -9,7 +9,7 @@ export default function ContactPage() {
     subject: "",
     message: "",
   });
-  
+
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -59,7 +59,7 @@ export default function ContactPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-12 md:gap-8">
-          
+
           {/* Contact Information (Left Column) */}
           <div className="md:col-span-2 flex flex-col gap-8">
             <div>
@@ -68,7 +68,7 @@ export default function ContactPage() {
                 We aim to respond to all inquiries within 24 business hours. For immediate assistance regarding an active rental, please call us directly.
               </p>
             </div>
-            
+
             <div className="space-y-6">
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 rounded-full bg-white border border-[#E8D8BA] flex items-center justify-center text-[#775a19] shrink-0">
@@ -78,8 +78,8 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-[#001410] uppercase tracking-wider mb-1">Phone Support</h4>
-                  <p className="text-sm text-zinc-600">+91 98765 43210</p>
-                  <p className="text-xs text-zinc-400 mt-1">Mon-Sat, 9AM-8PM IST</p>
+                  <p className="text-sm text-zinc-600">+91 91688 99557</p>
+                  <p className="text-xs text-zinc-400 mt-1">Mon-Sun, 9AM-8PM IST</p>
                 </div>
               </div>
 
@@ -106,8 +106,8 @@ export default function ContactPage() {
                 <div>
                   <h4 className="text-sm font-bold text-[#001410] uppercase tracking-wider mb-1">Studio Address</h4>
                   <p className="text-sm text-zinc-600">
-                    LOR Flagship Store<br/>
-                    123 Couture Avenue,<br/>
+                    LOR Flagship Store<br />
+                    123 Couture Avenue,<br />
                     Bandra West, Mumbai - 400050
                   </p>
                 </div>
@@ -138,7 +138,7 @@ export default function ContactPage() {
             ) : (
               <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                 <h3 className="font-serif text-2xl text-[#001410] mb-2">Send us a Message</h3>
-                
+
                 {status === "error" && (
                   <div className="p-4 bg-rose-50 border border-rose-100 text-rose-600 text-sm rounded-lg">
                     {errorMessage}
