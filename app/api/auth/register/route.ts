@@ -38,10 +38,11 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    // Parse role safely, default to CUSTOMER
+    // Parse role safely: only CUSTOMER or VENDOR can be registered publicly
     let userRole: Role = Role.CUSTOMER;
-    if (role === "VENDOR") userRole = Role.VENDOR;
-    if (role === "ADMIN") userRole = Role.ADMIN;
+    if (role === "VENDOR") {
+      userRole = Role.VENDOR;
+    }
 
     const user = await prisma.user.create({
       data: {

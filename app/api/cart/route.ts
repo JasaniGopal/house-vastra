@@ -17,7 +17,13 @@ export async function GET() {
         product: {
           include: {
             images: true,
-            vendor: true
+            vendor: {
+              select: {
+                id: true,
+                boutiqueName: true,
+                logoUrl: true,
+              }
+            }
           }
         }
       },

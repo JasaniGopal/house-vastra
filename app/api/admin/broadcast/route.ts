@@ -1,16 +1,22 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { Resend } from "resend";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 const resend = new Resend(process.env.RESEND_API_KEY || "re_mock_key");
 
 export async function POST(req: Request) {
   try {
-    const { subject, message, passcode, imageUrl } = await req.json();
+    const session = await getServerSession(authOptions);
+    const body = await req.json();
+    const { subject, message, passcode, imageUrl } = body;
 
-    // Simple security check to prevent unauthorized blasts
-    if (passcode !== process.env.ADMIN_PASSCODE) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const isPasscodeValid = Boolean(process.env.ADMIN_PASSCODE && passcode === process.env.ADMIN_PASSCODE);
+    const isAdminSession = session?.user?.role === "ADMIN";
+
+    if (!isAdminSession && !isPasscodeValid) {
+      return NextResponse.json({ error: "Unauthorized. Admin access required." }, { status: 403 });
     }
 
     if (!subject || !message) {

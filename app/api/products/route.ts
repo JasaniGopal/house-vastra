@@ -170,7 +170,13 @@ export async function GET(req: Request) {
       finalProducts = results.map(result => result.item);
     }
 
-    return NextResponse.json(finalProducts);
+    // Strip internal financial metrics from public response
+    const sanitizedProducts = finalProducts.map((p: any) => {
+      const { vendorExpectedRent, vendorExpectedDeposit, ...rest } = p;
+      return rest;
+    });
+
+    return NextResponse.json(sanitizedProducts);
   } catch (error: any) {
     console.error("Products fetch error:", error);
     return NextResponse.json(

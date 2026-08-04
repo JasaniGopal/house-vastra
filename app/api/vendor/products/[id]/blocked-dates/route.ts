@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function GET(
   req: Request,
@@ -23,7 +25,22 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || (session.user.role !== "VENDOR" && session.user.role !== "ADMIN")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
+
+    // Verify product exists and belongs to the vendor (unless Admin)
+    if (session.user.role === "VENDOR") {
+      const vendor = await prisma.vendor.findUnique({ where: { userId: session.user.id } });
+      if (!vendor) return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
+
+      const product = await prisma.product.findUnique({ where: { id, vendorId: vendor.id } });
+      if (!product) return NextResponse.json({ error: "Product not found or unauthorized" }, { status: 403 });
+    }
+
     const { startDate, endDate, reason } = await req.json();
 
     if (!startDate || !endDate) {
@@ -45,3 +62,4 @@ export async function POST(
     return NextResponse.json({ error: "Failed to add blocked date", details: error.message }, { status: 500 });
   }
 }
+

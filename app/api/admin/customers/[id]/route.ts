@@ -27,7 +27,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       data: { isBanned }
     });
 
-    return NextResponse.json(updatedCustomer);
+    const { password: _, ...customerWithoutPassword } = updatedCustomer;
+
+    return NextResponse.json(customerWithoutPassword);
   } catch (error: any) {
     console.error("Admin Customer Update Error:", error);
     return NextResponse.json({ error: "Failed to update customer" }, { status: 500 });

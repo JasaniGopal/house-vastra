@@ -29,8 +29,11 @@ export async function GET(req: Request) {
       totalSpent: c.orders.reduce((sum, o) => sum + o.totalAmount, 0)
     }));
 
-    // Remove raw orders array to save payload size
-    enrichedCustomers.forEach((c: any) => delete c.orders);
+    // Remove sensitive data (password hash) and raw orders array
+    enrichedCustomers.forEach((c: any) => {
+      delete c.password;
+      delete c.orders;
+    });
 
     return NextResponse.json(enrichedCustomers);
   } catch (error: any) {

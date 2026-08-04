@@ -2,8 +2,12 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import prisma from "@/lib/prisma";
 
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+
 export async function POST(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
     const { 
       razorpay_order_id, 
       razorpay_payment_id, 
@@ -33,18 +37,11 @@ export async function POST(req: Request) {
     
     const createdOrders = [];
     
-    // We assume userId is valid, but fallback to a test user if null for MVP if needed.
-    // Ensure you have a valid user in the DB.
-    let customerId = userId;
-    
-    if (!customerId) {
-        // Just for demo fallback, find first user
-        const firstUser = await prisma.user.findFirst();
-        if (firstUser) customerId = firstUser.id;
-    }
+    // Prioritize authenticated session user ID to prevent user impersonation
+    const customerId = session?.user?.id || userId;
 
     if (!customerId) {
-      return NextResponse.json({ error: "No customer found to attach order" }, { status: 400 });
+      return NextResponse.json({ error: "Unauthorized. Please login to complete your order." }, { status: 401 });
     }
 
     // Process Coupon if provided

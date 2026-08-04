@@ -33,7 +33,12 @@ export async function GET(
       return NextResponse.json({ error: "Product not found or not available." }, { status: 404 });
     }
 
-    return NextResponse.json(product);
+    // Remove internal vendor financial expectations from public customer response
+    const sanitizedProduct: any = { ...product };
+    delete sanitizedProduct.vendorExpectedRent;
+    delete sanitizedProduct.vendorExpectedDeposit;
+
+    return NextResponse.json(sanitizedProduct);
   } catch (error: any) {
     console.error("Product detail fetch error:", error);
     return NextResponse.json(
