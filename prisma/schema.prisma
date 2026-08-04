@@ -302,6 +302,16 @@ model SupportTicket {
   updatedAt   DateTime @updatedAt
 }
 
+model ContactMessage {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  subject   String
+  message   String   @db.Text
+  status    String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED
+  createdAt DateTime @default(now())
+}
+
 model MeasurementProfile {
   id          String   @id @default(uuid())
   userId      String   @unique

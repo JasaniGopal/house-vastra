@@ -97,6 +97,9 @@ export default function Footer() {
               Support
             </h4>
             <nav className="flex flex-col gap-1">
+              <Link href="/contact" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
+                Contact Us
+              </Link>
               <Link href="/faqs" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
                 FAQs
               </Link>

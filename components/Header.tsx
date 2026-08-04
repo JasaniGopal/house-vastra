@@ -199,6 +199,15 @@ export default function Header() {
                   <Link href="/collections?category=Headwear" className="block px-5 py-2.5 text-sm text-[#414846] hover:bg-[#fcf9f8] hover:text-[#775a19] transition-colors font-medium">Headwear</Link>
                 </div>
               </div>
+
+              <div className="relative group h-full flex items-center py-2 cursor-pointer">
+                <Link
+                  href="/contact"
+                  className="text-sm font-sans font-bold tracking-wider text-[#414846] group-hover:text-[#775a19] transition-colors uppercase"
+                >
+                  Contact
+                </Link>
+              </div>
             </nav>
 
             {/* Right Side Actions */}
@@ -472,14 +481,14 @@ export default function Header() {
             <span>How it Works</span>
           </Link>
           <Link
-            href="/support"
+            href="/contact"
             onClick={() => setIsMobileMenuOpen(false)}
             className="flex items-center gap-4 py-3 text-[#414846] font-sans font-medium text-base hover:text-[#775a19] hover:translate-x-1 transition-all"
           >
             <svg className="w-5 h-5 text-[#414846]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
             </svg>
-            <span>Support</span>
+            <span>Contact Us</span>
           </Link>
         </nav>
 
