@@ -53,29 +53,60 @@ export async function GET(req: Request) {
       whereClause.isTrending = true;
     }
 
-    // Synonym dictionary for common Indian wear typos
+    // Synonym dictionary for common Indian wear typos and misspellings
     if (search) {
       const synonymMap: Record<string, string> = {
         "sari": "saree",
         "sare": "saree",
         "sareee": "saree",
+        "sareeee": "saree",
+        "sareeeee": "saree",
+        "sarie": "saree",
         "serwani": "sherwani",
         "shervani": "sherwani",
         "sherwanii": "sherwani",
         "shrewani": "sherwani",
+        "shervanis": "sherwani",
+        "sherwanis": "sherwani",
+        "serwanis": "sherwani",
+        "sirwani": "sherwani",
         "lengha": "lehenga",
         "lahanga": "lehenga",
         "lehanga": "lehenga",
+        "lehengas": "lehenga",
+        "lahangas": "lehenga",
+        "lenghas": "lehenga",
+        "langa": "lehenga",
         "kurti": "kurta",
-        "kurtaa": "kurta"
+        "kurtis": "kurta",
+        "kurtaa": "kurta",
+        "kurtas": "kurta",
+        "kurtha": "kurta",
+        "gowm": "gown",
+        "gowns": "gown",
+        "dres": "dress",
+        "dresses": "dress",
+        "trowser": "trouser",
+        "trousers": "trouser",
+        "shrits": "shirt",
+        "shirts": "shirt",
+        "jwellry": "jewelry",
+        "jewelery": "jewelry",
+        "jewellry": "jewelry",
+        "jewellery": "jewelry",
       };
       
-      // Replace known typos in the search string
+      // Replace known typos in the search string using word boundaries to avoid partial matches
       Object.keys(synonymMap).forEach(typo => {
-        if (search && search.includes(typo)) {
-          search = search.replace(new RegExp(typo, 'g'), synonymMap[typo]);
+        if (search) {
+          // Check for the typo, optionally with a plural 's' at the end
+          const regex = new RegExp(`\\b${typo}s?\\b`, 'gi');
+          search = search.replace(regex, synonymMap[typo]);
         }
       });
+      
+      // Basic cleanup for excessive repeated letters (e.g. sareeeeee -> saree)
+      search = search.replace(/([a-z])\1{2,}/gi, '$1$1');
     }
 
     if (maxPrice) {
