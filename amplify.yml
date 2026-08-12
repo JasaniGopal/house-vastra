@@ -7,6 +7,7 @@ frontend:
     build:
       commands:
         - env | grep -e DATABASE_URL -e NEXTAUTH_SECRET -e GOOGLE_CLIENT_ID -e GOOGLE_CLIENT_SECRET -e NEXT_PUBLIC_RAZORPAY_KEY_ID -e RAZORPAY_KEY_SECRET -e RESEND_API_KEY -e ADMIN_PASSCODE -e AWS_REGION -e AWS_S3_BUCKET_NAME >> .env.production
+        - echo "NEXTAUTH_URL=https://www.lookonrent.com" >> .env.production
         - npm run build
   artifacts:
     baseDirectory: .next
