@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-
+// Trigger Amplify Redeploy
 const nextConfig: NextConfig = {
   sassOptions: {
     silenceDeprecations: ["import"],
