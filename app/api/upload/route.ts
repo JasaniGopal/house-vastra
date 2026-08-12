@@ -1,16 +1,17 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { v2 as cloudinary } from 'cloudinary';
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import crypto from "crypto";
 
-// Cloudinary config is automatically picked up from process.env.CLOUDINARY_URL
-cloudinary.config({
-  secure: true
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION || "ap-south-1",
+  // Credentials are automatically picked up from AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
 });
 
 export async function POST(req: Request) {
   try {
-    // 1. Verify the user is logged in (Customers, Vendors, and Admins can upload)
+    // 1. Verify the user is logged in
     const session = await getServerSession(authOptions);
     if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -28,31 +29,30 @@ export async function POST(req: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // 4. Upload to Cloudinary using a stream
+    // 4. Generate unique filename and setup S3 params
     const folderName = session.user.role === "CUSTOMER" ? 'rent-vastra-reviews' : 'rent-vastra-outfits';
-    const uploadResult = await new Promise<any>((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          folder: folderName,
-          resource_type: 'auto',
-        },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      );
-      
-      // End the stream with the buffer
-      uploadStream.end(buffer);
+    const extension = file.name.split('.').pop();
+    const uniqueFileName = `${folderName}/${crypto.randomUUID()}-${Date.now()}.${extension}`;
+    const bucketName = process.env.AWS_S3_BUCKET_NAME || "look-on-rent-images-934646501835";
+
+    // 5. Upload to S3
+    const command = new PutObjectCommand({
+      Bucket: bucketName,
+      Key: uniqueFileName,
+      Body: buffer,
+      ContentType: file.type,
     });
 
-    // 5. Return the secure URL from Cloudinary
-    return NextResponse.json({ url: uploadResult.secure_url });
+    await s3Client.send(command);
+
+    // 6. Return the secure URL from S3
+    const secureUrl = `https://${bucketName}.s3.${process.env.AWS_REGION || "ap-south-1"}.amazonaws.com/${uniqueFileName}`;
+    return NextResponse.json({ url: secureUrl });
 
   } catch (error: any) {
-    console.error("Upload Error:", error);
+    console.error("S3 Upload Error:", error);
     return NextResponse.json(
-      { error: "Failed to process the upload to Cloudinary." },
+      { error: "Failed to process the upload to AWS S3." },
       { status: 500 }
     );
   }

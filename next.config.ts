@@ -8,8 +8,8 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "res.cloudinary.com",
-      },
+        hostname: "look-on-rent-images-934646501835.s3.ap-south-1.amazonaws.com",
+      }
     ],
   },
 };
