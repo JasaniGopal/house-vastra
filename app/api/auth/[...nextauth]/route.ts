@@ -2,7 +2,6 @@ import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 
 export const authOptions: NextAuthOptions = {
@@ -23,39 +22,52 @@ export const authOptions: NextAuthOptions = {
       },
     }),
     CredentialsProvider({
-      name: "Credentials",
+      id: "otp",
+      name: "OTP",
       credentials: {
-        emailOrPhone: { label: "Email or Phone", type: "text" },
-        password: { label: "Password", type: "password" },
+        identifier: { label: "Email or Phone", type: "text" },
+        otp: { label: "OTP", type: "text" },
       },
       async authorize(credentials) {
-        if (!credentials?.emailOrPhone || !credentials?.password) {
-          throw new Error("Invalid credentials");
+        if (!credentials?.identifier || !credentials?.otp) {
+          throw new Error("Email/Phone and OTP are required");
         }
 
-        const isEmail = credentials.emailOrPhone.includes("@");
-        
+        // 1. Verify the OTP in the database
+        const otpRecord = await prisma.otpToken.findUnique({
+          where: {
+            identifier_code: {
+              identifier: credentials.identifier,
+              code: credentials.otp,
+            },
+          },
+        });
+
+        if (!otpRecord) {
+          throw new Error("Invalid or expired OTP");
+        }
+
+        if (new Date() > otpRecord.expiresAt) {
+          await prisma.otpToken.delete({ where: { id: otpRecord.id } });
+          throw new Error("OTP has expired");
+        }
+
+        // 2. Find the user
         const user = await prisma.user.findFirst({
           where: {
             OR: [
-              { email: isEmail ? credentials.emailOrPhone : `${credentials.emailOrPhone}@placeholder.local` },
-              ...(isEmail ? [] : [{ phone: credentials.emailOrPhone }])
+              { email: credentials.identifier },
+              { phone: credentials.identifier }
             ]
-          }
+          },
         });
 
-        if (!user || !user.password) {
-          throw new Error("Invalid credentials");
+        if (!user) {
+          throw new Error("No account found with this identifier");
         }
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
-
-        if (!isPasswordValid) {
-          throw new Error("Invalid credentials");
-        }
+        // 3. Delete the OTP since it has been successfully used
+        await prisma.otpToken.delete({ where: { id: otpRecord.id } });
 
         return {
           id: user.id,

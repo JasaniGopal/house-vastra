@@ -4,9 +4,9 @@ import bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
   try {
-    const { token, password } = await req.json();
+    const { identifier, otp, password } = await req.json();
 
-    if (!token || !password) {
+    if (!identifier || !otp || !password) {
       return new NextResponse("Missing fields", { status: 400 });
     }
 
@@ -14,37 +14,50 @@ export async function POST(req: Request) {
       return new NextResponse("Password must be at least 6 characters", { status: 400 });
     }
 
-    // Find the token in the database
-    const resetRecord = await prisma.passwordResetToken.findUnique({
-      where: { token },
+    // Verify the OTP in the database
+    const otpRecord = await prisma.otpToken.findUnique({
+      where: {
+        identifier_code: {
+          identifier,
+          code: otp,
+        },
+      },
     });
 
-    if (!resetRecord) {
-      return new NextResponse("Invalid or expired token", { status: 400 });
+    if (!otpRecord) {
+      return new NextResponse("Invalid or expired OTP", { status: 400 });
     }
 
-    // Check if token has expired
-    if (new Date() > resetRecord.expires) {
-      // Clean up the expired token
-      await prisma.passwordResetToken.delete({
-        where: { id: resetRecord.id },
-      });
-      return new NextResponse("Token has expired", { status: 400 });
+    if (new Date() > otpRecord.expiresAt) {
+      await prisma.otpToken.delete({ where: { id: otpRecord.id } });
+      return new NextResponse("OTP has expired", { status: 400 });
     }
 
     // Hash the new password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Find the user by email or phone
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: identifier },
+          { phone: identifier }
+        ]
+      }
+    });
+
+    if (!user) {
+      return new NextResponse("User not found", { status: 404 });
+    }
+
     // Update the user's password
     await prisma.user.update({
-      where: { email: resetRecord.email },
+      where: { id: user.id },
       data: { password: hashedPassword },
     });
 
-    // Delete the token so it cannot be used again
-    await prisma.passwordResetToken.delete({
-      where: { id: resetRecord.id },
-    });
+    // Delete the OTP since it has been successfully used
+    await prisma.otpToken.delete({ where: { id: otpRecord.id } });
 
     return NextResponse.json({ message: "Password updated successfully" });
   } catch (error: any) {

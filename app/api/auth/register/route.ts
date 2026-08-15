@@ -1,15 +1,33 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { Role } from "@prisma/client";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, email, phone, password, role } = body;
+    const { name, email, phone, role, otp } = body;
 
-    if (!name || !email || !phone || !password) {
-      return new NextResponse("Missing fields", { status: 400 });
+    if (!name || !email || !phone || !otp) {
+      return new NextResponse("Missing fields. OTP is required.", { status: 400 });
+    }
+
+    // 1. Verify OTP
+    const otpRecord = await prisma.otpToken.findUnique({
+      where: {
+        identifier_code: {
+          identifier: email,
+          code: otp,
+        },
+      },
+    });
+
+    if (!otpRecord) {
+      return new NextResponse("Invalid or expired OTP", { status: 400 });
+    }
+
+    if (new Date() > otpRecord.expiresAt) {
+      await prisma.otpToken.delete({ where: { id: otpRecord.id } });
+      return new NextResponse("OTP has expired", { status: 400 });
     }
 
     // Validate email format basic
@@ -36,8 +54,6 @@ export async function POST(req: Request) {
       return new NextResponse("Account with this email or phone already exists", { status: 400 });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    
     // Parse role safely: only CUSTOMER or VENDOR can be registered publicly
     let userRole: Role = Role.CUSTOMER;
     if (role === "VENDOR") {
@@ -49,7 +65,6 @@ export async function POST(req: Request) {
         name,
         email,
         phone,
-        password: hashedPassword,
         role: userRole,
       },
     });
@@ -63,6 +78,9 @@ export async function POST(req: Request) {
         }
       });
     }
+
+    // 4. Delete the used OTP token
+    await prisma.otpToken.delete({ where: { id: otpRecord.id } });
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;

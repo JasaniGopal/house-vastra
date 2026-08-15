@@ -8,15 +8,12 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState("CUSTOMER");
   const [agree, setAgree] = useState(false);
-  const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
-
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "otp">("idle");
+  const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!agree) return;
     const phoneRegex = /^\d{10}$/;
@@ -32,6 +29,38 @@ export default function RegisterPage() {
       return;
     }
 
+    setStatus("loading");
+    setError("");
+
+    try {
+      const res = await fetch("/api/auth/otp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier: email, phone: phone, type: "register" }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to send OTP");
+      }
+
+      setStatus("otp");
+    } catch (err: any) {
+      setStatus("idle");
+      setError(err.message || "Failed to send OTP. Please try again.");
+    }
+  };
+
+  const handleVerifyOtpAndRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otp.length !== 6) {
+      setError("OTP must be 6 digits.");
+      return;
+    }
+    
+    setStatus("loading");
+    setError("");
+
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
@@ -40,8 +69,8 @@ export default function RegisterPage() {
           name,
           email,
           phone,
-          password,
-          role: role,
+          role: "CUSTOMER",
+          otp,
         }),
       });
 
@@ -52,7 +81,7 @@ export default function RegisterPage() {
 
       setStatus("success");
     } catch (err: any) {
-      setStatus("idle");
+      setStatus("otp");
       setError(err.message || "An error occurred during registration");
     }
   };
@@ -98,38 +127,40 @@ export default function RegisterPage() {
               Log In to Account
             </Link>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Account Type Selection */}
+        ) : status === "otp" || (status === "loading" && otp) ? (
+          <form onSubmit={handleVerifyOtpAndRegister} className="space-y-5">
             <div className="mb-4">
-              <label className="text-xs md:text-sm font-semibold text-[#001410] mb-2 block">
-                I am registering as a:
+              <label className="text-xs md:text-sm font-semibold text-[#001410] mb-1.5 block">
+                Enter 6-Digit OTP
               </label>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="CUSTOMER"
-                    checked={role === "CUSTOMER"}
-                    onChange={(e) => setRole(e.target.value)}
-                    className="accent-[#001410] w-4 h-4 cursor-pointer"
-                  />
-                  <span className="text-sm font-medium text-[#414846]">Customer</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="VENDOR"
-                    checked={role === "VENDOR"}
-                    onChange={(e) => setRole(e.target.value)}
-                    className="accent-[#001410] w-4 h-4 cursor-pointer"
-                  />
-                  <span className="text-sm font-medium text-[#414846]">Vendor (Boutique)</span>
-                </label>
-              </div>
+              <p className="text-xs text-zinc-500 mb-3">We sent a verification code to <span className="font-bold">{email}</span> and WhatsApp on <span className="font-bold">+91 {phone}</span></p>
+              <input
+                type="text"
+                placeholder="123456"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                className="w-full bg-white border border-zinc-200 rounded-md px-4 py-3 font-sans text-2xl tracking-widest text-center focus:outline-none focus:border-[#775a19] focus:ring-1 focus:ring-[#775a19] transition-all"
+                required
+              />
             </div>
+            <button
+              type="submit"
+              disabled={status === "loading" || otp.length !== 6}
+              className="w-full bg-[#001410] text-white py-3.5 rounded-md font-sans font-semibold text-sm hover:bg-[#00261f] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              <span>{status === "loading" ? "Verifying..." : "Verify & Create Account"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setStatus("idle"); setOtp(""); }}
+              className="w-full text-[#775a19] text-sm font-bold mt-2 hover:underline"
+            >
+              Go Back
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleRequestOtp} className="space-y-5">
+
 
             {/* Full Name */}
             <div>
@@ -180,41 +211,6 @@ export default function RegisterPage() {
               />
             </div>
 
-            {/* Password */}
-            <div>
-              <label className="text-xs md:text-sm font-semibold text-[#001410] mb-1.5 block">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-white border border-zinc-200 rounded-md pl-4 pr-12 py-3 font-sans text-sm focus:outline-none focus:border-[#775a19] focus:ring-1 focus:ring-[#775a19] placeholder:text-zinc-400 transition-all"
-                  required
-                />
-                
-                {/* Eye Icon Button */}
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-zinc-400 hover:text-zinc-600 cursor-pointer"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? (
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L17.772 17.772m0 0a3 3 0 11-4.243-4.243m4.242 4.242L9.88 9.88" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-            </div>
 
             {/* Checkbox agreement */}
             <div className="flex items-start">
@@ -249,7 +245,7 @@ export default function RegisterPage() {
               disabled={status === "loading"}
               className="w-full bg-[#001410] text-white py-3.5 rounded-md font-sans font-semibold text-sm hover:bg-[#00261f] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
-              <span>{status === "loading" ? "Creating Account..." : "Create Account"}</span>
+              <span>{status === "loading" ? "Sending Code..." : "Verify Email & Register"}</span>
               {status !== "loading" && (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
                   <line x1="5" y1="12" x2="19" y2="12" />

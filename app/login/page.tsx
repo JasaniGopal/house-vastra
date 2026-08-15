@@ -1,44 +1,82 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
   const [emailOrPhone, setEmailOrPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "otp_sent" | "verifying_otp">("idle");
+  const [otp, setOtp] = useState("");
+  const [resendTimer, setResendTimer] = useState(0);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if ((status === "otp_sent" || status === "verifying_otp") && resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [status, resendTimer]);
 
   const [error, setError] = useState("");
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStatus("loading");
-    setError("");
-
     const isEmail = emailOrPhone.includes("@");
     if (!isEmail) {
       const phoneRegex = /^\d{10}$/;
       if (!phoneRegex.test(emailOrPhone)) {
-        setStatus("idle");
         setError("Please enter a valid email or a 10-digit mobile number.");
         return;
       }
     }
 
-    const result = await signIn("credentials", {
-      emailOrPhone,
-      password,
+    setStatus("loading");
+    setError("");
+
+    try {
+      const res = await fetch("/api/auth/otp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier: emailOrPhone }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to send OTP");
+      }
+
+      setStatus("otp_sent");
+      setResendTimer(120); // 2 minutes
+    } catch (err: any) {
+      setStatus("idle");
+      setError(err.message || "Failed to send OTP. Please try again.");
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otp.length !== 6) {
+      setError("OTP must be 6 digits.");
+      return;
+    }
+    
+    setStatus("verifying_otp");
+    setError("");
+
+    const result = await signIn("otp", {
+      identifier: emailOrPhone,
+      otp,
       redirect: false,
     });
 
     if (result?.error) {
-      setStatus("idle");
-      setError("Invalid email or password.");
+      setStatus("otp_sent");
+      setError("Invalid or expired OTP.");
     } else {
       setStatus("success");
       const urlParams = new URLSearchParams(window.location.search);
@@ -47,6 +85,7 @@ export default function LoginPage() {
       router.refresh();
     }
   };
+
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-[#fcf9f8] text-[#1c1b1b] font-sans">
@@ -89,8 +128,54 @@ export default function LoginPage() {
               Go to Homepage
             </Link>
           </div>
+        ) : (status === "otp_sent" || status === "verifying_otp") ? (
+          <form onSubmit={handleVerifyOtp} className="space-y-5">
+            <div className="mb-4">
+              <label className="text-xs md:text-sm font-semibold text-[#001410] mb-1.5 block">
+                Enter 6-Digit OTP
+              </label>
+              <p className="text-xs text-zinc-500 mb-3">We sent a secure code to <span className="font-bold">{emailOrPhone}</span></p>
+              <input
+                type="text"
+                placeholder="123456"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                className="w-full bg-white border border-zinc-200 rounded-md px-4 py-3 font-sans text-2xl tracking-widest text-center focus:outline-none focus:border-[#775a19] focus:ring-1 focus:ring-[#775a19] transition-all"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={status === "verifying_otp" || otp.length !== 6}
+              className="w-full bg-[#001410] text-white py-3.5 rounded-md font-sans font-semibold text-sm hover:bg-[#00261f] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              <span>{status === "verifying_otp" ? "Verifying..." : "Verify & Login"}</span>
+            </button>
+            <div className="flex flex-col gap-3 mt-4 text-center">
+              {resendTimer > 0 ? (
+                <p className="text-xs font-semibold text-zinc-500">
+                  Resend code in <span className="font-bold text-[#001410]">{Math.floor(resendTimer / 60)}:{(resendTimer % 60).toString().padStart(2, '0')}</span>
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleRequestOtp}
+                  className="text-xs font-bold text-[#775a19] hover:underline"
+                >
+                  Didn't receive a code? Resend OTP
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => { setStatus("idle"); setOtp(""); setResendTimer(0); }}
+                className="w-full text-[#775a19] text-sm font-bold hover:underline"
+              >
+                Go Back
+              </button>
+            </div>
+          </form>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleRequestOtp} className="space-y-5">
             {/* Email Address or Phone */}
             <div>
               <label className="text-xs md:text-sm font-semibold text-[#001410] mb-1.5 block">
@@ -106,59 +191,6 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Password */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs md:text-sm font-semibold text-[#001410] block">
-                  Password
-                </label>
-                <Link href="/forgot-password" className="text-xs font-semibold text-[#775a19] hover:underline">
-                  Forgot your password?
-                </Link>
-              </div>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-white border border-zinc-200 rounded-md px-4 py-3 font-sans text-sm focus:outline-none focus:border-[#775a19] focus:ring-1 focus:ring-[#775a19] placeholder:text-zinc-400 transition-all"
-                  required
-                />
-                
-                {/* Eye Icon Button */}
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-[#001410] transition-colors p-1"
-                >
-                  {showPassword ? (
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                    </svg>
-                  ) : (
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Remember me checkbox */}
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4.5 w-4.5 rounded border-zinc-300 text-[#001410] focus:ring-[#775a19] cursor-pointer"
-              />
-              <label htmlFor="remember-me" className="ml-3 text-xs md:text-sm font-sans text-zinc-500 cursor-pointer">
-                Remember me
-              </label>
-            </div>
 
             {/* Submit Button */}
             <button
@@ -166,7 +198,11 @@ export default function LoginPage() {
               disabled={status === "loading"}
               className="w-full bg-[#001410] text-white py-3.5 rounded-md font-sans font-semibold text-sm hover:bg-[#00261f] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
-              <span>{status === "loading" ? "Logging In..." : "Log In"}</span>
+              <span>
+                {status === "loading" 
+                  ? "Sending Code..." 
+                  : "Send Login Code"}
+              </span>
               {status !== "loading" && (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
                   <line x1="5" y1="12" x2="19" y2="12" />
@@ -177,37 +213,41 @@ export default function LoginPage() {
           </form>
         )}
 
-        {/* Separator */}
-        <div className="relative flex py-6 items-center">
-          <div className="flex-grow border-t border-zinc-200"></div>
-          <span className="flex-shrink mx-4 text-[10px] font-sans font-bold text-zinc-400 tracking-wider">
-            OR CONTINUE WITH
-          </span>
-          <div className="flex-grow border-t border-zinc-200"></div>
-        </div>
+        {status !== "otp_sent" && status !== "verifying_otp" && status !== "success" && (
+          <>
+            {/* Separator */}
+            <div className="relative flex py-6 items-center">
+              <div className="flex-grow border-t border-zinc-200"></div>
+              <span className="flex-shrink mx-4 text-[10px] font-sans font-bold text-zinc-400 tracking-wider">
+                OR CONTINUE WITH
+              </span>
+              <div className="flex-grow border-t border-zinc-200"></div>
+            </div>
 
-        {/* Google OAuth button */}
-        <button
-          type="button"
-          onClick={() => signIn("google", { callbackUrl: '/' })}
-          className="w-full border border-zinc-200 bg-white rounded-md py-3 font-sans font-semibold text-sm flex items-center justify-center gap-3 hover:bg-zinc-50 active:scale-[0.99] transition-all cursor-pointer shadow-sm text-zinc-700"
-        >
-          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.85z" fill="#FBBC05"/>
-            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.85c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-          </svg>
-          <span>Google</span>
-        </button>
+            {/* Google OAuth button */}
+            <button
+              type="button"
+              onClick={() => signIn("google", { callbackUrl: '/' })}
+              className="w-full border border-zinc-200 bg-white rounded-md py-3 font-sans font-semibold text-sm flex items-center justify-center gap-3 hover:bg-zinc-50 active:scale-[0.99] transition-all cursor-pointer shadow-sm text-zinc-700"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.85z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.85c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+              </svg>
+              <span>Google</span>
+            </button>
 
-        {/* Redirect toggle Link */}
-        <p className="mt-8 text-center text-xs md:text-sm font-sans text-zinc-500">
-          Already have an account?{" "}
-          <Link href="/register" className="font-bold text-[#001410] hover:text-[#775a19] transition-colors">
-            Sign Up
-          </Link>
-        </p>
+            {/* Redirect toggle Link */}
+            <p className="mt-8 text-center text-xs md:text-sm font-sans text-zinc-500">
+              Don't have an account?{" "}
+              <Link href="/register" className="font-bold text-[#001410] hover:text-[#775a19] transition-colors">
+                Sign Up
+              </Link>
+            </p>
+          </>
+        )}
 
       </div>
 
