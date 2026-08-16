@@ -27,6 +27,9 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         identifier: { label: "Email or Phone", type: "text" },
         otp: { label: "OTP", type: "text" },
+        name: { type: "text" },
+        phone: { type: "text" },
+        action: { type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.identifier || !credentials?.otp) {
@@ -52,8 +55,10 @@ export const authOptions: NextAuthOptions = {
           throw new Error("OTP has expired");
         }
 
+        const action = credentials.action || "login";
+
         // 2. Find the user
-        const user = await prisma.user.findFirst({
+        let user = await prisma.user.findFirst({
           where: {
             OR: [
               { email: credentials.identifier },
@@ -62,8 +67,27 @@ export const authOptions: NextAuthOptions = {
           },
         });
 
-        if (!user) {
-          throw new Error("No account found with this identifier");
+        if (action === "register") {
+          if (user) {
+            throw new Error("Account with this email or phone already exists");
+          }
+          if (credentials.phone && credentials.phone !== credentials.identifier) {
+            const phoneUser = await prisma.user.findUnique({ where: { phone: credentials.phone } });
+            if (phoneUser) throw new Error("Phone number is already registered");
+          }
+
+          user = await prisma.user.create({
+            data: {
+              name: credentials.name || "User",
+              email: credentials.identifier.includes("@") ? credentials.identifier : "",
+              phone: credentials.phone || credentials.identifier,
+              role: "CUSTOMER",
+            }
+          });
+        } else {
+          if (!user) {
+            throw new Error("No account found with this identifier");
+          }
         }
 
         // 3. Delete the OTP since it has been successfully used
