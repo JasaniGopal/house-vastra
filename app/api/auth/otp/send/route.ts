@@ -85,8 +85,9 @@ export async function POST(req: Request) {
         `,
       });
       
-      if (phone && type === "register") {
-        await sendWhatsAppMessage(phone, otpCode);
+      const targetPhone = phone || user?.phone;
+      if (targetPhone) {
+        await sendWhatsAppMessage(targetPhone, otpCode);
       }
     } else {
       // Send via Meta WhatsApp Cloud API
