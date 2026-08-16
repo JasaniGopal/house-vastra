@@ -86,11 +86,11 @@ export async function POST(req: Request) {
       });
       
       if (phone && type === "register") {
-        await send2Factor(phone, otpCode);
+        await sendWhatsAppMessage(phone, otpCode);
       }
     } else {
-      // Send via 2Factor.in
-      await send2Factor(identifier, otpCode);
+      // Send via Meta WhatsApp Cloud API
+      await sendWhatsAppMessage(identifier, otpCode);
     }
 
     return NextResponse.json({ success: true, message: "OTP sent successfully" });
@@ -100,25 +100,55 @@ export async function POST(req: Request) {
   }
 }
 
-async function send2Factor(phone: string, otpCode: string) {
-  const API_KEY = process.env.TWO_FACTOR_API_KEY;
+async function sendWhatsAppMessage(phone: string, otpCode: string) {
+  const WHATSAPP_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
+  const WHATSAPP_PHONE_ID = process.env.WHATSAPP_PHONE_ID;
+  const TEMPLATE_NAME = process.env.WHATSAPP_TEMPLATE_NAME || 'auth_login_code';
   
-  if (!API_KEY) {
-    // For testing when env vars aren't set yet
+  if (!WHATSAPP_TOKEN || !WHATSAPP_PHONE_ID) {
     console.log(`\n========================================`);
-    console.log(`[Mock 2Factor OTP] To: ${phone}`);
-    console.log(`[Mock 2Factor OTP] Code: ${otpCode}`);
+    console.log(`[Mock WhatsApp OTP] To: ${phone}`);
+    console.log(`[Mock WhatsApp OTP] Code: ${otpCode}`);
     console.log(`========================================\n`);
     return;
   }
   
-  const response = await fetch(`https://2factor.in/API/V1/${API_KEY}/SMS/${phone}/${otpCode}`, {
-    method: "GET"
+  const response = await fetch(`https://graph.facebook.com/v17.0/${WHATSAPP_PHONE_ID}/messages`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${WHATSAPP_TOKEN}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      to: `91${phone}`, // Assumes 10-digit Indian numbers
+      type: "template",
+      template: {
+        name: TEMPLATE_NAME,
+        language: { code: "en" },
+        components: [
+          {
+            type: "body",
+            parameters: [
+              { type: "text", text: otpCode }
+            ]
+          },
+          {
+            type: "button",
+            sub_type: "url",
+            index: "0",
+            parameters: [
+              { type: "text", text: otpCode }
+            ]
+          }
+        ]
+      }
+    })
   });
 
   if (!response.ok) {
     const errorData = await response.json();
-    console.error("2Factor API Error:", errorData);
-    throw new Error("Failed to send 2Factor OTP");
+    console.error("WhatsApp API Error:", errorData);
+    throw new Error("Failed to send WhatsApp OTP");
   }
 }

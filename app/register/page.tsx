@@ -130,7 +130,7 @@ export default function RegisterPage() {
               <label className="text-xs md:text-sm font-semibold text-[#001410] mb-1.5 block">
                 Enter 6-Digit OTP
               </label>
-              <p className="text-xs text-zinc-500 mb-3">We sent a verification code to <span className="font-bold">{email}</span> and SMS on <span className="font-bold">+91 {phone}</span></p>
+              <p className="text-xs text-zinc-500 mb-3">We sent a verification code to <span className="font-bold">{email}</span> and WhatsApp on <span className="font-bold">+91 {phone}</span></p>
               <input
                 type="text"
                 placeholder="123456"
