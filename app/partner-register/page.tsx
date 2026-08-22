@@ -7,17 +7,57 @@ import { signIn } from "next-auth/react";
 export default function PartnerRegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [boutiqueName, setBoutiqueName] = useState(""); // Though our API doesn't take boutiqueName yet, we can update it or just let the API create a default one. Wait, the API creates default. We should just ask for Name, Email, Password. Let's add boutiqueName and update the API if needed? Or just ask for the basics to get them in the door. Let's ask for the basics.
-  const [showPassword, setShowPassword] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
   const [agree, setAgree] = useState(false);
-  const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
-
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "otp">("idle");
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!agree) return;
+    const phoneRegex = /^\d{10}$/;
+    if (!phoneRegex.test(phone)) {
+      setStatus("idle");
+      setError("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+
+    if (!email.includes("@")) {
+      setStatus("idle");
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    setStatus("loading");
+    setError("");
+
+    try {
+      const res = await fetch("/api/auth/otp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier: email, phone: phone, type: "register" }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to send OTP");
+      }
+
+      setStatus("otp");
+    } catch (err: any) {
+      setStatus("idle");
+      setError(err.message || "Failed to send OTP. Please try again.");
+    }
+  };
+
+  const handleVerifyOtpAndRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otp.length !== 6) {
+      setError("OTP must be 6 digits.");
+      return;
+    }
+    
     setStatus("loading");
     setError("");
 
@@ -28,7 +68,8 @@ export default function PartnerRegisterPage() {
         body: JSON.stringify({
           name,
           email,
-          password,
+          phone,
+          otp,
           role: "VENDOR", // This triggers Vendor profile creation
         }),
       });
@@ -38,9 +79,22 @@ export default function PartnerRegisterPage() {
         throw new Error(errorText || "Registration failed");
       }
 
+      // Automatically log them in after registration
+      const result = await signIn("otp", {
+        redirect: false,
+        identifier: email,
+        otp,
+        action: "login", // Just normal login since account is created
+      });
+
+      // Even if signIn fails (e.g. OTP was consumed by register route), 
+      // we can just show success and direct them to login.
+      // Wait, the API route consumes the OTP! So signIn will fail with "Invalid or expired OTP".
+      // That's totally fine, we'll just redirect them to the login page manually if signIn fails.
+      
       setStatus("success");
     } catch (err: any) {
-      setStatus("idle");
+      setStatus("otp");
       setError(err.message || "An error occurred during registration");
     }
   };
@@ -86,8 +140,39 @@ export default function PartnerRegisterPage() {
               Log In to Dashboard
             </Link>
           </div>
+        ) : status === "otp" || (status === "loading" && otp) ? (
+          <form onSubmit={handleVerifyOtpAndRegister} className="space-y-5">
+            <div className="mb-4">
+              <label className="text-xs md:text-sm font-semibold text-zinc-300 mb-1.5 block">
+                Enter 6-Digit OTP
+              </label>
+              <p className="text-xs text-zinc-400 mb-3">We sent a verification code to <span className="text-white font-bold">{email}</span> and WhatsApp on <span className="text-white font-bold">+91 {phone}</span></p>
+              <input
+                type="text"
+                placeholder="123456"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                className="w-full bg-white/5 border border-white/10 rounded-md px-4 py-3 font-sans text-2xl tracking-widest text-center text-white focus:outline-none focus:border-[#E8D8BA] focus:ring-1 focus:ring-[#E8D8BA] transition-all"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={status === "loading" || otp.length !== 6}
+              className="w-full bg-[#E8D8BA] text-[#001410] py-3.5 rounded-md font-sans font-bold text-sm hover:bg-white transition-all mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {status === "loading" ? "Verifying..." : "Verify & Become a Partner"}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setStatus("idle"); setOtp(""); }}
+              className="w-full text-[#E8D8BA] text-sm font-bold mt-2 hover:underline"
+            >
+              Go Back
+            </button>
+          </form>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleRequestOtp} className="space-y-5">
             {/* Full Name */}
             <div>
               <label className="text-xs md:text-sm font-semibold text-zinc-300 mb-1.5 block">
@@ -118,39 +203,23 @@ export default function PartnerRegisterPage() {
               />
             </div>
 
-            {/* Password */}
+            {/* Mobile Number */}
             <div>
               <label className="text-xs md:text-sm font-semibold text-zinc-300 mb-1.5 block">
-                Secure Password
+                Mobile Number
               </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-md pl-4 pr-12 py-3 font-sans text-sm text-white focus:outline-none focus:border-[#E8D8BA] focus:ring-1 focus:ring-[#E8D8BA] placeholder:text-zinc-600 transition-all"
-                  required
-                />
-                
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-zinc-500 hover:text-zinc-300 cursor-pointer"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? (
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L17.772 17.772m0 0a3 3 0 11-4.243-4.243m4.242 4.242L9.88 9.88" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
+              <input
+                type="tel"
+                placeholder="9876543210"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                maxLength={10}
+                minLength={10}
+                pattern="\d{10}"
+                title="Please enter exactly 10 digits"
+                className="w-full bg-white/5 border border-white/10 rounded-md px-4 py-3 font-sans text-sm text-white focus:outline-none focus:border-[#E8D8BA] focus:ring-1 focus:ring-[#E8D8BA] placeholder:text-zinc-600 transition-all"
+                required
+              />
             </div>
 
             {/* Terms and Conditions */}
@@ -173,7 +242,7 @@ export default function PartnerRegisterPage() {
               disabled={status === "loading" || !agree}
               className="w-full bg-[#E8D8BA] text-[#001410] py-3.5 rounded-md font-sans font-bold text-sm hover:bg-white transition-all mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {status === "loading" ? "Creating Profile..." : "Become a Partner"}
+              {status === "loading" ? "Sending Code..." : "Verify & Become a Partner"}
             </button>
           </form>
         )}

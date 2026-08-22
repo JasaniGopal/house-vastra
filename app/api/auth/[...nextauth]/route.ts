@@ -88,6 +88,9 @@ export const authOptions: NextAuthOptions = {
           if (!user) {
             throw new Error("No account found with this identifier");
           }
+          if (action === "vendor_login" && user.role !== "VENDOR" && user.role !== "ADMIN") {
+            throw new Error("This account does not have Vendor privileges.");
+          }
         }
 
         // 3. Delete the OTP since it has been successfully used
