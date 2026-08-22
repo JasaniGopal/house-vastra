@@ -59,7 +59,7 @@ export async function POST(req: Request) {
     const product = await prisma.product.create({
       data: {
         vendorId: vendor.id,
-        category: { connect: { id: categoryId } },
+        categoryId: categoryId,
         gender: gender || "WOMEN",
         name,
         description,
