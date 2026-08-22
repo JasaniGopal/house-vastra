@@ -6,7 +6,10 @@ import crypto from "crypto";
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION || "ap-south-1",
-  // Credentials are automatically picked up from AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
+  }
 });
 
 export async function POST(req: Request) {
@@ -52,7 +55,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("S3 Upload Error:", error);
     return NextResponse.json(
-      { error: "Failed to process the upload to AWS S3." },
+      { error: `Failed to process the upload to AWS S3. Details: ${error.message}` },
       { status: 500 }
     );
   }
