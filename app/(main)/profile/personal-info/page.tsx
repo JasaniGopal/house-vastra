@@ -10,6 +10,12 @@ export default function PersonalInfoPage() {
   const firstName = fullName.split(' ')[0] || '';
   const lastName = fullName.split(' ').slice(1).join(' ') || '';
   const email = session?.user?.email || '';
+  
+  let phone = session?.user?.phone || '';
+  if (phone.startsWith('+91')) {
+    phone = phone.slice(3).trim();
+  }
+  
   return (
     <main className="min-h-screen bg-[#fcf9f8] font-sans pb-24">
       <div className="max-w-[600px] mx-auto px-4 md:px-8 pt-8 md:pt-12">
@@ -69,7 +75,7 @@ export default function PersonalInfoPage() {
                 </div>
                 <input 
                   type="tel" 
-                  defaultValue=""
+                  defaultValue={phone}
                   className="flex-1 bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 text-sm font-medium text-[#001410] focus:outline-none focus:border-[#775a19] focus:bg-white transition-colors"
                 />
               </div>

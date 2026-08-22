@@ -16,15 +16,18 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   const [error, setError] = useState("");
   
   // Advanced Image Management State
-  const [existingImages, setExistingImages] = useState<any[]>([]);
-  const [deletedImageIds, setDeletedImageIds] = useState<string[]>([]);
-  const [newSelectedFiles, setNewSelectedFiles] = useState<File[]>([]);
-  const [newPreviewUrls, setNewPreviewUrls] = useState<string[]>([]);
+  interface GalleryItem {
+    id?: string;
+    url: string;
+    file?: File;
+  }
+  const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [uploadProgress, setUploadProgress] = useState("");
 
   const [formData, setFormData] = useState({
     name: "",
     categoryId: "",
+    gender: "WOMEN",
     description: "",
     retailValue: "",
     vendorExpectedRent: "",
@@ -54,6 +57,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         setFormData({
           name: product.name,
           categoryId: product.categoryId,
+          gender: product.gender || "WOMEN",
           description: product.description,
           retailValue: product.retailValue.toString(),
           vendorExpectedRent: product.vendorExpectedRent.toString(),
@@ -63,7 +67,19 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           rejectionReason: product.rejectionReason,
         });
         
-        setExistingImages(product.images || []);
+        
+        // Sort by sequence if available
+        const sortedImages = [...(product.images || [])].sort((a: any, b: any) => {
+          if (a.sequence !== undefined && b.sequence !== undefined) return a.sequence - b.sequence;
+          if (a.isPrimary) return -1;
+          if (b.isPrimary) return 1;
+          return 0;
+        });
+
+        setGallery(sortedImages.map((img: any) => ({
+          id: img.id,
+          url: img.url
+        })));
         
       } catch (err: any) {
         setError(err.message);
@@ -80,27 +96,26 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     setError("");
 
     try {
-      let uploadedUrls: string[] = [];
+      let orderedImageUrls: string[] = [];
 
-      // 1. Upload any brand new images first
-      if (newSelectedFiles.length > 0) {
-        setUploadProgress(`Uploading 0 of ${newSelectedFiles.length} new files...`);
-        for (let i = 0; i < newSelectedFiles.length; i++) {
-          setUploadProgress(`Uploading ${i + 1} of ${newSelectedFiles.length} files...`);
+      for (let i = 0; i < gallery.length; i++) {
+        const item = gallery[i];
+        if (item.file) {
+          setUploadProgress(`Uploading new image...`);
           const fileData = new FormData();
-          fileData.append("file", newSelectedFiles[i]);
+          fileData.append("file", item.file);
 
           const uploadRes = await fetch("/api/upload", {
             method: "POST",
             body: fileData
           });
 
-          if (!uploadRes.ok) {
-            throw new Error(`Failed to upload image ${i + 1}`);
-          }
-
+          if (!uploadRes.ok) throw new Error(`Failed to upload new image`);
+          
           const uploadJson = await uploadRes.json();
-          uploadedUrls.push(uploadJson.url);
+          orderedImageUrls.push(uploadJson.url);
+        } else {
+          orderedImageUrls.push(item.url);
         }
       }
 
@@ -112,8 +127,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          deletedImageIds,
-          newImageUrls: uploadedUrls
+          orderedImageUrls
         })
       });
 
@@ -146,6 +160,23 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   };
 
   if (loading) return <div className="p-8 text-zinc-500 font-medium">Loading outfit details...</div>;
+
+  const moveImage = (index: number, direction: 'left' | 'right') => {
+    if (direction === 'left' && index === 0) return;
+    if (direction === 'right' && index === gallery.length - 1) return;
+    const newIndex = direction === 'left' ? index - 1 : index + 1;
+    const newGallery = [...gallery];
+    const temp = newGallery[index];
+    newGallery[index] = newGallery[newIndex];
+    newGallery[newIndex] = temp;
+    setGallery(newGallery);
+  };
+
+  const removeImage = (index: number) => {
+    const newGallery = [...gallery];
+    newGallery.splice(index, 1);
+    setGallery(newGallery);
+  };
 
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto">
@@ -210,6 +241,13 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
               </select>
             </div>
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#001410] mb-2 block">Gender</label>
+              <select value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value})} className="w-full border border-zinc-300 px-4 py-3 text-sm focus:outline-none focus:border-[#001410]" required>
+                <option value="WOMEN">Women</option>
+                <option value="MEN">Men</option>
+              </select>
+            </div>
           </div>
 
           <div>
@@ -240,40 +278,46 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           <div>
              <label className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#001410] mb-4 block border-t border-zinc-100 pt-6">Image Gallery</label>
              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                {/* Existing Images */}
-                {existingImages.filter(img => !deletedImageIds.includes(img.id)).map((img) => (
-                  <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden border border-zinc-200 bg-zinc-100 group">
-                    <img src={img.url} className="w-full h-full object-cover" />
+                {/* Unified Gallery */}
+                {gallery.map((item, index) => (
+                  <div key={item.id || `new-${index}`} className={`relative aspect-square rounded-lg overflow-hidden border-2 bg-zinc-100 group ${item.file ? 'border-[#001410]' : 'border-zinc-200'}`}>
+                    {item.file && (
+                      <div className="absolute top-0 left-0 bg-[#001410] text-white text-[9px] font-bold px-2 py-1 rounded-br-lg z-10">NEW</div>
+                    )}
+                    {index === 0 && !item.file && (
+                      <div className="absolute top-2 left-2 bg-[#A8813C] text-white text-[9px] font-bold px-2 py-1 rounded-full uppercase tracking-wider shadow-sm z-10">Cover Image</div>
+                    )}
+                    {index === 0 && item.file && (
+                      <div className="absolute top-2 right-2 bg-[#A8813C] text-white text-[9px] font-bold px-2 py-1 rounded-full uppercase tracking-wider shadow-sm z-10">Cover Image</div>
+                    )}
+                    <img src={item.url} className="w-full h-full object-cover" />
+                    
                     <button 
                       type="button"
-                      onClick={() => setDeletedImageIds([...deletedImageIds, img.id])}
-                      className="absolute top-2 right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center text-rose-500 shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-50"
+                      onClick={() => removeImage(index)}
+                      className="absolute top-2 right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center text-rose-500 shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-50 z-20"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
-                  </div>
-                ))}
-                
-                {/* New Image Previews */}
-                {newPreviewUrls.map((url, index) => (
-                  <div key={`new-${index}`} className="relative aspect-square rounded-lg overflow-hidden border-2 border-[#001410] bg-zinc-100 group">
-                    <div className="absolute top-0 left-0 bg-[#001410] text-white text-[9px] font-bold px-2 py-1 rounded-br-lg z-10">NEW</div>
-                    <img src={url} className="w-full h-full object-cover" />
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        const newFiles = [...newSelectedFiles];
-                        newFiles.splice(index, 1);
-                        setNewSelectedFiles(newFiles);
-                        
-                        const newUrls = [...newPreviewUrls];
-                        newUrls.splice(index, 1);
-                        setNewPreviewUrls(newUrls);
-                      }}
-                      className="absolute top-2 right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center text-rose-500 shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-50 z-10"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
+
+                    <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                      <button 
+                        type="button"
+                        onClick={() => moveImage(index, 'left')}
+                        disabled={index === 0}
+                        className="bg-white/90 backdrop-blur text-[#001410] p-1.5 rounded-full shadow-sm hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => moveImage(index, 'right')}
+                        disabled={index === gallery.length - 1}
+                        className="bg-white/90 backdrop-blur text-[#001410] p-1.5 rounded-full shadow-sm hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                      </button>
+                    </div>
                   </div>
                 ))}
              </div>
@@ -287,10 +331,11 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                   onChange={(e) => {
                     if (e.target.files) {
                       const filesArray = Array.from(e.target.files);
-                      setNewSelectedFiles([...newSelectedFiles, ...filesArray]);
-                      
-                      const urls = filesArray.map(file => URL.createObjectURL(file));
-                      setNewPreviewUrls([...newPreviewUrls, ...urls]);
+                      const newItems = filesArray.map(file => ({
+                        url: URL.createObjectURL(file),
+                        file
+                      }));
+                      setGallery([...gallery, ...newItems]);
                     }
                   }}
                   className="block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#001410] file:text-white hover:file:bg-[#00261f] cursor-pointer"

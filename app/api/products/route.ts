@@ -10,7 +10,7 @@ export async function GET(req: Request) {
     const trending = searchParams.get("trending") === "true";
     let search = searchParams.get("q")?.toLowerCase();
     const sort = searchParams.get("sort"); // "newest", "price_asc", "price_desc"
-    const maxPrice = searchParams.get("maxPrice");
+    const gender = searchParams.get("gender");
     const size = searchParams.get("size");
 
     let whereClause: any = {
@@ -109,8 +109,8 @@ export async function GET(req: Request) {
       search = search.replace(/([a-z])\1{2,}/gi, '$1$1');
     }
 
-    if (maxPrice) {
-      whereClause.rentalPrice4Day = { lte: parseFloat(maxPrice) };
+    if (gender) {
+      whereClause.gender = gender.toUpperCase();
     }
 
     if (size) {
@@ -136,7 +136,9 @@ export async function GET(req: Request) {
     const products = await prisma.product.findMany({
       where: whereClause,
       include: {
-        images: true,
+        images: {
+          orderBy: { sequence: "asc" }
+        },
         category: true,
         productOccasions: { include: { occasion: true } },
         vendor: {

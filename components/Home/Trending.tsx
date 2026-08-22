@@ -9,7 +9,9 @@ export default function Trending() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { wishlistItems, toggleWishlist: contextToggleWishlist } = useWishlist();
   const [products, setProducts] = useState<any[]>([]);
+  const [originalCount, setOriginalCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const hasInitialized = useRef(false);
 
   React.useEffect(() => {
     const fetchProducts = async () => {
@@ -26,7 +28,15 @@ export default function Trending() {
             link: `/product/${p.id}`,
             alt: p.name,
           }));
-          setProducts(mapped);
+          
+          setOriginalCount(mapped.length);
+          if (mapped.length > 0) {
+            // Create 50 copies to allow infinite scrolling in both directions for a very long time
+            const giantArray = Array(50).fill(mapped).flat();
+            setProducts(giantArray);
+          } else {
+            setProducts([]);
+          }
         }
       } catch (err) {
         console.error("Failed to fetch trending products", err);
@@ -36,6 +46,40 @@ export default function Trending() {
     };
     fetchProducts();
   }, []);
+
+  // Auto-scroll logic
+  React.useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (products.length > 0 && !loading && originalCount > 0) {
+      
+      // Initialize scroll position to the exact middle of our 50 copies (copy #25)
+      // This allows the user to manually scroll deeply in either direction
+      if (!hasInitialized.current && scrollRef.current && scrollRef.current.children.length > 0) {
+        const firstChild = scrollRef.current.children[0] as HTMLElement;
+        const itemWidth = firstChild.offsetWidth + 24; // width + gap
+        const middlePosition = itemWidth * originalCount * 25;
+        scrollRef.current.scrollTo({ left: middlePosition, behavior: 'auto' });
+        hasInitialized.current = true;
+      }
+
+      interval = setInterval(() => {
+        if (scrollRef.current && scrollRef.current.children.length > 0) {
+          const { scrollLeft } = scrollRef.current;
+          const firstChild = scrollRef.current.children[0] as HTMLElement;
+          const scrollAmount = firstChild.offsetWidth + 24;
+          
+          scrollRef.current.scrollTo({
+            left: scrollLeft + scrollAmount,
+            behavior: "smooth",
+          });
+        }
+      }, 4000); // Scroll every 4 seconds
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [products, loading, originalCount]);
 
   const toggleWishlist = (e: React.MouseEvent, product: any) => {
     e.preventDefault();
@@ -51,9 +95,11 @@ export default function Trending() {
   };
 
   const scroll = (direction: "left" | "right") => {
-    if (scrollRef.current) {
-      const { scrollLeft, clientWidth } = scrollRef.current;
-      const scrollAmount = clientWidth * 0.8;
+    if (scrollRef.current && scrollRef.current.children.length > 0) {
+      const { scrollLeft } = scrollRef.current;
+      const firstChild = scrollRef.current.children[0] as HTMLElement;
+      const scrollAmount = firstChild.offsetWidth + 24;
+      
       scrollRef.current.scrollTo({
         left: direction === "left" ? scrollLeft - scrollAmount : scrollLeft + scrollAmount,
         behavior: "smooth",
@@ -113,7 +159,7 @@ export default function Trending() {
           ) : (
             products.map((product, idx) => (
             <Link
-              key={idx}
+              key={`${product.id}-${idx}`}
               href={product.link}
               className="group relative flex-none w-[85%] sm:w-[45%] md:w-[31.5%] lg:w-[31.5%] snap-start snap-always"
             >

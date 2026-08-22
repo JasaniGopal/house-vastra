@@ -64,6 +64,21 @@ export default function LiveInventoryPage() {
     }
   };
 
+  const handleToggleTrending = async (id: string, currentTrendingStatus: boolean) => {
+    try {
+      const res = await fetch(`/api/admin/inventory/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isTrending: !currentTrendingStatus })
+      });
+      if (!res.ok) throw new Error(`Failed to update trending status`);
+      
+      setProducts(products.map(p => p.id === id ? { ...p, isTrending: !currentTrendingStatus } : p));
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
 
 
   const vendors = Array.from(new Set(products.filter(p => p.vendor).map(p => p.vendor.id))).map(id => {
@@ -145,6 +160,9 @@ export default function LiveInventoryPage() {
                       ) : (
                         <span className="bg-rose-100 text-rose-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Offline</span>
                       )}
+                      {product.isTrending && (
+                        <span className="ml-2 bg-[#A8813C]/10 text-[#A8813C] text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider border border-[#A8813C]/20">Trending</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-right space-x-3">
                       {product.isAvailable ? (
@@ -160,6 +178,22 @@ export default function LiveInventoryPage() {
                           className="text-xs font-bold text-emerald-600 hover:text-emerald-800 uppercase tracking-wider hover:underline"
                         >
                           Put Live
+                        </button>
+                      )}
+                      <span className="text-zinc-300">|</span>
+                      {product.isTrending ? (
+                        <button 
+                          onClick={() => handleToggleTrending(product.id, product.isTrending)}
+                          className="text-xs font-bold text-zinc-500 hover:text-rose-600 uppercase tracking-wider hover:underline"
+                        >
+                          Remove Trending
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={() => handleToggleTrending(product.id, product.isTrending)}
+                          className="text-xs font-bold text-[#A8813C] hover:text-[#8a6829] uppercase tracking-wider hover:underline"
+                        >
+                          Make Trending
                         </button>
                       )}
                     </td>

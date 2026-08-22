@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name, description, retailValue, vendorExpectedRent, vendorExpectedDeposit, sizes, categoryId, occasionIds, images } = body;
+    const { name, description, retailValue, vendorExpectedRent, vendorExpectedDeposit, sizes, categoryId, gender, occasionIds, images } = body;
 
     // Basic validation
     if (!name || !description || !retailValue || !vendorExpectedRent || !sizes || !categoryId) {
@@ -41,6 +41,7 @@ export async function POST(req: Request) {
           create: images.map((url: string, index: number) => ({
             url,
             isPrimary: index === 0, // First image is primary
+            sequence: index,
           })),
         }
       : undefined;
@@ -58,7 +59,8 @@ export async function POST(req: Request) {
     const product = await prisma.product.create({
       data: {
         vendorId: vendor.id,
-        categoryId,
+        category: { connect: { id: categoryId } },
+        gender: gender || "WOMEN",
         name,
         description,
         retailValue: parseFloat(retailValue),

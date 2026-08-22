@@ -101,15 +101,20 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           email: user.email,
           role: user.role,
+          phone: user.phone,
         };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.phone = user.phone;
+      }
+      if (trigger === "update" && session?.phone) {
+        token.phone = session.phone;
       }
       return token;
     },
@@ -117,12 +122,14 @@ export const authOptions: NextAuthOptions = {
       if (token && session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        session.user.phone = token.phone as string | null | undefined;
       }
       return session;
     },
   },
   session: {
     strategy: "jwt",
+    maxAge: 24 * 60 * 60, // 24 hours (1 day)
   },
   secret: process.env.NEXTAUTH_SECRET || "fallback_secret_for_local_dev",
   pages: {

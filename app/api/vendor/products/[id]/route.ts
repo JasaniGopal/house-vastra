@@ -16,7 +16,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const { id } = await params;
     const product = await prisma.product.findUnique({
       where: { id, vendorId: vendor.id },
-      include: { images: true }
+      include: { 
+        images: {
+          orderBy: { sequence: 'asc' }
+        }
+      }
     });
 
     if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
@@ -43,7 +47,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     if (!existing) return NextResponse.json({ error: "Product not found" }, { status: 404 });
 
     const body = await req.json();
-    const { name, description, retailValue, vendorExpectedRent, vendorExpectedDeposit, sizes, categoryId, deletedImageIds, newImageUrls } = body;
+    const { name, description, retailValue, vendorExpectedRent, vendorExpectedDeposit, sizes, categoryId, gender, orderedImageUrls } = body;
 
     const updated = await prisma.product.update({
       where: { id },
@@ -54,34 +58,32 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         vendorExpectedRent: parseFloat(vendorExpectedRent),
         vendorExpectedDeposit: parseFloat(vendorExpectedDeposit),
         sizes,
-        categoryId,
+        category: { connect: { id: categoryId } },
+        gender: gender || "WOMEN",
         approvalStatus: "PENDING",
         rejectionReason: null
       }
     });
 
-    if (deletedImageIds && deletedImageIds.length > 0) {
+    if (orderedImageUrls && Array.isArray(orderedImageUrls)) {
+      // 1. Delete all existing images
       await prisma.productImage.deleteMany({
-        where: {
-          id: { in: deletedImageIds },
-          productId: id
-        }
+        where: { productId: id }
       });
-    }
 
-    if (newImageUrls && newImageUrls.length > 0) {
-      // Check if we need to set the first one as primary
-      const existingImages = await prisma.productImage.count({ where: { productId: id } });
-      
-      const newImagesData = newImageUrls.map((url: string, index: number) => ({
-        productId: id,
-        url,
-        isPrimary: existingImages === 0 && index === 0
-      }));
+      // 2. Recreate with exact requested sequence
+      if (orderedImageUrls.length > 0) {
+        const newImagesData = orderedImageUrls.map((url: string, index: number) => ({
+          productId: id,
+          url,
+          isPrimary: index === 0,
+          sequence: index
+        }));
 
-      await prisma.productImage.createMany({
-        data: newImagesData
-      });
+        await prisma.productImage.createMany({
+          data: newImagesData
+        });
+      }
     }
 
     return NextResponse.json({ message: "Product updated", product: updated });

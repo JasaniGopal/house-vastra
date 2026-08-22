@@ -196,7 +196,7 @@ export default function Footer() {
         {/* Bottom copyright banner */}
         <div className="mt-6 pt-6 border-t border-[#c1c8c5]/20">
           <p className="text-sm text-[#414846] font-sans">
-            &copy; 2026 Lookonrenton Technologies Pvt. Ltd. All rights reserved.
+            &copy; 2026 Lookonrent Technologies Pvt. Ltd. All rights reserved.
           </p>
         </div>
       </div>

@@ -15,6 +15,7 @@ export default function AddProductPage() {
   const [formData, setFormData] = useState({
     name: "",
     categoryId: "",
+    gender: "WOMEN",
     description: "",
     retailValue: "",
     vendorExpectedRent: "",
@@ -98,6 +99,7 @@ export default function AddProductPage() {
       const payload = {
         name: formData.name,
         categoryId: formData.categoryId,
+        gender: formData.gender,
         description: formData.description,
         retailValue: parseFloat(formData.retailValue),
         vendorExpectedRent: parseFloat(formData.vendorExpectedRent),
@@ -125,6 +127,27 @@ export default function AddProductPage() {
       setError(err.message);
       setLoading(false);
     }
+  };
+
+  const moveImage = (index: number, direction: 'left' | 'right') => {
+    if (direction === 'left' && index === 0) return;
+    if (direction === 'right' && index === previewUrls.length - 1) return;
+
+    const newIndex = direction === 'left' ? index - 1 : index + 1;
+    
+    // Swap in previewUrls
+    const newPreviewUrls = [...previewUrls];
+    const tempUrl = newPreviewUrls[index];
+    newPreviewUrls[index] = newPreviewUrls[newIndex];
+    newPreviewUrls[newIndex] = tempUrl;
+    setPreviewUrls(newPreviewUrls);
+
+    // Swap in selectedFiles
+    const newSelectedFiles = [...selectedFiles];
+    const tempFile = newSelectedFiles[index];
+    newSelectedFiles[index] = newSelectedFiles[newIndex];
+    newSelectedFiles[newIndex] = tempFile;
+    setSelectedFiles(newSelectedFiles);
   };
 
   return (
@@ -177,6 +200,20 @@ export default function AddProductPage() {
                 {categories.map(cat => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#001410] mb-2 block">
+                Gender
+              </label>
+              <select
+                value={formData.gender}
+                onChange={e => setFormData({...formData, gender: e.target.value})}
+                className="w-full bg-white border border-zinc-300 px-4 py-3 text-sm focus:outline-none focus:border-[#001410] focus:ring-1 focus:ring-[#001410]"
+                required
+              >
+                <option value="WOMEN">Women</option>
+                <option value="MEN">Men</option>
               </select>
             </div>
           </div>
@@ -304,13 +341,42 @@ export default function AddProductPage() {
               />
               <p className="text-xs text-zinc-400 mt-3">Select 4 to 5 images showing different views of the outfit.</p>
             </div>
-            
+
             {/* Image Previews */}
             {previewUrls.length > 0 && (
               <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
                 {previewUrls.map((url, index) => (
-                  <div key={index} className="relative aspect-square rounded-lg overflow-hidden border border-zinc-200 bg-zinc-100">
+                  <div key={index} className="relative aspect-square rounded-lg overflow-hidden border border-zinc-200 bg-zinc-100 group">
                     <img src={url} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+                    
+                    {index === 0 && (
+                      <div className="absolute top-2 left-2 bg-[#A8813C] text-white text-[9px] font-bold px-2 py-1 rounded-full uppercase tracking-wider shadow-sm z-10">
+                        Cover Image
+                      </div>
+                    )}
+
+                    <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        type="button"
+                        onClick={() => moveImage(index, 'left')}
+                        disabled={index === 0}
+                        className="bg-white/90 backdrop-blur text-[#001410] p-1.5 rounded-full shadow-sm hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => moveImage(index, 'right')}
+                        disabled={index === previewUrls.length - 1}
+                        className="bg-white/90 backdrop-blur text-[#001410] p-1.5 rounded-full shadow-sm hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

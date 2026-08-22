@@ -81,7 +81,7 @@ function CollectionsContent() {
   );
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [selectedSort, setSelectedSort] = useState<string>('newest');
-  const [maxPrice, setMaxPrice] = useState<number>(50000);
+  const [selectedGender, setSelectedGender] = useState<string>('');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   const [products, setProducts] = useState<DisplayProduct[]>([]);
@@ -107,8 +107,8 @@ function CollectionsContent() {
           query.set('occasion', selectedOccasions.join(','));
         }
         query.set('sort', selectedSort);
-        if (maxPrice < 50000) {
-          query.set('maxPrice', maxPrice.toString());
+        if (selectedGender) {
+          query.set('gender', selectedGender);
         }
         if (selectedSize) {
           query.set('size', selectedSize);
@@ -142,7 +142,7 @@ function CollectionsContent() {
     };
 
     fetchProducts();
-  }, [selectedCategories, selectedOccasions, selectedSort, maxPrice, selectedSize, searchParams]);
+  }, [selectedCategories, selectedOccasions, selectedSort, selectedGender, selectedSize, searchParams]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -203,10 +203,15 @@ function CollectionsContent() {
     setSelectedSize(prev => prev === size ? '' : size);
   };
 
+  const toggleGender = (gender: string) => {
+    setSelectedGender(prev => prev === gender ? '' : gender);
+  };
+
   const clearFilters = () => {
     setSelectedCategories([]);
     setSelectedOccasions([]);
     setSelectedSize('');
+    setSelectedGender('');
   };
 
   // Since we are doing backend filtering now, products state is already filtered.
@@ -244,7 +249,7 @@ function CollectionsContent() {
               <svg className="w-3 h-3 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
             </button>
             <button onClick={() => setIsMobileFilterOpen(true)} className="flex items-center gap-2 border border-zinc-300 rounded-lg px-4 py-2 text-xs font-bold text-[#001410] whitespace-nowrap bg-white hover:bg-zinc-50">
-              Price
+              Gender
               <svg className="w-3 h-3 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
             </button>
           </div>
@@ -349,23 +354,23 @@ function CollectionsContent() {
             </div>
           </div>
 
-          {/* Daily Price Range Filter */}
+          {/* Gender Filter */}
           <div className="flex flex-col gap-4">
-            <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Max Daily Price</span>
-            <div className="mt-2 relative">
-               <input 
-                 type="range" 
-                 min="1000" 
-                 max="50000" 
-                 step="1000"
-                 value={maxPrice}
-                 onChange={(e) => setMaxPrice(Number(e.target.value))}
-                 className="w-full accent-[#001410] cursor-pointer"
-               />
-               <div className="flex justify-between items-center mt-2 text-[10px] font-bold text-zinc-500">
-                 <span>₹1,000</span>
-                 <span className="text-[#001410]">Up to ₹{maxPrice.toLocaleString()}</span>
-               </div>
+            <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Gender</span>
+            <div className="flex flex-wrap gap-2">
+              {['WOMEN', 'MEN'].map(gender => (
+                <button 
+                  key={gender}
+                  onClick={() => toggleGender(gender)}
+                  className={`px-4 py-2 border text-xs transition-colors ${
+                    selectedGender === gender 
+                      ? 'border-[#001410] bg-[#001410] font-bold text-white' 
+                      : 'border-zinc-200 bg-white font-medium text-zinc-600 hover:border-[#001410] hover:text-[#001410]'
+                  }`}
+                >
+                  {gender === 'WOMEN' ? 'Women' : 'Men'}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -497,23 +502,23 @@ function CollectionsContent() {
               </div>
             </div>
 
-            {/* Daily Price Range Filter */}
+            {/* Gender Filter */}
             <div className="flex flex-col gap-4">
-              <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Max Daily Price</span>
-              <div className="mt-2 relative">
-                 <input 
-                   type="range" 
-                   min="1000" 
-                   max="50000" 
-                   step="1000"
-                   value={maxPrice}
-                   onChange={(e) => setMaxPrice(Number(e.target.value))}
-                   className="w-full accent-[#001410] cursor-pointer"
-                 />
-                 <div className="flex justify-between items-center mt-2 text-[10px] font-bold text-zinc-500">
-                   <span>₹1,000</span>
-                   <span className="text-[#001410]">Up to ₹{maxPrice.toLocaleString()}</span>
-                 </div>
+              <span className="text-[10px] font-bold tracking-[0.15em] text-[#001410] uppercase">Gender</span>
+              <div className="flex flex-wrap gap-2">
+                {['WOMEN', 'MEN'].map(gender => (
+                  <button 
+                    key={`mob-${gender}`}
+                    onClick={() => toggleGender(gender)}
+                    className={`px-4 py-2 border text-xs transition-colors ${
+                      selectedGender === gender 
+                        ? 'border-[#001410] bg-[#001410] font-bold text-white' 
+                        : 'border-zinc-200 bg-white font-medium text-zinc-600'
+                    }`}
+                  >
+                    {gender === 'WOMEN' ? 'Women' : 'Men'}
+                  </button>
+                ))}
               </div>
             </div>
 

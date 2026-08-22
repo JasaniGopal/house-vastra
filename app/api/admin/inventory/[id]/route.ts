@@ -12,11 +12,15 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     }
 
     const { id } = await params;
-    const { isAvailable } = await req.json();
+    const { isAvailable, isTrending } = await req.json();
+
+    const dataToUpdate: any = {};
+    if (isAvailable !== undefined) dataToUpdate.isAvailable = isAvailable;
+    if (isTrending !== undefined) dataToUpdate.isTrending = isTrending;
 
     const updated = await prisma.product.update({
       where: { id },
-      data: { isAvailable }
+      data: dataToUpdate
     });
 
     return NextResponse.json(updated);
