@@ -6,7 +6,7 @@ frontend:
         - npm ci --cache .npm --prefer-offline
     build:
       commands:
-        - env | grep -e DATABASE_URL -e NEXTAUTH_SECRET -e GOOGLE_CLIENT_ID -e GOOGLE_CLIENT_SECRET -e NEXT_PUBLIC_RAZORPAY_KEY_ID -e RAZORPAY_KEY_SECRET -e RESEND_API_KEY -e ADMIN_PASSCODE -e AWS_REGION -e AWS_S3_BUCKET_NAME -e WHATSAPP_ACCESS_TOKEN -e WHATSAPP_PHONE_ID -e WHATSAPP_TEMPLATE_NAME >> .env.production
+        - env | grep -e DATABASE_URL -e NEXTAUTH_SECRET -e GOOGLE_CLIENT_ID -e GOOGLE_CLIENT_SECRET -e NEXT_PUBLIC_RAZORPAY_KEY_ID -e RAZORPAY_KEY_SECRET -e RESEND_API_KEY -e ADMIN_PASSCODE -e AWS_REGION -e AWS_S3_BUCKET_NAME -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e WHATSAPP_ACCESS_TOKEN -e WHATSAPP_PHONE_ID -e WHATSAPP_TEMPLATE_NAME >> .env.production
         - echo "NEXTAUTH_URL=https://www.lookonrent.com" >> .env.production
         - npm run build
   artifacts:
