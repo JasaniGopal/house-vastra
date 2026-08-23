@@ -20,7 +20,7 @@ export default function Footer() {
             <div className="flex items-center gap-3 mt-1">
               {/* Instagram Icon */}
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/lookonrent"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[#1c1b1b] hover:text-[#775a19] transition-colors p-1"
@@ -47,26 +47,6 @@ export default function Footer() {
                 </svg>
               </a>
 
-              {/* Share Icon */}
-              <button
-                className="text-[#1c1b1b] hover:text-[#775a19] transition-colors p-1"
-                aria-label="Share page"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="currentColor"
-                  className="h-5 w-5"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"
-                  />
-                </svg>
-              </button>
             </div>
           </div>
 
@@ -84,9 +64,6 @@ export default function Footer() {
               </Link>
               <Link href="/about" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
                 About Us
-              </Link>
-              <Link href="/blog" className="text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors">
-                Blog
               </Link>
             </nav>
           </div>
@@ -123,7 +100,7 @@ export default function Footer() {
             <div className="flex flex-col gap-1">
               {/* Email */}
               <a
-                href="mailto:hello@lookonrent.com"
+                href="mailto:contact@lookonrent.com"
                 className="flex items-center gap-1 text-sm font-sans text-[#414846] hover:text-[#001410] transition-colors"
               >
                 <svg
@@ -140,7 +117,7 @@ export default function Footer() {
                     d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
                   />
                 </svg>
-                <span>hello@lookonrent.com</span>
+                <span>contact@lookonrent.com</span>
               </a>
 
               {/* Phone */}

@@ -17,15 +17,15 @@ export default function PrivacyPage() {
           </p>
 
           <h2 className="font-serif text-xl text-[#001410] pt-4">How We Use Your Data</h2>
-          <p>
-            We use the information we collect to:
+          <div>
+            <p>We use the information we collect to:</p>
             <ul className="list-disc pl-5 mt-2 space-y-1">
               <li>Provide, maintain, and improve our services.</li>
               <li>Process transactions and send related information.</li>
               <li>Verify sizing and fit based on your measurements.</li>
               <li>Send technical notices, updates, and security alerts.</li>
             </ul>
-          </p>
+          </div>
 
           <h2 className="font-serif text-xl text-[#001410] pt-4">Data Sharing</h2>
           <p>

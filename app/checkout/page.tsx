@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Script from "next/script";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
-import { useEffect } from "react";
 
 interface CartItem {
   id: string | number;
@@ -36,14 +35,49 @@ export default function CheckoutPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   
   const [selectedPayment, setSelectedPayment] = useState("card");
-  const [isEditingAddress, setIsEditingAddress] = useState(false);
-  const [address, setAddress] = useState({
-    name: "Ananya Sharma",
-    flat: "Flat 402, Sea View Apartments",
-    street: "Juhu Tara Road",
-    city: "Mumbai, Maharashtra 400049",
-    phone: "+91 98XXX XXXXX"
+  const [addresses, setAddresses] = useState<any[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [isAddingAddress, setIsAddingAddress] = useState(false);
+  const [isSelectingAddress, setIsSelectingAddress] = useState(false);
+  const [errorModalMsg, setErrorModalMsg] = useState("");
+  const [newAddress, setNewAddress] = useState({
+    name: "", phone: "", line1: "", line2: "", city: "", state: "", zip: "", type: "Home"
   });
+
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      try {
+        const res = await fetch("/api/user/addresses");
+        const data = await res.json();
+        if (data.addresses && data.addresses.length > 0) {
+          setAddresses(data.addresses);
+          const def = data.addresses.find((a: any) => a.isDefault) || data.addresses[0];
+          setSelectedAddressId(def.id);
+        } else {
+          setIsAddingAddress(true);
+        }
+      } catch (err) {}
+    };
+    if (status === "authenticated") fetchAddresses();
+  }, [status]);
+
+  const handleSaveAddress = async () => {
+    try {
+      const res = await fetch("/api/user/addresses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newAddress)
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAddresses([...addresses.map(a => data.address.isDefault ? {...a, isDefault: false} : a), data.address]);
+        setSelectedAddressId(data.address.id);
+        setIsAddingAddress(false);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const handleDelete = (id: string | number) => {
     removeFromCart(id);
@@ -57,9 +91,15 @@ export default function CheckoutPage() {
       return;
     }
     
+    if (!selectedAddressId) {
+      setErrorModalMsg("Please provide a delivery address before checking out.");
+      return;
+    }
+    const selectedAddress = addresses.find(a => a.id === selectedAddressId);
+    
     // Validation for missing dates
     if (items.some(item => !item.startDate || !item.endDate)) {
-      alert("Please select rental dates for all items in your bag before checking out.");
+      setErrorModalMsg("Please select rental dates for all items in your bag before checking out.");
       return;
     }
 
@@ -75,7 +115,7 @@ export default function CheckoutPage() {
       const valData = await valRes.json();
       
       if (!valData.available) {
-        alert("Sorry, some items in your bag are no longer available for the selected dates. Please review your bag.");
+        setErrorModalMsg("Sorry, some items in your bag are no longer available for the selected dates. Please review your bag.");
         setIsCheckoutLoading(false);
         return;
       }
@@ -110,8 +150,14 @@ export default function CheckoutPage() {
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
               items: items,
-              address: address,
-              userId: session?.user?.id,
+              address: {
+                name: selectedAddress.name,
+                flat: selectedAddress.line1,
+                street: selectedAddress.line2 || "",
+                city: `${selectedAddress.city}, ${selectedAddress.state} ${selectedAddress.zip}`,
+                phone: selectedAddress.phone
+              },
+              userId: session?.user?.id || null, // Pass actual session userId
               couponCode: appliedCoupon?.code || null
             }),
           });
@@ -120,12 +166,12 @@ export default function CheckoutPage() {
             setIsSuccess(true);
             clearCart();
           } else {
-            alert("Payment verification failed. Please contact support.");
+            setErrorModalMsg("Payment verification failed. Please contact support.");
           }
         },
         prefill: {
-          name: address.name,
-          contact: address.phone,
+          name: selectedAddress.name,
+          contact: selectedAddress.phone,
         },
         theme: {
           color: "#001410",
@@ -144,12 +190,12 @@ export default function CheckoutPage() {
 
       const rzp = new (window as any).Razorpay(options);
       rzp.on("payment.failed", function (response: any) {
-        alert(`Payment failed! ${response.error.description}`);
+        setErrorModalMsg(`Payment failed! ${response.error.description}`);
       });
       rzp.open();
     } catch (err) {
       console.error(err);
-      alert("Something went wrong during checkout.");
+      setErrorModalMsg("Something went wrong during checkout.");
     } finally {
       setIsCheckoutLoading(false);
     }
@@ -278,23 +324,28 @@ export default function CheckoutPage() {
               <section>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-serif text-xl md:text-2xl font-bold text-[#001410]">1. Delivery Address</h2>
-                  <button 
-                    onClick={() => setIsEditingAddress(!isEditingAddress)} 
-                    className="text-sm font-bold text-[#775a19] hover:underline"
-                  >
-                    {isEditingAddress ? "Cancel" : "Change"}
-                  </button>
+                  {addresses.length > 0 && !isAddingAddress && (
+                    <button
+                      onClick={() => {
+                        if (isSelectingAddress) setIsSelectingAddress(false);
+                        else setIsSelectingAddress(true);
+                      }}
+                      className="text-sm font-bold text-[#775a19] hover:underline"
+                    >
+                      {isSelectingAddress ? "Cancel" : "Change"}
+                    </button>
+                  )}
                 </div>
                 
-                {isEditingAddress ? (
+                {isAddingAddress ? (
                   <div className="bg-white p-6 rounded-sm border border-black/10 flex flex-col gap-4 shadow-sm animate-fade-in">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Full Name</label>
                         <input 
                           type="text" 
-                          value={address.name}
-                          onChange={(e) => setAddress({...address, name: e.target.value})}
+                          value={newAddress.name}
+                          onChange={(e) => setNewAddress({...newAddress, name: e.target.value})}
                           className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" 
                         />
                       </div>
@@ -302,8 +353,8 @@ export default function CheckoutPage() {
                         <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Phone Number</label>
                         <input 
                           type="text" 
-                          value={address.phone}
-                          onChange={(e) => setAddress({...address, phone: e.target.value})}
+                          value={newAddress.phone}
+                          onChange={(e) => setNewAddress({...newAddress, phone: e.target.value})}
                           className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" 
                         />
                       </div>
@@ -311,8 +362,8 @@ export default function CheckoutPage() {
                         <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Flat, House no., Building</label>
                         <input 
                           type="text" 
-                          value={address.flat}
-                          onChange={(e) => setAddress({...address, flat: e.target.value})}
+                          value={newAddress.line1}
+                          onChange={(e) => setNewAddress({...newAddress, line1: e.target.value})}
                           className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" 
                         />
                       </div>
@@ -320,45 +371,96 @@ export default function CheckoutPage() {
                         <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Area, Street, Sector, Village</label>
                         <input 
                           type="text" 
-                          value={address.street}
-                          onChange={(e) => setAddress({...address, street: e.target.value})}
+                          value={newAddress.line2}
+                          onChange={(e) => setNewAddress({...newAddress, line2: e.target.value})}
                           className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" 
                         />
                       </div>
-                      <div className="md:col-span-2">
-                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Town/City & Pincode</label>
+                      <div>
+                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">City</label>
                         <input 
                           type="text" 
-                          value={address.city}
-                          onChange={(e) => setAddress({...address, city: e.target.value})}
+                          value={newAddress.city}
+                          onChange={(e) => setNewAddress({...newAddress, city: e.target.value})}
+                          className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" 
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">State</label>
+                        <input 
+                          type="text" 
+                          value={newAddress.state}
+                          onChange={(e) => setNewAddress({...newAddress, state: e.target.value})}
+                          className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" 
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Pincode</label>
+                        <input 
+                          type="text" 
+                          value={newAddress.zip}
+                          onChange={(e) => setNewAddress({...newAddress, zip: e.target.value})}
                           className="w-full border border-black/10 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-[#001410] transition-colors" 
                         />
                       </div>
                     </div>
-                    <button 
-                      onClick={() => setIsEditingAddress(false)}
-                      className="mt-2 bg-[#001410] text-white py-3 px-6 rounded-sm font-sans font-bold text-xs tracking-widest uppercase hover:bg-[#00261f] transition-all self-start"
+                    <div className="flex gap-4 items-center mt-2">
+                      <button 
+                        onClick={handleSaveAddress}
+                        className="bg-[#001410] text-white py-3 px-6 rounded-sm font-sans font-bold text-xs tracking-widest uppercase hover:bg-[#00261f] transition-all"
+                      >
+                        Save Address
+                      </button>
+                      {addresses.length > 0 && (
+                        <button
+                          onClick={() => setIsAddingAddress(false)}
+                          className="text-zinc-500 py-3 px-6 rounded-sm font-sans font-bold text-xs tracking-widest uppercase hover:text-black transition-all"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ) : isSelectingAddress ? (
+                  <div className="bg-white p-6 rounded-sm border border-black/10 flex flex-col gap-4 shadow-sm animate-fade-in">
+                    <h3 className="font-bold text-[#001410] mb-2">Select an Address</h3>
+                    {addresses.map(addr => (
+                      <div key={addr.id} className={`p-4 rounded-sm border cursor-pointer flex gap-4 ${selectedAddressId === addr.id ? 'border-[#775a19] bg-[#775a19]/5' : 'border-black/10 hover:border-black/30'}`} onClick={() => { setSelectedAddressId(addr.id); setIsSelectingAddress(false); }}>
+                        <div className={`w-4 h-4 rounded-full border flex-shrink-0 mt-1 flex items-center justify-center ${selectedAddressId === addr.id ? 'border-[#775a19]' : 'border-zinc-300'}`}>
+                          {selectedAddressId === addr.id && <div className="w-2.5 h-2.5 bg-[#775a19] rounded-full"></div>}
+                        </div>
+                        <div>
+                          <span className="block font-bold text-[#001410] mb-1">{addr.name} <span className="ml-2 text-xs text-zinc-500 font-normal py-0.5 px-2 bg-zinc-100 rounded-full">{addr.type}</span></span>
+                          <span className="block text-sm text-[#414846] leading-relaxed">
+                            {addr.line1}, {addr.line2 && `${addr.line2},`} {addr.city}, {addr.state} {addr.zip}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    <button
+                      onClick={() => { setIsSelectingAddress(false); setIsAddingAddress(true); }}
+                      className="mt-2 border border-[#001410] text-[#001410] py-3 px-6 rounded-sm font-sans font-bold text-xs tracking-widest uppercase hover:bg-zinc-50 transition-all self-start"
                     >
-                      Save Address
+                      + Add New Address
                     </button>
                   </div>
-                ) : (
+                ) : addresses.find(a => a.id === selectedAddressId) ? (
                   <div className="bg-[#f5f3f0] p-6 rounded-sm border border-black/5 flex gap-4 items-start">
                     <svg className="w-5 h-5 text-[#001410] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
                     </svg>
                     <div>
-                      <span className="block font-bold text-[#001410] mb-1">{address.name}</span>
+                      <span className="block font-bold text-[#001410] mb-1">{addresses.find(a => a.id === selectedAddressId)?.name}</span>
                       <span className="block text-sm text-[#414846] leading-relaxed">
-                        {address.flat},<br />
-                        {address.street},<br />
-                        {address.city}
+                        {addresses.find(a => a.id === selectedAddressId)?.line1},<br />
+                        {addresses.find(a => a.id === selectedAddressId)?.line2 && <>{addresses.find(a => a.id === selectedAddressId)?.line2},<br /></>}
+                        {addresses.find(a => a.id === selectedAddressId)?.city}, {addresses.find(a => a.id === selectedAddressId)?.state} {addresses.find(a => a.id === selectedAddressId)?.zip}
                       </span>
-                      <span className="block text-sm text-[#414846] mt-2">Phone: {address.phone}</span>
+                      <span className="block text-sm text-[#414846] mt-2">Phone: {addresses.find(a => a.id === selectedAddressId)?.phone}</span>
                     </div>
                   </div>
-                )}
+                ) : null}
               </section>
 
               {/* Bag Items list */}
@@ -616,6 +718,31 @@ export default function CheckoutPage() {
         )}
 
       </main>
+
+      {/* Error Modal */}
+      {errorModalMsg && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-[#001410] mb-2 font-serif">Action Required</h3>
+              <p className="text-sm text-zinc-600 leading-relaxed mb-6">
+                {errorModalMsg}
+              </p>
+              <button
+                onClick={() => setErrorModalMsg("")}
+                className="w-full bg-[#001410] text-white py-3 rounded-md font-bold text-xs uppercase tracking-widest hover:bg-[#00261f] transition-colors"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
     </>

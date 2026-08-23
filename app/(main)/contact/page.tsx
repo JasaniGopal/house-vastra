@@ -6,6 +6,7 @@ export default function ContactPage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone: "",
     subject: "",
     message: "",
   });
@@ -39,7 +40,7 @@ export default function ContactPage() {
       }
 
       setStatus("success");
-      setFormData({ name: "", email: "", subject: "", message: "" });
+      setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
     } catch (error: any) {
       console.error(error);
       setStatus("error");
@@ -91,27 +92,11 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-[#001410] uppercase tracking-wider mb-1">Email Inquiries</h4>
-                  <p className="text-sm text-zinc-600">hello@houseofvastra.com</p>
-                  <p className="text-xs text-zinc-400 mt-1">support@houseofvastra.com</p>
+                  <p className="text-sm text-zinc-600">contact@lookonrent.com</p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-white border border-[#E8D8BA] flex items-center justify-center text-[#775a19] shrink-0">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-[#001410] uppercase tracking-wider mb-1">Studio Address</h4>
-                  <p className="text-sm text-zinc-600">
-                    LOR Flagship Store<br />
-                    123 Couture Avenue,<br />
-                    Bandra West, Mumbai - 400050
-                  </p>
-                </div>
-              </div>
+
             </div>
           </div>
 
@@ -170,6 +155,18 @@ export default function ContactPage() {
                       className="w-full bg-[#fcf9f8] border border-zinc-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#775a19] focus:ring-1 focus:ring-[#775a19] transition-all"
                     />
                   </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#001410]">Phone <span className="text-zinc-400 normal-case lowercase">(Optional)</span></label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="+91 90000 00000"
+                    className="w-full bg-[#fcf9f8] border border-zinc-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#775a19] focus:ring-1 focus:ring-[#775a19] transition-all"
+                  />
                 </div>
 
                 <div className="flex flex-col gap-1.5">

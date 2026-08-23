@@ -31,7 +31,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${bodoniModa.variable} ${plusJakartaSans.variable} h-full antialiased`}
+      className={`${bodoniModa.variable} ${plusJakartaSans.variable} h-full antialiased scroll-pt-[52px] scroll-smooth`}
       data-scroll-behavior="smooth"
     >
 

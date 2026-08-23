@@ -41,6 +41,8 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
+  addresses     Address[]
+  
   vendorProfile Vendor?
   orders        Order[]
   accounts      Account[]
@@ -308,6 +310,7 @@ model ContactMessage {
   id        String   @id @default(uuid())
   name      String
   email     String
+  phone     String?
   subject   String
   message   String   @db.Text
   status    String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED
@@ -352,4 +355,21 @@ model OtpToken {
   createdAt  DateTime @default(now())
 
   @@unique([identifier, code])
+}
+
+model Address {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   @default("Home") // Home, Office, Other
+  name      String
+  phone     String
+  line1     String
+  line2     String?
+  city      String
+  state     String
+  zip       String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

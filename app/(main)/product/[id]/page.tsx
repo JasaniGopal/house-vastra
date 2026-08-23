@@ -261,12 +261,22 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             </div>
             
             {/* Mobile Carousel & Desktop Main Image */}
-            <div className="md:hidden flex overflow-x-auto snap-x snap-mandatory no-scrollbar w-full relative">
-              {product.gallery.map((img, idx) => (
-                <div key={idx} className="relative aspect-[4/5] w-full shrink-0 snap-start bg-zinc-100 overflow-hidden">
-                   <Image src={img} alt={`${product.name} ${idx}`} fill priority={idx === 0} sizes="100vw" className="object-cover object-top" />
+            <div className="md:hidden flex flex-col w-full">
+              <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar w-full">
+                {product.gallery.map((img, idx) => (
+                  <div key={idx} className="relative aspect-[4/5] w-full shrink-0 snap-start bg-zinc-100 overflow-hidden">
+                     <Image src={img} alt={`${product.name} ${idx}`} fill priority={idx === 0} sizes="100vw" className="object-cover object-top" />
+                  </div>
+                ))}
+              </div>
+              {product.gallery.length > 1 && (
+                <div className="flex items-center gap-2 mt-2 text-[10px] text-zinc-500 uppercase tracking-widest font-medium">
+                  Slide to view more
+                  <svg className="w-3 h-3 animate-[pulse_2s_ease-in-out_infinite]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  </svg>
                 </div>
-              ))}
+              )}
             </div>
             <div className="hidden md:block relative aspect-[3/4] w-full bg-zinc-100 flex-1 overflow-hidden">
                <Image src={activeImage} alt={product.name} fill priority sizes="60vw" className="object-cover object-top" />

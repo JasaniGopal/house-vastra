@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-interface Address {
-  id: number;
+export interface Address {
+  id: string;
   type: string;
   name: string;
   line1: string;
-  line2: string;
+  line2?: string;
   city: string;
   state: string;
   zip: string;
@@ -16,35 +16,9 @@ interface Address {
   isDefault: boolean;
 }
 
-const INITIAL_ADDRESSES: Address[] = [
-  {
-    id: 1,
-    type: "Home",
-    name: "Ananya Sharma",
-    line1: "A-102, Royal Enclave Apartments",
-    line2: "14th Main Road, Indiranagar",
-    city: "Bengaluru",
-    state: "Karnataka",
-    zip: "560038",
-    phone: "+91 9168899557",
-    isDefault: true
-  },
-  {
-    id: 2,
-    type: "Office",
-    name: "Ananya Sharma (TechCorp)",
-    line1: "Level 4, Orion Tech Park",
-    line2: "Outer Ring Road, Bellandur",
-    city: "Bengaluru",
-    state: "Karnataka",
-    zip: "560103",
-    phone: "+91 9168899557",
-    isDefault: false
-  }
-];
-
 export default function AddressesPage() {
-  const [addresses, setAddresses] = useState<Address[]>(INITIAL_ADDRESSES);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -53,25 +27,61 @@ export default function AddressesPage() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleSetDefault = (id: number) => {
-    setAddresses(prev => prev.map(addr => ({
-      ...addr,
-      isDefault: addr.id === id
-    })));
-    showToast("Default address updated!");
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      try {
+        const res = await fetch("/api/user/addresses");
+        const data = await res.json();
+        if (data.addresses) {
+          setAddresses(data.addresses);
+        }
+      } catch (err) {
+        console.error("Failed to load addresses", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchAddresses();
+  }, []);
+
+  const handleSetDefault = async (id: string) => {
+    try {
+      const res = await fetch(`/api/user/addresses/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isDefault: true })
+      });
+      if (res.ok) {
+        setAddresses(prev => prev.map(addr => ({
+          ...addr,
+          isDefault: addr.id === id
+        })));
+        showToast("Default address updated!");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to update default address.");
+    }
   };
 
-  const handleDelete = (id: number) => {
-    setAddresses(prev => prev.filter(addr => addr.id !== id));
-    showToast("Address removed.");
+  const handleDelete = async (id: string) => {
+    try {
+      const res = await fetch(`/api/user/addresses/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setAddresses(prev => prev.filter(addr => addr.id !== id));
+        showToast("Address removed.");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to remove address.");
+    }
   };
 
-  const handleAddNew = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAddNew = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const newAddr: Address = {
-      id: Date.now(),
-      type: formData.get('type') as string || "Other",
+    const newAddr = {
+      type: formData.get('type') as string || "Home",
       name: formData.get('name') as string,
       line1: formData.get('line1') as string,
       line2: formData.get('line2') as string,
@@ -82,9 +92,22 @@ export default function AddressesPage() {
       isDefault: addresses.length === 0
     };
     
-    setAddresses([...addresses, newAddr]);
-    setIsAdding(false);
-    showToast("New address added successfully!");
+    try {
+      const res = await fetch("/api/user/addresses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newAddr)
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAddresses([...addresses.map(a => newAddr.isDefault ? {...a, isDefault: false} : a), data.address]);
+        setIsAdding(false);
+        showToast("New address added successfully!");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to add address.");
+    }
   };
 
   return (
@@ -168,9 +191,12 @@ export default function AddressesPage() {
         ) : null}
 
         {/* Addresses Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          {addresses.map((addr) => (
+        {isLoading ? (
+          <div className="flex justify-center items-center py-12 text-zinc-500">Loading addresses...</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {addresses.map((addr) => (
             <div key={addr.id} className={`bg-white p-6 rounded-2xl ${addr.isDefault ? 'border-2 border-[#775a19]/20 shadow-md' : 'border border-[#c1c8c5]/40 shadow-sm'} relative overflow-hidden`}>
               {addr.isDefault && (
                 <div className="absolute top-0 right-0 bg-[#FAF2E8] text-[#775a19] text-[10px] font-bold tracking-wider uppercase px-4 py-1.5 rounded-bl-xl">
@@ -229,7 +255,8 @@ export default function AddressesPage() {
             </button>
           )}
 
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Custom Toast Notification */}
