@@ -360,7 +360,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             </div>
 
             {/* Cost Breakdown */}
-            <div className="bg-[#f5f5f5] p-5 rounded-lg mb-8">
+            <div className="bg-[#f5f5f5] p-5 rounded-lg mb-6">
               <div className="flex justify-between text-xs text-zinc-600 mb-2">
                 <span>Rental Fee ({calculatedDays} Days)</span>
                 <span>₹{currentRentalPrice.toLocaleString()}</span>
@@ -372,6 +372,61 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               <div className="flex justify-between items-center">
                 <span className="text-sm font-bold text-[#001410]">Total Payable</span>
                 <span className="font-serif text-xl font-medium text-[#001410]">₹{currentTotal.toLocaleString()}</span>
+              </div>
+            </div>
+
+            {/* Hygiene Overview */}
+            <div className="bg-[#FAF2E8]/50 border border-[#E8D8BA] rounded-xl p-4 mb-8">
+              <h4 className="text-xs font-bold text-[#001410] uppercase tracking-wider mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4 text-[#A8813C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Hygiene & Care Promise
+              </h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex items-start gap-2">
+                  <div className="mt-0.5 text-[#A8813C]">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h5 className="font-bold text-[10px] text-[#001410] uppercase tracking-wider">Eco-Dry Cleaning</h5>
+                    <p className="text-[9px] text-zinc-500 leading-tight mt-0.5">Chemical-free, gentle on skin.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="mt-0.5 text-[#A8813C]">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h5 className="font-bold text-[10px] text-[#001410] uppercase tracking-wider">UV Sanitization</h5>
+                    <p className="text-[9px] text-zinc-500 leading-tight mt-0.5">Medical-grade UV-C treated.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="mt-0.5 text-[#A8813C]">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h5 className="font-bold text-[10px] text-[#001410] uppercase tracking-wider">High-Temp Steam</h5>
+                    <p className="text-[9px] text-zinc-500 leading-tight mt-0.5">Pressed at over 150°C.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="mt-0.5 text-[#A8813C]">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h5 className="font-bold text-[10px] text-[#001410] uppercase tracking-wider">Multi-Point QA</h5>
+                    <p className="text-[9px] text-zinc-500 leading-tight mt-0.5">Meticulously checked.</p>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -394,6 +449,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
           </div>
         </div>
+
+
 
         {/* Complete the Look Section */}
         {relatedAccessories.length > 0 && (
@@ -419,13 +476,13 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* Reviews Section */}
-      {product?.reviews && product.reviews.length > 0 && (
+      {(product?.reviews?.length ?? 0) > 0 && (
         <div className="max-w-[1400px] mx-auto px-6 md:px-8 py-16 md:py-24 border-t border-zinc-200">
           <h2 className="font-serif text-2xl md:text-3xl text-center text-[#001410] mb-10 md:mb-16">
             Customer Reviews
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-            {product.reviews.map((review: any) => (
+            {product?.reviews?.map((review: any) => (
               <div key={review.id} className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm flex flex-col">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 rounded-full bg-[#FAF2E8] text-[#A8813C] flex items-center justify-center font-bold text-sm">
