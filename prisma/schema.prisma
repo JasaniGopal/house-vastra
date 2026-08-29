@@ -164,6 +164,9 @@ model Order {
   startDate       DateTime
   endDate         DateTime
   totalAmount     Float
+  rentalAmount    Float       @default(0)
+  securityDeposit Float       @default(0)
+  taxAmount       Float       @default(0)
   status          OrderStatus @default(PENDING)
   shippingAddress String      @db.Text
   trackingId      String?

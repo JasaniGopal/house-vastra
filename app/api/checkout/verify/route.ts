@@ -4,6 +4,8 @@ import prisma from "@/lib/prisma";
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { generateInvoicePDF } from "@/lib/invoice-generator";
+import { sendOrderConfirmationEmail, sendOrderConfirmationWhatsApp } from "@/lib/notifications";
 
 export async function POST(req: Request) {
   try {
@@ -116,6 +118,12 @@ export async function POST(req: Request) {
       // Platform absorbs the discount
       platformFee = platformFee - itemDiscount;
 
+      // Calculate split values
+      const rentalAmount = item.price - itemDiscount;
+      const securityDeposit = item.deposit || 0;
+      const taxAmount = rentalAmount - (rentalAmount / 1.18); // assuming 18% GST inclusive
+      const totalAmount = rentalAmount + securityDeposit;
+
       const newOrder = await prisma.order.create({
         data: {
           orderNumber: `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -123,9 +131,12 @@ export async function POST(req: Request) {
           productId: actualProductId,
           startDate: item.startDate ? new Date(item.startDate) : new Date(),
           endDate: item.endDate ? new Date(item.endDate) : new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
-          totalAmount: item.price - itemDiscount + item.deposit,
+          totalAmount: totalAmount,
+          rentalAmount: rentalAmount,
+          securityDeposit: securityDeposit,
+          taxAmount: parseFloat(taxAmount.toFixed(2)),
           shippingAddress: addressString,
-          status: "PREPARING",
+          status: "PENDING",
           platformFee: platformFee,
           vendorEarnings: vendorEarnings,
           couponCode: couponCode || null,
@@ -133,6 +144,28 @@ export async function POST(req: Request) {
         }
       });
       createdOrders.push(newOrder);
+
+      // Generate invoice and send email immediately upon order creation
+      try {
+        const orderWithRelations = await prisma.order.findUnique({
+          where: { id: newOrder.id },
+          include: { customer: true, product: true }
+        });
+        
+        if (orderWithRelations) {
+          const pdfBuffer = await generateInvoicePDF(orderWithRelations);
+          
+          if (orderWithRelations.customer.email) {
+            await sendOrderConfirmationEmail(orderWithRelations.orderNumber, orderWithRelations.customer.email, pdfBuffer);
+          }
+          
+          if (orderWithRelations.customer.phone) {
+            await sendOrderConfirmationWhatsApp(orderWithRelations.orderNumber, orderWithRelations.customer.phone, pdfBuffer);
+          }
+        }
+      } catch (invoiceError) {
+        console.error("Failed to generate/send invoice email:", invoiceError);
+      }
     }
 
     // Clear the cart in the DB since checkout succeeded

@@ -287,9 +287,9 @@ export default function CheckoutPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="font-serif text-2xl md:text-3xl font-bold text-[#001410] mb-3">Booking Confirmed!</h2>
+            <h2 className="font-serif text-2xl md:text-3xl font-bold text-[#001410] mb-3">Order Placed!</h2>
             <p className="font-sans text-sm md:text-base text-[#5c6462] leading-relaxed mb-8">
-              Thank you for renting with LOR. Your luxury garments have been reserved and are being prepared under clinical standards.
+              We are reviewing your details and will confirm your order shortly (within 15 minutes).
             </p>
             <Link
               href="/"

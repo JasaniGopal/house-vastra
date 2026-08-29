@@ -306,9 +306,9 @@ function CheckoutContent({ unwrappedParams }: { unwrappedParams: any }) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="font-serif text-3xl font-bold text-[#001410] mb-3">Order Confirmed</h2>
+          <h2 className="font-serif text-3xl font-bold text-[#001410] mb-3">Order Placed!</h2>
           <p className="font-sans text-[#5c6462] leading-relaxed mb-8">
-            Thank you for choosing LOR. Your luxury garments have been reserved and will be delivered to you shortly.
+            We are reviewing your details and will confirm your order shortly (within 15 minutes).
           </p>
           <Link
             href="/"
